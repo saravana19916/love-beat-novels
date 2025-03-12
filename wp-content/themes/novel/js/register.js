@@ -1,6 +1,7 @@
 jQuery(document).ready(function ($) {
     $('#registerForm').on('submit', function (e) {
         e.preventDefault();
+        console.log("dddd", ajaxurl.nonce);
 
         const formData = $(this).serialize();
 
@@ -17,5 +18,10 @@ jQuery(document).ready(function ($) {
                 }
             },
         });
+    });
+
+    $('#registerModal').on('hidden.bs.modal', function () {
+        $('#registerForm')[0].reset();
+        $('#registerMessage').html('');
     });
 });

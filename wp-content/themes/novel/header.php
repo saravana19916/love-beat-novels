@@ -13,30 +13,37 @@
     flex-direction: column;">
 
 <!-- Navbar using Bootstrap -->
-<nav class="navbar navbar-expand-lg navbar-light header">
+<nav class="navbar navbar-expand-xl navbar-light header">
     <div class="container">
-        <!-- <a class="navbar-brand text-white" href="<?php echo home_url(); ?>">Love Beat Novels</a> -->
-        <a class="navbar-brand" href="<?php echo home_url(); ?>" style="margin-right: 6rem;">
-    <img src="<?php echo get_theme_mod('custom_logo') ? wp_get_attachment_image_url(get_theme_mod('custom_logo'), 'full') : get_template_directory_uri().'/assets/img/default-logo.png'; ?>" 
-         alt="<?php bloginfo('name'); ?>" 
-         height="80">
-</a>
+        <div class="d-flex justify-content-between align-items-center header-logo-responsive">
+            <a class="navbar-brand" href="<?php echo home_url(); ?>" style="margin-right: 6rem;">
+                <img src="<?php echo get_theme_mod('custom_logo') ? wp_get_attachment_image_url(get_theme_mod('custom_logo'), 'full') : get_template_directory_uri().'/assets/img/default-logo.png'; ?>" 
+                    alt="<?php bloginfo('name'); ?>" 
+                    height="80">
+            </a>
 
-<!-- Search Form Start (Next to Logo) -->
-<form class="d-flex align-items-center search-form" method="get" action="<?php echo esc_url(home_url('/')); ?>">
-    <div class="position-relative search-container">
-        <input type="text" name="s" class="form-control search-input" placeholder="தேடு..." value="<?php echo get_search_query(); ?>">
-        <i class="fas fa-search search-icon"></i>
-    </div>
-</form>
+            <!-- Search Form Start (Next to Logo) -->
+            <form class="d-none d-lg-flex align-items-center search-form" method="get" action="<?php echo esc_url(home_url('/')); ?>">
+                <div class="position-relative search-container">
+                    <input type="text" name="s" class="form-control search-input" placeholder="தேடு..." value="<?php echo get_search_query(); ?>">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+            </form>
+            <!-- Search Form End -->
 
+            <button class="navbar-toggler bg-white m-3 my-md-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
 
-<!-- Search Form End -->
+        <div class="collapse navbar-collapse header-coll" id="navbarNav">
+            <form class="d-flex align-items-center search-form d-lg-none justify-content-center m-3" method="get" action="<?php echo esc_url(home_url('/')); ?>">
+                <div class="position-relative search-container">
+                    <input type="text" name="s" class="form-control search-input" placeholder="தேடு..." value="<?php echo get_search_query(); ?>">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+            </form>
 
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
             <?php wp_nav_menu(array(
                 'theme_location' => 'primary',
                 'container' => false,
@@ -47,80 +54,76 @@
             <?php if (is_user_logged_in()) { ?>
                 <a href="<?php echo wp_logout_url(home_url()); ?>" class="text-white text-decoration-none" style="padding-left: 0.5rem;padding-right: 0.5rem;">
                     <span itemprop="name">
-                        <div class="menu-icon text-center">
+                        <div class="menu-icon text-center custom-menu-icon">
                             <i class="fa-solid fa-right-from-bracket"></i>
                         </div>
-                        <span class="menu-text">வெளியேறு</span>
+                        <div class="text-center custom-menu row col-12">
+                            <span class="menu-text">வெளியேறு</span>
+                        </div>
                     </span>
                 </a>
             <?php } else { ?>
                 <a href="#" data-bs-toggle="modal" data-bs-target="#loginModal" class="text-white text-decoration-none" style="padding-left: 0.5rem;padding-right: 0.5rem;">
                     <span itemprop="name">
-                        <div class="menu-icon text-center">
+                        <div class="menu-icon text-center custom-menu-icon">
                             <i class="fa-solid fa-right-to-bracket"></i>
                         </div>
-                        <span class="menu-text">உள்நுழைக</span>
+                        <div class="text-center custom-menu row col-12">
+                            <span class="menu-text">உள்நுழைக</span>
+                        </div>
                     </span>
                 </a>
             <?php } ?>
-
-
-
         </div>
 
         <!-- Bootstrap Modal -->
         <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-lg">
                 <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="loginModalLabel">Login</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="modal-header bg-primary-color">
+                        <h5 class="modal-title text-white" id="loginModalLabel">Login &nbsp; <i class="fa-solid fa-user"></i></h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <div id="login-message" class="mt-3"></div>
-                        <form id="login-form">
-                            <div class="row mb-3 align-items-center">
-                                <label for="username" class="col-sm-3 col-form-label">Username <span class="text-danger">*</span></label>
-                                <div class="col-sm-9">
-                                    <div class="input-group">
-                                        <span class="input-group-text">
-                                            <i class="fas fa-user"></i>
-                                        </span>
-                                        <input type="text" class="form-control" id="username" name="username" placeholder="Username">
+                        <div class="row">
+                            <div class="col-md-6 d-flex align-items-center">
+                                <img src="<?php echo get_template_directory_uri() . '/images/login.png'; ?>" alt="Registration" class="img-fluid rounded">
+                            </div>
+                            <div class="col-md-6 p-4 d-flex align-items-center justify-content-center">
+                                <form id="login-form">
+                                    <div class="row mb-3 text-center">
+                                        <i class="fa-solid fa-circle-user text-primary-color" style="font-size: 60px;"></i>
                                     </div>
-                                </div>
-                            </div>
-                            <div class="row mb-3 align-items-center">
-                                <label for="password" class="col-sm-3 col-form-label">Password <span class="text-danger">*</span></label>
-                                <div class="col-sm-9">
-                                    <div class="input-group">
-                                        <span class="input-group-text">
-                                            <i class="fas fa-lock"></i>
-                                        </span>
-                                        <input type="password" class="form-control" id="password" name="password" placeholder="Password">
+
+                                    <div id="login-message" class="mt-3"></div>
+
+                                    <div class="row mb-3 align-items-center">
+                                        <div class="col-12">
+                                            <input type="text" class="form-control" id="username" name="username" placeholder="Username *">
+                                        </div>
                                     </div>
-                                </div>
+                                    <div class="row mb-4 align-items-center">
+                                        <div class="col-12">
+                                            <input type="password" class="form-control" id="password" name="password" placeholder="Password *">
+                                        </div>
+                                    </div>
+                                    <input type="hidden" name="frontend_login" value="1">
+                                    <div class="row mb-4">
+                                        <div class="col-6">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-sign-in-alt me-2"></i> Login
+                                            </button>
+                                        </div>
+                                        <div class="col-6 d-flex align-items-center justify-content-end">
+                                            <a href="#" class="text-primary-color text-decoration-none" data-bs-toggle="modal" data-bs-target="#registerModal">Register?</a>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-4">
+                                        <a class="text-primary-color text-decoration-none" href="<?php echo wp_lostpassword_url(); ?>">Forget Password?</a>
+                                    </div>
+                                </form>
                             </div>
-                            <input type="hidden" name="frontend_login" value="1">
-                            <div class="row mb-3 align-items-center">
-                                <label for="login" class="col-sm-3 col-form-label"></label>
-                                <div class="col-sm-9">
-                                    <button type="submit" class="btn btn-primary d-flex align-items-center w-25">
-                                        <i class="fas fa-sign-in-alt me-2"></i> Login
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="row mb-3 align-items-center">
-                                <label for="login" class="col-sm-3 col-form-label"></label>
-                                <div class="col-sm-4">
-                                    <a href="<?php echo wp_lostpassword_url(); ?>">Lost Password?</a>
-                                </div>
-                                <div class="col-sm-5">
-                                    <!-- <a href="<?php echo wp_lostpassword_url(); ?>">Register?</a> -->
-                                    <a href="#" class="text-primary-color text-decoration-none" data-bs-toggle="modal" data-bs-target="#registerModal">Register?</a>
-                                </div>
-                            </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -129,93 +132,74 @@
         <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="registerModalLabel">Register</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="modal-header bg-primary-color">
+                        <h5 class="modal-title text-white" id="registerModalLabel">Register  &nbsp; <i class="fa-solid fa-user-plus"></i></h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body p-4 px-5">
-                        <form id="registerForm">
-                            <div class="row mb-3 align-items-center">
-                                <label for="username" class="col-sm-3 col-form-label">Username <span class="text-danger">*</span></label>
-                                <div class="col-sm-9">
-                                    <div class="input-group">
-                                        <span class="input-group-text">
-                                            <i class="fas fa-user"></i>
-                                        </span>
-                                        <input type="text" class="form-control" id="username" name="username" placeholder="Username">
+                        <div class="row">
+                            <div class="col-md-6 d-flex align-items-center">
+                                <img src="<?php echo get_template_directory_uri() . '/images/register.png'; ?>" alt="Registration" class="img-fluid rounded">
+                            </div>
+                            <div class="col-md-6">
+                                <form id="registerForm">
+                                    <div class="row mb-3 text-center">
+                                        <i class="fa-solid fa-circle-user text-primary-color" style="font-size: 60px;"></i>
                                     </div>
-                                </div>
-                            </div>
 
-                            <div class="row mb-3 align-items-center">
-                                <label for="email" class="col-sm-3 col-form-label">Email <span class="text-danger">*</span></label>
-                                <div class="col-sm-9">
-                                    <div class="input-group">
-                                        <span class="input-group-text">
-                                            <i class="fa-solid fa-envelope"></i>
-                                        </span>
-                                        <input type="text" class="form-control" id="email" name="email" placeholder="Email">
+                                    <div id="registerMessage" class="mt-3"></div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-sm-12">
+                                            <input type="text" class="form-control" id="username" name="username" placeholder="Username *">
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
 
-                            <div class="row mb-3 align-items-center">
-                                <label for="password" class="col-sm-3 col-form-label">Password <span class="text-danger">*</span></label>
-                                <div class="col-sm-9">
-                                    <div class="input-group">
-                                        <span class="input-group-text">
-                                            <i class="fa-solid fa-lock"></i>
-                                        </span>
-                                        <input type="password" class="form-control" id="password" name="password" placeholder="Password">
+                                    <div class="row mb-3">
+                                        <div class="col-sm-12">
+                                            <input type="text" class="form-control" id="email" name="email" placeholder="Email *">
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
 
-                            <div class="row mb-3 align-items-center">
-                                <label for="firstname" class="col-sm-3 col-form-label">First Name</label>
-                                <div class="col-sm-9">
-                                    <div class="input-group">
-                                        <span class="input-group-text">
-                                            <i class="fas fa-user"></i>
-                                        </span>
-                                        <input type="text" class="form-control" id="firstname" name="firstname" placeholder="First Name">
+                                    <div class="row mb-3">
+                                        <div class="col-sm-12">
+                                            <input type="password" class="form-control" id="password" name="password" placeholder="Password *">
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
 
-                            <div class="row mb-3 align-items-center">
-                                <label for="lastname" class="col-sm-3 col-form-label">Last Name</label>
-                                <div class="col-sm-9">
-                                    <div class="input-group">
-                                        <span class="input-group-text">
-                                            <i class="fas fa-user"></i>
-                                        </span>
-                                        <input type="text" class="form-control" id="lastname" name="lastname" placeholder="Last Name">
+                                    <div class="row mb-3">
+                                        <div class="col-sm-12">
+                                            <input type="text" class="form-control" id="firstname" name="firstname" placeholder="First Name *">
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
 
-                            <input type="hidden" name="action" value="register_user">
-                            <div class="row mb-3 align-items-center">
-                                <label for="lastname" class="col-sm-3 col-form-label"></label>
-                                <div class="col-sm-9">
-                                    <button type="submit" class="btn btn-primary w-25">
-                                        <i class="fa-solid fa-floppy-disk me-2"></i> Register
-                                    </button>
-                                    <button type="button" data-bs-dismiss="modal" class="btn btn-secondary w-25">
-                                    <i class="fa-solid fa-xmark me-2"></i> Close
-                                    </button>
-                                </div>
+                                    <div class="row mb-4">
+                                        <div class="col-sm-12">
+                                            <input type="text" class="form-control" id="lastname" name="lastname" placeholder="Last Name *">
+                                        </div>
+                                    </div>
+
+                                    <input type="hidden" name="action" value="register_user">
+                                    <div class="row mb-3 align-items-center">
+                                        <div class="col-sm-12">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fa-solid fa-floppy-disk me-2"></i> Register
+                                            </button>
+                                            <button type="button" data-bs-dismiss="modal" class="btn btn-secondary ms-3">
+                                            <i class="fa-solid fa-xmark me-2"></i> Close
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <a href="#" class="text-primary-color text-decoration-none" data-bs-toggle="modal" data-bs-target="#loginModal">Already have an account?</a>
+                                    </div>
+                                </form>
                             </div>
-                        </form>
-                        <div id="registerMessage" class="mt-3"></div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-
-
     </div>
 </nav>
-
-

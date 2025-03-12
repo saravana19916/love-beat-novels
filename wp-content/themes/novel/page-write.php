@@ -4,12 +4,20 @@
 get_header(); // Include the header
 ?>
 
+<div style="position: relative; display: inline-block; width: 100%;">
+    <h5 style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+               color: white; padding: 5px 10px; border-radius: 5px; width: 70%; font-size: 14px; line-height: 25px;" class="banner-story text-center text-danger fw-bold">
+        இங்கு அனைவரும் எழுதலாம். உங்கள் படைப்புகளை நீங்களே வெளியிட்டுக் கொள்ளலாம். இது எல்லா வகையான எழுத்திற்கும், எழுத்தாளர்களுக்குமான தளம்.
+    </h5>
+    <img src="<?php echo get_template_directory_uri() . '/images/write.jpg'; ?>" alt="Contact Us" class="img-fluid rounded" style="width: 100%; height: 200px;">
+</div>
+
 <div class="container my-5">
 
 <?php
 $args = array(
     'post_type'      => 'competition',
-    'posts_per_page' => 10, // Adjust as needed
+    'posts_per_page' => 10,
 );
 $query = new WP_Query($args);
 
@@ -37,7 +45,13 @@ if ($query->have_posts()) : ?>
 <?php
 wp_reset_postdata();
 else :
-    echo '<p>No competitions found.</p>';
+?>
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center mt-5">
+            <h4 class="text-primary-color">No competitions found.</h4>
+        </div>
+    </div>
+<?php
 endif;
 ?>
 

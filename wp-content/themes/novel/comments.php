@@ -24,7 +24,7 @@ if (post_password_required()) {
                 'style'       => 'ul',
                 'short_ping'  => true,
                 'avatar_size' => 64,
-                'callback'    => 'bootstrap5_comment_callback', // Custom callback
+                'callback'    => 'bootstrap5_comment_callback',
             ]);
             ?>
         </ul>
@@ -38,13 +38,10 @@ if (post_password_required()) {
             comment_form([
                 'class_form'       => 'needs-validation',
                 'class_submit'     => 'btn btn-primary',
-                'title_reply'      => 'Leave a Reply',
-                'comment_field'    => '<div class="mb-3"><label for="comment" class="form-label">Comment</label><textarea id="comment" name="comment" class="form-control" rows="4" required></textarea></div>',
-                // 'fields'           => [
-                //     'author' => '<div class="mb-3"><label for="author" class="form-label">Name</label><input id="author" name="author" type="text" class="form-control" required></div>',
-                //     'email'  => '<div class="mb-3"><label for="email" class="form-label">Email</label><input id="email" name="email" type="email" class="form-control" required></div>',
-                //     'url'    => '<div class="mb-3"><label for="url" class="form-label">Website</label><input id="url" name="url" type="url" class="form-control"></div>',
-                // ],
+                'title_reply'      => 'Comments',
+                'label_submit' => 'கருத்தை வெளியிடவும்',
+                'comment_field'    => '<div class="mb-3"><label for="comment" class="form-label">கருத்து</label><textarea id="comment" name="comment" class="form-control" rows="4" required></textarea></div>',
+                'logged_in_as' => ''
             ]);
         } else {
     ?>

@@ -10,8 +10,8 @@
                     <?php echo wpautop(get_the_content()); ?>
                 </div>
 
-                 <!-- Next & Previous Episode Navigation -->
-                 <div class="navigation my-4">
+                <!-- Next & Previous Episode Navigation -->
+                <div class="navigation my-4">
                     <div class="d-flex justify-content-between">
                         <div class="prev-episode">
                             <?php 
@@ -36,23 +36,21 @@
                 </div>
 
                 <!-- Reaction start -->
-                 <hr/>
+                <hr/>
                 <?php
                     $user_id = null;
                     $episode_id = get_the_ID();
                     $emojis = ['thumb' => '👍', 'heart' => '❤️', 'lough' => '😂', 'cry' => '😢', 'fire' => '🔥'];
 
-                // Fetch counts for this episode
-                $emoji_counts = [];
-                foreach ($emojis as $key => $emoji) {
-                    $emoji_counts[$key] = $wpdb->get_var($wpdb->prepare(
-                        "SELECT COUNT(*) FROM {$wpdb->prefix}episode_reactions WHERE episode_id = %d AND reaction = %s",
-                        $episode_id, $key
-                    ));
-                }
+                    $emoji_counts = [];
+                    foreach ($emojis as $key => $emoji) {
+                        $emoji_counts[$key] = $wpdb->get_var($wpdb->prepare(
+                            "SELECT COUNT(*) FROM {$wpdb->prefix}episode_reactions WHERE episode_id = %d AND reaction = %s",
+                            $episode_id, $key
+                        ));
+                    }
                 ?>
 
-                <p class="me-3 text-primary-color"><span style="color:red;">***</span> இந்தப் படைப்பு உங்களுக்கு பிடித்திருக்கிறதா? <span style="color:red;">***</span></p>
                 <div class="emoji-reactions" data-episode="<?php echo $episode_id; ?>" data-user="<?php echo $user_id; ?>">
                     <?php foreach ($emojis as $key => $emoji) : ?>
                         <button class="emoji-btn" data-emo-symbol="<?php echo $key; ?>" data-emoji="<?php echo $emoji; ?>">
@@ -61,7 +59,7 @@
                     <?php endforeach; ?>
                 </div>
                 <hr/>
-                <!-- Reaction end -->
+                <!-- Reaction End -->
 
                 <!-- Rating start -->
                 <p class="mt-3 mb-0 text-primary-color"><span style="color:red;">***</span> <?php echo the_title(); ?> - படைப்பை ரேட் செய்யுங்கள் <span style="color:red;">***</span></p>

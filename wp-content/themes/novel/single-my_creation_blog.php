@@ -5,10 +5,10 @@
     <?php
 
     $args = array(
-        'post_type' => 'sub_blog',
+        'post_type' => 'my_creation_sub_blog',
         'meta_query' => array(
             array(
-                'key' => 'parent_blog_id',
+                'key' => 'my_creation_parent_blog_id',
                 'value' => get_the_ID(),
                 'compare' => '='
             )
@@ -86,6 +86,7 @@
 
                             <span class="text-muted"><?php echo $tamil_date; ?></span>
                         </div>
+
                         <div class="d-flex align-items-center px-5 my-3">
                             <p class="me-4">
                                 <i class="fa-solid fa-eye"></i>&nbsp;&nbsp;<?php echo format_view_count($views); ?>
@@ -108,7 +109,7 @@
 
     <?php
         $args = array(
-            'post_type' => 'main_blog',
+            'post_type' => 'my_creation_blog',
             'meta_query' => array(
                 array(
                     'p' => get_the_ID()
@@ -172,7 +173,6 @@
                         </div>
                         <hr/>
                         <!-- Rating end -->
-
 
                         <div class="mt-4">
                             <?php

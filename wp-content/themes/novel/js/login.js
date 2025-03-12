@@ -6,6 +6,24 @@ jQuery(document).ready(function ($) {
         const password = $('#password').val();
         const messageContainer = $('#login-message');
 
+        let isValid = true;
+        let title = $('#username').val().trim();
+        let content = $('#password').val().trim();
+
+        $('.error-message').remove();
+
+        if (title === '') {
+            isValid = false;
+            $('#username').after('<small class="text-danger error-message">Username is required.</small>');
+        }
+
+        if (content === '') {
+            isValid = false;
+            $('#password').after('<small class="text-danger error-message">Password is required.</small>');
+        }
+
+        if (!isValid) return;
+
         // Clear previous messages
         messageContainer.html('');
 
@@ -32,5 +50,10 @@ jQuery(document).ready(function ($) {
                 }
             },
         });
+    });
+
+    $('#loginModal').on('hidden.bs.modal', function () {
+        $('#login-form')[0].reset();
+        $('.error-message').remove();
     });
 });

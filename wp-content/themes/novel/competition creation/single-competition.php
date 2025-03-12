@@ -22,7 +22,7 @@
                                 Create Story
                             </button>
                         <?php } else { ?>
-                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#loginModal">You must log in to post here</button>
+                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#loginModal">இங்கே பதிவிட நீங்கள் உள்நுழைய வேண்டும்</button>
                         <?php } ?>
                     </div>
                 </div>
