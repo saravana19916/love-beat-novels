@@ -15,35 +15,39 @@
 <!-- Navbar using Bootstrap -->
 <nav class="navbar navbar-expand-xl navbar-light header">
     <div class="container">
-        <div class="d-flex justify-content-between align-items-center header-logo-responsive">
-            <a class="navbar-brand" href="<?php echo home_url(); ?>" style="margin-right: 6rem;">
-                <img src="<?php echo get_theme_mod('custom_logo') ? wp_get_attachment_image_url(get_theme_mod('custom_logo'), 'full') : get_template_directory_uri().'/assets/img/default-logo.png'; ?>" 
-                    alt="<?php bloginfo('name'); ?>" 
-                    height="80">
-            </a>
+    <div class="d-flex justify-content-between align-items-center flex-wrap header-logo-responsive">
+        <a class="navbar-brand me-sm-5 me-0" href="<?php echo home_url(); ?>">
+            <img src="<?php echo get_theme_mod('custom_logo') ? wp_get_attachment_image_url(get_theme_mod('custom_logo'), 'full') : get_template_directory_uri().'/assets/img/default-logo.png'; ?>" 
+                alt="<?php bloginfo('name'); ?>" 
+                height="80">
+        </a>
 
-            <!-- Search Form Start (Next to Logo) -->
-            <form class="d-none d-lg-flex align-items-center search-form" method="get" action="<?php echo esc_url(home_url('/')); ?>">
-                <div class="position-relative search-container">
+        <!-- Search Form (Visible next to logo on lg and above) -->
+        <form class="d-none d-sm-flex align-items-center search-form flex-grow-1 mx-3" method="get" action="<?php echo esc_url(home_url('/')); ?>">
+            <div class="position-relative search-container w-100">
+                <input type="text" name="s" class="form-control search-input" placeholder="தேடு..." value="<?php echo get_search_query(); ?>">
+                <i class="fas fa-search search-icon"></i>
+            </div>
+        </form>
+
+        <button class="navbar-toggler bg-white m-3 my-md-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+
+    <!-- Second Row: Search Form (Visible below logo on mobile) -->
+    <div class="row mt-2 d-sm-none w-100">
+        <div class="col-12">
+            <form class="d-flex align-items-center search-form" method="get" action="<?php echo esc_url(home_url('/')); ?>">
+                <div class="position-relative search-container w-100">
                     <input type="text" name="s" class="form-control search-input" placeholder="தேடு..." value="<?php echo get_search_query(); ?>">
                     <i class="fas fa-search search-icon"></i>
                 </div>
             </form>
-            <!-- Search Form End -->
-
-            <button class="navbar-toggler bg-white m-3 my-md-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
         </div>
+    </div>
 
         <div class="collapse navbar-collapse header-coll" id="navbarNav">
-            <form class="d-flex align-items-center search-form d-lg-none justify-content-center m-3" method="get" action="<?php echo esc_url(home_url('/')); ?>">
-                <div class="position-relative search-container">
-                    <input type="text" name="s" class="form-control search-input" placeholder="தேடு..." value="<?php echo get_search_query(); ?>">
-                    <i class="fas fa-search search-icon"></i>
-                </div>
-            </form>
-
             <?php wp_nav_menu(array(
                 'theme_location' => 'primary',
                 'container' => false,
@@ -52,7 +56,7 @@
                 'walker' => new WP_Bootstrap_Navwalker()
             )); ?>
             <?php if (is_user_logged_in()) { ?>
-                <a href="<?php echo wp_logout_url(home_url()); ?>" class="text-white text-decoration-none" style="padding-left: 0.5rem;padding-right: 0.5rem;">
+                <a href="<?php echo wp_logout_url(get_permalink()); ?>" class="text-white text-decoration-none" style="padding-left: 0.5rem;padding-right: 0.5rem;">
                     <span itemprop="name">
                         <div class="menu-icon text-center custom-menu-icon">
                             <i class="fa-solid fa-right-from-bracket"></i>

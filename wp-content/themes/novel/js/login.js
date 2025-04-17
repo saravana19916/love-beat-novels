@@ -45,8 +45,8 @@ jQuery(document).ready(function ($) {
                 } else if (response.status === 'success') {
                     messageContainer.html('<div class="alert alert-success">' + response.message + '</div>');
                     setTimeout(function () {
-                        window.location.href = response.redirect_url;
-                    }, 2000);
+                        location.reload();
+                    }, 100);
                 }
             },
         });

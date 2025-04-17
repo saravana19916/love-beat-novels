@@ -4,7 +4,7 @@ get_header();
 
     <div class="container mt-5">
         <div class="row">
-            <div class="col-md-12 submit-page-padding">
+            <div class="col-md-12">
                 <?php 
                 if (isset($_GET['story_id']) && is_numeric($_GET['story_id'])) {
                     $story_id = intval($_GET['story_id']);
@@ -35,40 +35,40 @@ get_header();
                 }
                 ?>
 
-                <h3 class="text-primary-color">Create Episode for: <?php echo esc_html($story_title); ?></h3>
+                <h5 class="text-primary-color fw-bold">Create Episode for: <?php echo esc_html($story_title); ?></h5>
 
-                <div class="shadow-lg rounded my-5 p-4">
+                <div class="shadow-lg rounded my-4 p-4">
                     <?php if (is_user_logged_in()) : ?>
-                        <form id="episode-form" class="p-4">
+                        <form id="episode-form" class="p-0 p-xl-4">
                             <input type="hidden" id="story-id" value="<?php echo $_GET['story_id']; ?>">
                             <input type="hidden" id="episode-id" value="<?php echo $episode_id; ?>">
 
                             <div class="row mb-4">
-                                <label for="title" class="col-sm-2 col-form-label">தலைப்பு <span class="text-danger">*</span></label>
+                                <label for="title" class="col-12 col-xl-1 col-form-label">Title <span class="text-danger">*</span></label>
                                 <div class="col-sm-4">
-                                    <input type="text" class="form-control" id="episode-title" placeholder="அத்தியாயம் தலைப்பு" value="<?php echo $episode_title; ?>">
+                                    <input type="text" class="form-control" id="episode-title" placeholder="Title" value="<?php echo $episode_title; ?>">
                                 </div>
                             </div>
 
                             <div class="row mb-4">
-                                <label for="title" class="col-sm-2 col-form-label">கதை <span class="text-danger">*</span></label>
-                                <div class="col-sm-10">
-                                    <textarea id="episode-content" class="form-control" placeholder="கதை" rows="10"><?php echo $episode_content; ?></textarea>
+                                <label for="title" class="col-12 col-xl-1 col-form-label">Description <span class="text-danger">*</span></label>
+                                <div class="col-12 col-xl-11">
+                                    <textarea id="episode-content" class="form-control" placeholder="Description" rows="10"><?php echo $episode_content; ?></textarea>
                                 </div>
                             </div>
 
                             <div class="row mb-4">
-                                <div class="col-sm-9 offset-sm-2">
-                                    <button type="submit" class="btn btn-primary btn-sm">
+                                <div class="col-sm-9 offset-sm-1">
+                                    <button type="submit" class="btn btn-primary btn-sm pt-2">
                                         <?php if ($post_id): ?>
                                             <i class="fa-solid fa-floppy-disk"></i>
-                                            &nbsp;&nbsp; Update
+                                            &nbsp; Update
                                         <?php else: ?>
                                             <i class="fa-solid fa-plus"></i>
-                                            &nbsp;&nbsp; Create
+                                            &nbsp; Create
                                         <?php endif; ?>
                                     </button>
-                                    <a href="<?php echo esc_url(get_permalink($story_id)); ?>" class="btn btn-secondary btn-sm ms-3"> <i class="fa-solid fa-arrow-left"></i>&nbsp;&nbsp; Back</a>
+                                    <a href="<?php echo esc_url(get_permalink($story_id)); ?>" class="btn btn-secondary btn-sm ms-3 pt-2"> <i class="fa-solid fa-arrow-left"></i>&nbsp; Back</a>
                                 </div>
                             </div>
                         </form>
@@ -83,33 +83,44 @@ get_header();
 
 <script>
 jQuery(document).ready(function($) {
-    let editor;
+    // let editor;
 
-    ClassicEditor
-        .create(document.querySelector('#episode-content'), {
-            toolbar: [
-                'heading', '|',
-                'bold', 'italic', 'underline', 'strikethrough', 'code', 'subscript', 'superscript', '|',
-                'bulletedList', 'numberedList', 'todoList', '|',
-                'alignment', 'outdent', 'indent', '|',
-                'link', 'blockQuote', 'imageUpload', 'insertTable', 'mediaEmbed', '|',
-                'undo', 'redo'
-            ]
-        })
-        .then(newEditor => {
-            editor = newEditor;
-        })
-        .catch(error => {
-            console.error('CKEditor error:', error);
-        });
+    // ClassicEditor
+    //     .create(document.querySelector('#episode-content'), {
+    //         toolbar: [
+    //             'heading', '|',
+    //             'bold', 'italic', 'underline', 'strikethrough', 'code', 'subscript', 'superscript', '|',
+    //             'bulletedList', 'numberedList', 'todoList', '|',
+    //             'alignment', 'outdent', 'indent', '|',
+    //             'link', 'blockQuote', 'imageUpload', 'insertTable', 'mediaEmbed', '|',
+    //             'undo', 'redo'
+    //         ]
+    //     })
+    //     .then(newEditor => {
+    //         editor = newEditor;
+    //     })
+    //     .catch(error => {
+    //         console.error('CKEditor error:', error);
+    //     });
+
+    $("#episode-content").trumbowyg({
+        btns: [
+            ['formatting'],
+            ['fontsize'],
+            ["bold", "italic", "underline"],
+            ['unorderedList', 'orderedList'],
+            ["emoji"]
+        ],
+        autogrow: true
+    });
 
     $('#episode-form').submit(function(e) {
         e.preventDefault();
 
         let isValid = true;
         let title = $('#episode-title').val().trim();
-        // let content = $('#episode-content').val().trim();
-        let content = editor.getData().trim();
+        let content = $('#episode-content').val().trim();
+        // let content = editor.getData().trim();
 
         $('.error-message').remove();
 

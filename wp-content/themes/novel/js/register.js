@@ -1,7 +1,6 @@
 jQuery(document).ready(function ($) {
     $('#registerForm').on('submit', function (e) {
         e.preventDefault();
-        console.log("dddd", ajaxurl.nonce);
 
         const formData = $(this).serialize();
 
@@ -13,6 +12,11 @@ jQuery(document).ready(function ($) {
                 if (response.success) {
                     $('#registerMessage').html('<div class="alert alert-success">' + response.data + '</div>');
                     $('#registerForm')[0].reset();
+
+                    setTimeout(function () {
+                        $('#registerModal').modal('hide');
+                        $('#loginModal').modal('show');
+                    }, 1000);
                 } else {
                     $('#registerMessage').html('<div class="alert alert-danger">' + response.data + '</div>');
                 }

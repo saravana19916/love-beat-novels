@@ -14,8 +14,29 @@ function my_theme_enqueue_styles() {
     wp_enqueue_script('bootstrap-js', 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js', array(), null, true);
 
     wp_enqueue_script('jquery');
+
+    add_action('wp_footer', function () {
+        echo '<script src="https://www.google.com/ime/transliteration?hl=en&callback=initTamilTyping" async defer></script>';
+    });
 }
 add_action('wp_enqueue_scripts', 'my_theme_enqueue_styles');
+
+function enqueue_swiper_slider() {
+    wp_enqueue_style('swiper-css', 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css');
+    wp_enqueue_script('swiper-js', 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js', [], null, true);
+}
+add_action('wp_enqueue_scripts', 'enqueue_swiper_slider');
+
+
+function enqueue_comment_scripts() {
+    wp_enqueue_script('emojionearea', 'https://cdnjs.cloudflare.com/ajax/libs/emojionearea/3.4.2/emojionearea.min.js', ['jquery'], null, true);
+    wp_enqueue_style('emojionearea-css', 'https://cdnjs.cloudflare.com/ajax/libs/emojionearea/3.4.2/emojionearea.min.css');
+
+    // FontAwesome for send button icon
+    wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css');
+}
+add_action('wp_enqueue_scripts', 'enqueue_comment_scripts');
+
 
 // Enable featured images
 add_theme_support('post-thumbnails');
@@ -27,15 +48,36 @@ function mytheme_custom_logo() {
 add_action('after_setup_theme', 'mytheme_custom_logo');
 // Logo upload end
 
-// Remove Howdy start
-function change_howdy_text($translated_text, $text, $domain) {
-    if ($text === 'Howdy, %s') {
-        return '%s';
-    }
-    return $translated_text;
+// Remove admin bar start
+add_filter('show_admin_bar', '__return_false');
+// Remove admin bar end
+
+function enqueue_trumbowyg() {
+    wp_enqueue_style('trumbowyg-style', 'https://cdn.jsdelivr.net/npm/trumbowyg/dist/ui/trumbowyg.min.css');
+    wp_enqueue_script('jquery'); // Ensure jQuery is loaded
+    wp_enqueue_script('trumbowyg-script', 'https://cdn.jsdelivr.net/npm/trumbowyg/dist/trumbowyg.min.js', array('jquery'), null, true);
+    wp_enqueue_script('trumbowyg-emoji', 'https://cdn.jsdelivr.net/npm/trumbowyg/dist/plugins/emoji/trumbowyg.emoji.min.js', array('jquery'), null, true);
 }
-add_filter('gettext', 'change_howdy_text', 10, 3);
-// Remove Howdy end
+add_action('wp_enqueue_scripts', 'enqueue_trumbowyg');
+
+
+// disable content select start
+function disable_text_selection_script() {
+    ?>
+    <script>
+        jQuery(document).ready(function($) {
+            $("body").css({
+                "user-select": "none",
+                "-webkit-user-select": "none",
+                "-moz-user-select": "none",
+                "-ms-user-select": "none"
+            });
+        });
+    </script>
+    <?php
+}
+add_action('wp_footer', 'disable_text_selection_script');
+// disable content select end
 
 if (class_exists('Kirki')) {
     Kirki::add_config('your_theme_config', array(
@@ -52,6 +94,50 @@ if (class_exists('Kirki')) {
         'type'        => 'repeater',
         'settings'    => 'banner_images',
         'label'       => esc_html__('Banner Images', 'your-theme'),
+        'section'     => 'banner_section',
+        'priority'    => 10,
+        'row_label'   => [
+            'type'  => 'text',
+            'value' => esc_html__('Banner Image', 'your-theme'),
+        ],
+        'fields' => [
+            'image' => [
+                'type'  => 'image',
+                'label' => esc_html__('Image', 'your-theme'),
+            ],
+            'link' => [
+                'type'  => 'url',
+                'label' => esc_html__('Link', 'your-theme'),
+            ],
+        ],
+    ]);
+
+    Kirki::add_field('your_theme_config', [
+        'type'        => 'repeater',
+        'settings'    => 'my_creation_banner_images',
+        'label'       => esc_html__('My Creation Banner Images', 'your-theme'),
+        'section'     => 'banner_section',
+        'priority'    => 10,
+        'row_label'   => [
+            'type'  => 'text',
+            'value' => esc_html__('Banner Image', 'your-theme'),
+        ],
+        'fields' => [
+            'image' => [
+                'type'  => 'image',
+                'label' => esc_html__('Image', 'your-theme'),
+            ],
+            'link' => [
+                'type'  => 'url',
+                'label' => esc_html__('Link', 'your-theme'),
+            ],
+        ],
+    ]);
+
+    Kirki::add_field('your_theme_config', [
+        'type'        => 'repeater',
+        'settings'    => 'competition_banner_images',
+        'label'       => esc_html__('Competition Banner Images', 'your-theme'),
         'section'     => 'banner_section',
         'priority'    => 10,
         'row_label'   => [
@@ -293,6 +379,18 @@ function handle_competition_post_submission() {
         $post_id = wp_insert_post($post_data);
     }
 
+    // Handle image upload
+    if (isset($_FILES['post_image']) && !empty($_FILES['post_image']['tmp_name'])) {
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        require_once(ABSPATH . 'wp-admin/includes/image.php');
+    
+        $uploaded = media_handle_upload('post_image', $post_id);
+    
+        if (!is_wp_error($uploaded)) {
+            set_post_thumbnail($post_id, $uploaded);
+        }
+    }
+
     if ($post_id) {
         $redirect_url = get_permalink($competition_id);
         wp_send_json_success(['redirect_url' => $redirect_url]);
@@ -352,7 +450,7 @@ function fetch_competition_posts() {
 
             $output .= '<tr>
                 <td class="px-4 class="align-middle"">
-                    <a class="fs-6 fw-bold" href="' . get_permalink(get_the_ID()) . '">' . get_the_title() . '</a>
+                    <a class="fw-bold" href="' . get_permalink(get_the_ID()) . '">' . get_the_title() . '</a>
                     <p style="font-size: 0.8rem;" class="m-0">' . esc_html($user->display_name) . '</p>
                 </td>
                 <td class="align-middle">
@@ -362,7 +460,7 @@ function fetch_competition_posts() {
                                 <i class="fa-solid fa-eye"></i>&nbsp;&nbsp;' . format_view_count($total_views) . '
                             </p>
                             <p class="mb-0">
-                                <i class="fa-solid fa-star"></i>&nbsp;&nbsp; ' . $average_rating . '
+                                <i class="fa-solid fa-star" style="color: gold;"></i>&nbsp;&nbsp; ' . $average_rating . '
                             </p>
                         </div>
                     </div>
@@ -372,7 +470,10 @@ function fetch_competition_posts() {
                 </td>
                 <td class="align-middle">';
 
-            if (get_current_user_id() === get_the_author_meta('ID')) {
+            $competition_created_date = get_the_date('Y-m-d', get_the_ID());
+            $two_days_after = date('Y-m-d', strtotime($competition_created_date . ' +2 days'));
+            $current_date = date('Y-m-d');
+            if (get_current_user_id() === get_the_author_meta('ID') && $current_date <= $two_days_after) {
                 $edit_url = get_permalink(get_page_by_path('submit-story')) . '?competition_id=' . $competition_id . '&post_id=' . get_the_ID();
                 $output .= '<a href="' . esc_url($edit_url) . '"><i class="fa-solid fa-pen-to-square fa-xl"></i></a>';
             }
@@ -713,7 +814,7 @@ function ajax_login_handler() {
     } else {
         $response['status'] = 'success';
         $response['message'] = 'Login successful!';
-        $response['redirect_url'] = home_url(); // Redirect URL
+        // $response['redirect_url'] = home_url();
     }
 
     wp_send_json($response);
@@ -746,38 +847,18 @@ function handle_frontend_login() {
 }
 add_action('init', 'handle_frontend_login');
 
-// comment like button
-// Add Like button to comments
-// function add_like_button_to_comments($comment_text, $comment) {
-//     if (is_singular() && $comment->comment_approved == 1) {
-//         $comment_id = $comment->comment_ID;
-//         $likes = get_comment_meta($comment_id, 'likes', true) ?: 0;
-//         $button = '<button class="btn btn-outline-primary btn-sm like-comment" data-comment-id="' . $comment_id . '">Like (' . $likes . ')</button>';
-//         $comment_text .= '<div class="comment-actions">' . $button . '</div>';
-//     }
-//     return $comment_text;
-// }
-// add_filter('comment_text', 'add_like_button_to_comments', 10, 2);
-
 function get_like_button($comment_id) {
     $likes = get_comment_meta($comment_id, 'likes', true) ?: 0;
-    return '<button class="btn btn-outline-primary btn-sm like-comment" data-comment-id="' . $comment_id . '">Like (' . $likes . ')</button>';
+    return '<a href="javascript:void(0);" class="like-comment" data-comment-id="' . $comment_id . '">
+                <i class="fa-solid fa-thumbs-up fa-lg"></i> <span class="like-count">' . format_view_count($likes) . '</span>
+            </a>';
 }
 
-// Generate Subscribe Button
-function get_subscribe_button() {
-    return '<button class="btn btn-outline-success btn-sm">Subscribe</button>';
-}
-
-// Generate Reply Button
-function get_reply_button($args, $depth, $comment_id) {
-    return get_comment_reply_link(array_merge($args, [
-        'reply_text' => 'Reply',
-        'depth'      => $depth,
-        'max_depth'  => $args['max_depth'],
-        'add_below'  => 'comment',
-        'class'      => 'btn btn-outline-secondary btn-sm'
-    ]), $comment_id);
+function get_unlike_button($comment_id) {
+    $unlikes = get_comment_meta($comment_id, 'unlikes', true) ?: 0;
+    return '<a href="javascript:void(0);" class="text-danger unlike-comment" data-comment-id="' . $comment_id . '">
+                <i class="fa-solid fa-thumbs-down fa-lg"></i> <span class="unlike-count">' . format_view_count($unlikes) . '</span>
+            </a>';
 }
 
 // Handle Like button click
@@ -791,63 +872,154 @@ function handle_comment_like() {
 add_action('wp_ajax_like_comment', 'handle_comment_like');
 add_action('wp_ajax_nopriv_like_comment', 'handle_comment_like');
 
+// Handle UnLike button click
+function handle_comment_unlike() {
+    $comment_id = intval($_POST['comment_id']);
+    $unlikes = get_comment_meta($comment_id, 'unlikes', true) ?: 0;
+    $unlikes++;
+    update_comment_meta($comment_id, 'unlikes', $unlikes);
+    wp_send_json_success($unlikes);
+}
+add_action('wp_ajax_unlike_comment', 'handle_comment_unlike');
+add_action('wp_ajax_nopriv_unlike_comment', 'handle_comment_unlike');
+
 // Enqueue scripts
 function enqueue_like_comment_script() {
     wp_enqueue_script('comment-like', get_template_directory_uri() . '/js/comment-like.js', ['jquery'], null, true);
     wp_localize_script('comment-like', 'commentLike', [
         'ajax_url' => admin_url('admin-ajax.php'),
     ]);
+
+    wp_localize_script('comment-like', 'commentUnLike', [
+        'ajax_url' => admin_url('admin-ajax.php'),
+    ]);
 }
 add_action('wp_enqueue_scripts', 'enqueue_like_comment_script');
 
 function bootstrap5_comment_callback($comment, $args, $depth) {
-    $comment_id = get_comment_ID(); 
-    $episode_id = get_comment($comment_id)->comment_post_ID; // Get Episode (Post) ID
-    $user_id = $comment->user_id; // Get User ID
+    // Only show parent comments
+    if ($comment->comment_parent != 0) return;
+
+    $comment_id = $comment->comment_ID;
+    $episode_id = $comment->comment_post_ID;
+    $user_id = $comment->user_id;
     $rating = get_user_meta($user_id, "episode_rating_{$episode_id}", true);
 
+    // Get child comments
+    $child_comments = get_comments([
+        'parent' => $comment_id,
+        'status' => 'approve',
+        'order' => 'ASC',
+    ]);
+    $child_count = count($child_comments);
     ?>
-    <li <?php comment_class('mb-4'); ?> id="comment-<?php comment_ID(); ?>">
-        <div class="card">
-            <div class="card-body">
-                <div class="row g-3">
-                    <!-- Author Photo -->
-                    <div class="col-12 col-md-2 text-center border-end border-2">
-                        <?php echo get_avatar($comment, 64, '', '', ['class' => 'rounded-circle img-fluid']); ?>
-                        <div>
-                            <h5 class="card-title mb-1"><?php comment_author(); ?></h5>
-                            <small class="text-muted"><?php comment_date(); ?> <?php comment_time(); ?></small>
-
-                            <?php if ($rating) : ?>
+    <li id="comment-<?php comment_ID(); ?>">
+        <div class="row">
+            <div class="col-2">
+                <?php echo get_avatar($comment, 64, '', '', ['class' => 'rounded-circle img-fluid']); ?>
+            </div>
+            <div class="col-10 text-start">
+                <h6 class="mb-0"><?php comment_author(); ?></h6>
+                <div class="d-flex align-items-center justify-content-between">
+                    <?php if ($rating): ?>
                         <div class="comment-rating">
                             <?php for ($i = 1; $i <= 5; $i++) {
-                                echo ($i <= $rating) ? '<span style="color: #061148;">★</span>' : '<span style="color: #061148;">☆</span>';
+                                echo ($i <= $rating) ? '<span style="color: gold;">★</span>' : '<span style="color: gold;">☆</span>';
                             } ?>
                         </div>
-                    <?php endif; ?> 
-                        </div>
-                    </div>
-                    <!-- Comment Content -->
-                    <div class="col-12 col-md-9 mx-3">
-                        <!-- Author Name and Date -->
-                        
-                        <!-- Comment Text -->
-                        <p class="card-text mt-2"><?php comment_text(); ?></p>
-                        <!-- Action Buttons -->
-                        <div class="d-flex flex-wrap gap-2 mt-3">
-                        <?php
-                            echo get_like_button($comment->comment_ID);
-                            echo get_subscribe_button();
-                            echo get_reply_button($args, $depth, $comment->comment_ID);
-                            ?>
-                        </div>
-                    </div>
+                    <?php endif; ?>
+
+                    <small class="text-muted"><?php echo date('F j, Y', strtotime($comment->comment_date)); ?></small>
                 </div>
+
+                <div class="mt-2 d-inline-block p-2 border rounded comment-text" style="background-color: #f3f3f3;">
+                    <p class="mb-0 text-wrap"><?php comment_text(); ?></p>
+                </div>
+
+                <div class="d-flex align-items-center gap-4 mt-3">
+                    <?php echo get_like_button($comment_id); ?>
+
+                    <?php if (is_user_logged_in()) { ?>
+                        <?php if ($child_count > 0): ?>
+                            <a href="#" class="text-decoration-none text-primary-color" onclick="event.preventDefault(); toggleChildComments(<?php echo $comment_id; ?>)">
+                                <i class="fa fa-reply"></i> <?php echo $child_count; ?> <?php echo _n('Reply', 'Replies', $child_count); ?>
+                            </a>
+                        <?php else: ?>
+                            <a href="#" class="text-decoration-none text-primary-color" onclick="event.preventDefault(); toggleChildComments(<?php echo $comment_id; ?>)">
+                                <i class="fa fa-reply"></i> Reply
+                            </a>
+                        <?php endif; ?>
+                    <?php } ?>
+                </div>
+
+                <!-- Child Comments Container -->
+                <div id="child-comments-<?php echo $comment_id; ?>" class="mt-3 d-none">
+                    <?php
+                        foreach ($child_comments as $child_comment) { ?>
+                            <hr/>
+                            <div class="row">
+                                <div class="col-2">
+                                    <?php echo get_avatar($comment, 64, '', '', ['class' => 'rounded-circle img-fluid']); ?>
+                                </div>
+                                <div class="col-10 text-start">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <h6 class="mb-0"><?php echo get_comment_author($child_comment); ?></h6>
+
+                                        <small class="text-muted"><?php echo date('F j, Y', strtotime($child_comment->comment_date)); ?></small>
+                                    </div>
+
+                                    <div class="mt-2 d-inline-block p-2 border rounded comment-text" style="background-color: #f3f3f3;">
+                                        <p class="mb-0 text-wrap"><?php echo esc_html($child_comment->comment_content); ?></p>
+                                    </div>
+                                </div>
+                            </div>
+                    <?php } ?>
+
+                    <?php 
+                    if (comments_open($episode_id)) {
+                        comment_form([
+                            'fields' => [],
+                            'submit_field' => '',
+                            'submit_button' => '',
+                            'logged_in_as' => '',
+                            'comment_field' => '
+                                <hr/>
+                                <div class="comment-box p-2 rounded position-relative">
+                                    <div class="d-flex align-items-start">
+                                        <div class="flex-grow-1 position-relative">
+                                            <textarea name="comment" class="reply-form-text form-control comment-text" rows="1" placeholder="Reply..." required></textarea>
+                                            <input type="hidden" name="comment_post_ID" value="' . esc_attr($episode_id) . '">
+                                            <input type="hidden" name="comment_parent" value="' . esc_attr($comment_id) . '">
+                                        </div>
+                                        <button type="submit" class="btn btn-primary send-comment-reply ms-2">
+                                            <i class="fa-solid fa-paper-plane"></i>
+                                        </button>
+                                    </div>
+                                </div>'
+                        ], $episode_id);
+                    } else {
+                        echo '<p class="text-danger">Comments are closed for this post.</p>';
+                    }
+                    ?>
+                </div>
+
+                <hr/>
             </div>
         </div>
     </li>
     <?php
 }
+
+
+function set_default_story_view_count($post_id) {
+    if (get_post_type($post_id) === 'main_blog' || get_post_type($post_id) === 'my_creation_blog') {
+        $views = get_post_meta($post_id, 'story_view_count', true);
+        if ($views === '') { // If meta field does not exist, set it to 0
+            update_post_meta($post_id, 'story_view_count', 0);
+        }
+    }
+}
+add_action('save_post', 'set_default_story_view_count');
 
 // Episode wise view count start
 function increase_episode_view_count() {
@@ -988,43 +1160,29 @@ function add_reaction() {
     global $wpdb;
     $table_name = $wpdb->prefix . "episode_reactions";
 
-    $sql = $wpdb->prepare(
-        "INSERT INTO $table_name (episode_id, reaction) VALUES (%d, %s)",
-        $episode_id, $reaction
-    );
+    $existing_reaction = $wpdb->get_row($wpdb->prepare(
+        "SELECT * FROM $table_name WHERE episode_id = %d AND reaction = %s AND user_id = %d",
+        $episode_id, $reaction, $user_id
+    ));
 
-    $wpdb->query($sql);
+    if (!$existing_reaction) {
+        $sql = $wpdb->prepare(
+            "INSERT INTO $table_name (episode_id, reaction, user_id) VALUES (%d, %s, %d)",
+            $episode_id, $reaction, $user_id
+        );
 
-    // $existing_reaction = $wpdb->get_row($wpdb->prepare(
-    //     "SELECT * FROM $table_name WHERE episode_id = %d AND reaction = %s",
-    //     $episode_id, $reaction
-    // ));
-
-    // if ($existing_reaction) {
-        // Remove reaction if already exists
-        // $wpdb->delete($table_name, [
-        //     'episode_id' => $episode_id,
-        //     'user_id' => $user_id,
-        //     'reaction' => $reaction
-        // ]);
-    // } else {
-        // Insert new reaction
-        // $wpdb->insert($table_name, [
-        //     'episode_id' => $episode_id,
-        //     'user_id' => $user_id,
-        //     'reaction' => $reaction
-        // ]);
-
-//         global $wpdb;
-// $table_name = $wpdb->prefix . "episode_reactions";
-
-// $sql = $wpdb->prepare(
-//     "INSERT INTO $table_name (episode_id, reaction) VALUES (%d, %s)",
-//     $episode_id, $reaction
-// );
-
-// $wpdb->query($sql);
-    // }
+        $wpdb->query($sql);
+    } else {
+        $wpdb->delete(
+            $table_name,
+            [
+                'episode_id' => $episode_id,
+                'reaction' => $reaction,
+                'user_id' => $user_id
+            ],
+            ['%d', '%s', '%d']
+        );
+    }
 
     // Get updated reaction count
     $reaction_count = $wpdb->get_var($wpdb->prepare(
@@ -1178,7 +1336,198 @@ function get_story_average_rating($postType, $postKey, $storyId) {
 
 // Rating end
 
+// competition close option start
+function add_competition_meta_box() {
+    add_meta_box(
+        'competition_closed_meta_box',
+        'Competition Settings',
+        'render_competition_closed_meta_box',
+        'competition',
+        'side',
+        'high'
+    );
+}
+add_action('add_meta_boxes', 'add_competition_meta_box');
 
+function render_competition_closed_meta_box($post) {
+    $competition_closed = get_post_meta($post->ID, '_competition_closed', true);
+    ?>
+    <label for="competition_closed">
+        <input type="checkbox" name="competition_closed" id="competition_closed" value="1" <?php checked($competition_closed, '1'); ?>>
+        Mark as Closed (Disable Story Submissions)
+    </label>
+    <?php
+}
+
+function save_competition_meta_box($post_id) {
+    if (isset($_POST['competition_closed'])) {
+        update_post_meta($post_id, '_competition_closed', '1');
+    } else {
+        update_post_meta($post_id, '_competition_closed', '0');
+    }
+}
+add_action('save_post', 'save_competition_meta_box');
+
+// competition close option end
+
+
+// external links start
+add_action('admin_enqueue_scripts', function() {
+    wp_enqueue_media();
+});
+
+
+function custom_external_novels_menu() {
+    add_menu_page(
+        'External Novels',
+        'External Novels',
+        'manage_options',
+        'external-novels',
+        'custom_external_novels_page_html',
+        'dashicons-book',
+        20
+    );
+}
+add_action('admin_menu', 'custom_external_novels_menu');
+
+function custom_external_novels_page_html() {
+    if (!current_user_can('manage_options')) return;
+
+    if (isset($_POST['external_novels_links'])) {
+        update_option('external_novels_links', $_POST['external_novels_links']);
+        echo '<div class="updated"><p>Links updated successfully.</p></div>';
+    }
+
+    $links = get_option('external_novels_links', []);
+
+    echo '<div class="wrap">';
+    echo '<h1>External Novel Links</h1>';
+    echo '<form method="post">';
+    echo '<table id="novel-links-table">';
+    echo '<tr><th>Title</th><th>Image</th><th>External Link</th><th>Action</th></tr>';
+
+    if (!empty($links)) {
+        foreach ($links as $index => $link) {
+            echo '<tr>
+                <td><input type="text" name="external_novels_links[' . $index . '][title]" value="' . esc_attr($link['title']) . '" placeholder="Title"></td>
+                <td>
+                    <input type="hidden" class="image-url" name="external_novels_links[' . $index . '][image]" value="' . esc_url($link['image']) . '">
+                    <img src="' . esc_url($link['image']) . '" class="image-preview" style="max-height: 50px;"><br>
+                    <button type="button" class="upload-image-button button">Upload Image</button>
+                </td>
+                <td><input type="url" name="external_novels_links[' . $index . '][url]" value="' . esc_url($link['url']) . '" placeholder="https://example.com"></td>
+                <td><button type="button" class="delete-link button">Delete</button></td>
+            </tr>';
+        }
+    }
+
+    echo '</table>';
+    echo '<p><button type="button" id="add-more-links" class="button">Add More</button></p>';
+    echo '<p><input type="submit" class="button-primary" value="Save Links"></p>';
+    echo '</form>';
+    echo '</div>';
+
+    // JS
+    echo '
+        <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let currentIndex = ' . count($links) . ';
+            function bindUploadButton(button, container) {
+                button.addEventListener("click", function(e) {
+                    e.preventDefault();
+                    var customUploader = wp.media({
+                        title: "Choose Image",
+                        button: { text: "Select Image" },
+                        multiple: false
+                    }).on("select", function() {
+                        var attachment = customUploader.state().get("selection").first().toJSON();
+                        var imgUrl = attachment.url;
+                        container.querySelector(".image-url").value = imgUrl;
+                        container.querySelector(".image-preview").src = imgUrl;
+                    }).open();
+                });
+            }
+
+            function bindDeleteButton(button) {
+                button.addEventListener("click", function() {
+                    const row = button.closest("tr");
+                    row.remove();
+                });
+            }
+
+            // Bind existing buttons
+            document.querySelectorAll(".upload-image-button").forEach(function(button) {
+                let container = button.closest("td");
+                bindUploadButton(button, container);
+            });
+
+            document.querySelectorAll(".delete-link").forEach(function(button) {
+                bindDeleteButton(button);
+            });
+
+            document.getElementById("add-more-links").addEventListener("click", function () {
+                var table = document.getElementById("novel-links-table");
+                var row = table.insertRow();
+                row.innerHTML = `
+                    <td><input type="text" name="external_novels_links[${currentIndex}][title]" placeholder="Title"></td>
+                    <td>
+                        <input type="hidden" class="image-url" name="external_novels_links[${currentIndex}][image]">
+                        <img src="" class="image-preview" style="max-height: 50px;"><br>
+                        <button type="button" class="upload-image-button button">Upload Image</button>
+                    </td>
+                    <td><input type="url" name="external_novels_links[${currentIndex}][url]" placeholder="https://example.com"></td>
+                    <td><button type="button" class="delete-link button">Delete</button></td>
+                `;
+                let newContainer = row.querySelector("td:nth-child(2)");
+                let newButton = row.querySelector(".upload-image-button");
+                let newDeleteButton = row.querySelector(".delete-link");
+
+                bindUploadButton(newButton, newContainer);
+                bindDeleteButton(newDeleteButton);
+
+                currentIndex++; // increment for next added row
+            });
+        });
+        </script>';
+    
+        echo '<style>
+            #novel-links-table {
+                width: 80%;
+                border-collapse: collapse;
+                margin-top: 10px;
+            }
+            #novel-links-table th,
+            #novel-links-table td {
+                border: 1px solid #ccd0d4;
+                padding: 8px;
+                text-align: center;
+            }
+            #novel-links-table tr:nth-child(even) {
+                background-color: #f9f9f9;
+            }
+
+            #novel-links-table td:nth-child(2) {
+                text-align: center;
+            }
+            #novel-links-table img.image-preview {
+                max-height: 50px;
+                display: block;
+                margin: 0 auto 5px auto; /* centers image and adds bottom spacing */
+            }
+
+            #novel-links-table th {
+                background-color: #f1f1f1;
+            }
+            #novel-links-table img.image-preview {
+                max-height: 50px;
+                display: block;
+                margin-bottom: 5px;
+            }
+            #novel-links-table td {
+                vertical-align: middle;
+            }
+        </style>';
+}
 
 
 

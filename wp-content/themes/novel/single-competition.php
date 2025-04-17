@@ -1,7 +1,16 @@
 <?php get_header(); ?>
 
 <div class="container my-5">
-    <div class="mx-5">
+    <?php
+        $competition_closed = get_post_meta(get_the_ID(), '_competition_closed', true); 
+        if ($competition_closed == '1') {
+    ?>
+        <div class="alert alert-warning text-center mx-auto competition-alert mb-5">
+            This competition is currently closed for submissions.
+        </div>
+    <?php } ?>
+
+    <div>
         <?php if (have_posts()) :
             while (have_posts()) : the_post(); ?>
 
@@ -9,20 +18,22 @@
                 <input type="hidden" id="competition-id" value="<?php echo get_the_ID(); ?>">
                 <div class="row">
                     <div class="col-md-6">
-                        <h3 class="text-primary-color">
+                        <h5 class="text-primary-color fw-bold">
                             <?php the_title(); ?>
-                        </h3>
+                        </h>
                     </div>
                     <div class="col-md-6 text-end">
                         <?php if (is_user_logged_in()) { ?>
                             <?php
                                 $submit_story_url = get_permalink(get_page_by_path('submit-story')) . '?competition_id=' . get_the_ID();
+                                if ($competition_closed != '1') {
                             ?>
-                            <button class="btn btn-primary btn-sm" onclick="window.location.href='<?php echo esc_url($submit_story_url); ?>'">
-                                <i class="fa-solid fa-plus fa-lg"></i>&nbsp; Create Story
-                            </button>
+                                <button class="btn btn-primary btn-sm" onclick="window.location.href='<?php echo esc_url($submit_story_url); ?>'">
+                                    <i class="fa-solid fa-plus fa-lg"></i>&nbsp; Create Story
+                                </button>
+                            <?php } ?>
                         <?php } else { ?>
-                            <button class="btn btn-primary text-sm" data-bs-toggle="modal" data-bs-target="#loginModal">இங்கே பதிவிட நீங்கள் உள்நுழைய வேண்டும்</button>
+                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#loginModal">Login to create stories</button>
                         <?php } ?>
                     </div>
                 </div>

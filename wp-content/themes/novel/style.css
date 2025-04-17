@@ -1,17 +1,83 @@
 body {
     font-family: 'Noto Sans Tamil', 'Latha', 'Arial', sans-serif;
+    font-size: 13px;
 }
 
-.container {
-    max-width: 1600px;
+.form-control {
+    font-size: 13px;
+    padding: .475rem .75rem;
+}
+
+.fs-custom {
+    font-size: 13px !important;
+}
+
+.custom-content span {
+    font-size: 16px !important;
+}
+
+.container.details-page {
+    max-width: 830px;
+}
+
+@media (max-width: 999px) {
+    .container.details-page {
+        max-width: 675px;
+    }
+}
+
+@media (max-width: 767px) {
+    .container {
+        max-width: 1800px;
+    }    
+}
+
+@media (min-width: 1700px) {
+    .container {
+        max-width: 1600px;
+    }
+
+    .container.details-page {
+        max-width: 1140px;
+    }
 }
 
 .header, .footer, .primary, .bg-primary-color {
-    /* background-color: #0B2447; */
     background-color: #061148;
 }
 
+.custom-img-height {
+    height: 150px;
+}
+
+.comment-reply-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+
+#commentform, #commentform .form-submit input {
+    font-size: 13px;
+}
+
+#comment, .comment-section {
+    width: 100%;
+}
+
+@media (min-width: 768px) {
+    .custom-img-height {
+        height: 300px;
+    }
+
+    .comment-section {
+        width: 75%;
+    }
+}
+
 .text-primary-color {
+    color: #061148;
+}
+
+.text-primary-color:hover {
     color: #061148;
 }
 
@@ -372,7 +438,7 @@ a:hover, .footer-menu li:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 20px;
+    gap: 10px;
     padding: 8px;
     background: #ffffff;
     border-radius: 50px;
@@ -383,6 +449,21 @@ a:hover, .footer-menu li:hover {
 }
 
 /* Emoji Button */
+.emoji-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f0f0;
+    border: none;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    position: relative;
+}
+
 .emoji-btn {
     display: flex;
     align-items: center;
@@ -427,8 +508,29 @@ a:hover, .footer-menu li:hover {
     min-width: 20px;
     text-align: center;
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
-    display: none; /* Hide if count is 0 */
+    display: none;
 }
+
+.icon-container {
+    display: inline-block;
+    position: relative; /* This makes sure the count badge is positioned relative to the icon */
+}
+
+.count-badge {
+    position: absolute;
+    top: -14px; /* Moves the badge above the icon */
+    right: -10px; /* Adjust this based on your icon size */
+    background-color: red;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 3px 6px;
+    border-radius: 50%;
+    min-width: 16px;
+    text-align: center;
+    line-height: 1;
+}
+
 
 .emoji-btn .count:not(:empty) {
     display: block;
@@ -487,7 +589,7 @@ a:hover, .footer-menu li:hover {
 }
 /* emojis end */
 
-.ck-editor__editable {
+.ck-editor__editable, .trumbowyg-editor {
     min-height: 1200px !important;
     max-height: 1500px;
     overflow-y: auto;
@@ -500,13 +602,161 @@ a:hover, .footer-menu li:hover {
 
 /* Rating section start */
 .star {
-    font-size: 30px;
+    font-size: 35px;
     cursor: pointer;
     color: transparent;
-    -webkit-text-stroke: 1px #061148; /* Border color */
+    -webkit-text-stroke: 1px gold; /* Border color */
     transition: 0.3s;
 }
 .star.rated, .star:hover {
-    color: #061148;
+    color: gold;
 }
 /* Rating section end */
+
+#commentform .trumbowyg-box {
+    min-height: 50% !important;
+}
+
+p.form-submit {
+    text-align: right;
+}
+
+/* Fix the Trumbowyg emoji dropdown visibility */
+.trumbowyg-dropdown {
+    max-height: 250px; /* Adjust height for responsiveness */
+    overflow-y: auto; /* Enable scrolling if necessary */
+    white-space: normal;
+}
+
+/* Ensure the emoji container is fully visible */
+.trumbowyg-dropdown-emoji {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 320px; /* Adjust based on your layout */
+    padding: 10px;
+    gap: 10px;
+}
+
+/* Adjust individual emoji buttons */
+.trumbowyg-dropdown-emoji button {
+    flex: 1 1 40px; /* Adjust width for responsiveness */
+    font-size: 20px;
+    text-align: center;
+    padding: 5px;
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+
+/* Fix positioning issues */
+.trumbowyg-box {
+    position: relative; /* Ensure dropdown is positioned correctly */
+}
+
+/* Prevent overflow issues */
+.trumbowyg-editor {
+    overflow: visible !important;
+}
+
+/* Adjust layout for smaller screens */
+@media (max-width: 768px) {
+    .trumbowyg-dropdown-emoji {
+        max-width: 280px; /* Reduce width for smaller screens */
+    }
+    .trumbowyg-dropdown-emoji button {
+        flex: 1 1 30px; /* Keep it smaller for mobile */
+        font-size: 18px;
+    }
+}
+
+/* Remove shadow and outline on focus */
+.emojionearea.form-control {
+    box-shadow: none !important;
+    border: 1px solid #ced4da !important;
+}
+
+/* Remove shadow on focus */
+.emojionearea.form-control:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: #ced4da !important;
+}
+
+.reactions-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.sec-comment {
+    flex: 1;
+    text-align: center;
+    padding: 10px;
+    min-width: 250px; /* Ensures responsiveness */
+}
+
+/* Vertical Divider */
+.comment-sec {
+    border-right: 2px solid #ddd;
+    border-left: 2px solid #ddd;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* On smaller screens, stack items vertically */
+@media (max-width: 999px) {
+    .reactions-container {
+        flex-direction: column;
+    }
+    .comment-sec {
+        border-right: none;
+        border-left: none;
+        border-top: 2px solid #ddd;
+        border-bottom: 2px solid #ddd;
+        padding-top: 20px;
+        padding-bottom: 20px;
+        margin-top: 15px;
+    }
+
+    .reactions-container {
+        width: 100%;
+    }
+}
+
+.competition-alert {
+    width: 100%;
+    max-width: 75%;
+}
+
+@media (max-width: 991px) {
+    .competition-alert {
+        max-width: 100%;
+    }
+}
+
+.show-more-btn, #show-more-competitions, #trendingStories {
+    width: 20%;
+}
+
+@media (max-width: 767px) {
+    .show-more-btn, #show-more-competitions, #trendingStories {
+        width: 40%;
+    }
+}
+
+.swiper-slide.custom-width {
+    width: 200px !important;
+}
+
+body, html {
+    overflow-x: hidden;
+}
+
+.swiper-container {
+    overflow: hidden;
+}
