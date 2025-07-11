@@ -46,14 +46,14 @@ get_header();
                         <input type="hidden" id="competition-id" value="<?php echo $competition_id; ?>">
                         <div class="row mb-4">
                             <label for="title" class="col-12 col-xl-1 col-form-label">Title <span class="text-danger">*</span></label>
-                            <div class="col-sm-4">
+                            <div class="col-sm-6 col-xl-4">
                                 <input type="text" class="form-control" id="post-title" placeholder="Title" value="<?php echo $title; ?>">
                             </div>
                         </div>
 
                         <div class="row mb-4">
                             <label for="post-image" class="col-12 col-xl-1 col-form-label">Image <span class="text-danger">*</span></label>
-                            <div class="col-sm-4">
+                            <div class="col-sm-6 col-xl-4">
                                 <input type="file" class="form-control" id="post-image" name="post_image" accept="image/*">
                                 <div class="mt-2">
                                     <img id="image-preview" src="<?php echo esc_url($image_url); ?>" alt="Image preview" class="img-fluid rounded border" style="max-height: 150px; <?php echo $image_url ? '' : 'display: none;'; ?>">
@@ -69,7 +69,7 @@ get_header();
                         </div>
 
                         <div class="row mb-4 align-items-center">
-                            <div class="col-sm-9 offset-sm-1">
+                            <div class="col-sm-9 offset-xl-1">
                                 <button type="submit" class="btn btn-primary btn-sm pt-2">
                                     <?php if ($post_id): ?>
                                         <i class="fa-solid fa-floppy-disk"></i>

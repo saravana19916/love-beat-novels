@@ -45,7 +45,7 @@ jQuery(document).ready(function ($) {
                 } else if (response.status === 'success') {
                     messageContainer.html('<div class="alert alert-success">' + response.message + '</div>');
                     setTimeout(function () {
-                        location.reload();
+                        window.location.href = window.location.href + '?v=' + new Date().getTime();
                     }, 100);
                 }
             },

@@ -1,8 +1,9 @@
 
 jQuery(document).ready(function ($) {
-    $(".like-comment").on("click", function () {
-        var commentId = $(this).data("comment-id");
-        var likeCountSpan = $(this).find(".like-count");
+    $(document).on("click", ".like-comment", function () {
+        var $this = $(this);
+        var commentId = $this.data("comment-id");
+        var likeCountSpan = $this.find(".like-count");
 
         $.ajax({
             type: "POST",
@@ -14,6 +15,7 @@ jQuery(document).ready(function ($) {
             success: function (response) {
                 if (response.success) {
                     likeCountSpan.text(response.data);
+                    $this.toggleClass("liked");
                 }
             },
         });

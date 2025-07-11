@@ -65,16 +65,16 @@ if ($query->have_posts()) : ?>
     <div class="container">
         <div class="row">
             <?php while ($query->have_posts()) : $query->the_post(); ?>
-                <div class="col-md-4">
+                <div class="col-sm-6 col-md-4 col-lg-3">
                     <a href="<?php the_permalink(); ?>" class="text-decoration-none">
                         <div class="shadow p-3 mb-4 card-hover">
-                            <div class="card-header py-2">
-                                <h5 class="mb-0 text-primary-color fw-bold"><?php the_title(); ?></h5>
+                            <div class="card-header py-2 text-center">
+                                <h6 class="mb-0 text-primary-color fw-bold"><?php the_title(); ?></h6>
                             </div>
                             <?php if (has_post_thumbnail()) : ?>
-                                <img src="<?php the_post_thumbnail_url('medium'); ?>" class="competition-img" alt="<?php the_title(); ?>">
+                                <img src="<?php the_post_thumbnail_url('medium'); ?>" class="img-fluid mx-auto d-block my-3" alt="<?php the_title(); ?>" style="height: 300px; width: 200px;">
                             <?php else : ?>
-                                <img src="<?php echo get_template_directory_uri(); ?>/assets/img/default-image.jpg" class="card-img-top" alt="Default Image">
+                                <img src="<?php echo get_template_directory_uri(); ?>/images/no-image.jpeg" class="img-fluid mx-auto d-block my-3" alt="Default Image" style="height: 300px; width: 200px;">
                             <?php endif; ?>
                         </div>
                     </a>

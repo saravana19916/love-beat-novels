@@ -56,7 +56,7 @@
                 'walker' => new WP_Bootstrap_Navwalker()
             )); ?>
             <?php if (is_user_logged_in()) { ?>
-                <a href="<?php echo wp_logout_url(get_permalink()); ?>" class="text-white text-decoration-none" style="padding-left: 0.5rem;padding-right: 0.5rem;">
+                <a href="<?php echo esc_url( add_query_arg('custom_logout', '1', get_permalink()) ); ?>" class="text-white text-decoration-none" style="padding-left: 0.5rem;padding-right: 0.5rem;">
                     <span itemprop="name">
                         <div class="menu-icon text-center custom-menu-icon">
                             <i class="fa-solid fa-right-from-bracket"></i>

@@ -21,15 +21,17 @@
         <div class="col-md-12">
             <div class="shadow-lg p-4 rounded">
                 <div class="row">
-                    <div class="col-md-4">
+                    <div class="col-md-3 text-center">
                         <?php if (has_post_thumbnail()) : ?>
-                            <img src="<?php the_post_thumbnail_url('large'); ?>" class="img-fluid rounded shadow" alt="<?php the_title(); ?>">
+                            <img src="<?php the_post_thumbnail_url('large'); ?>" class="img-fluid rounded shadow" alt="<?php the_title(); ?>" style="height: 300px; width: 220px;">
+                        <?php else : ?>
+                            <img src="<?php echo get_template_directory_uri(); ?>/images/no-image.jpeg" class="img-fluid mx-auto d-block my-3" alt="Default Image" style="height: 300px; width: 220px;">
                         <?php endif; ?>
                     </div>
 
-                    <div class="col-md-8">
+                    <div class="col-md-9 mt-4 mt-md-0 p-4">
                         <h5 class="fw-bold mb-3"><?php the_title(); ?></h5>
-                        <div class="mb-3 col-md-8">
+                        <div class="mb-3 col-md-9">
                             <?php echo wpautop(get_the_content()); ?>
                         </div>
                     </div>

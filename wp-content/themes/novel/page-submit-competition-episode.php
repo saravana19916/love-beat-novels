@@ -45,7 +45,7 @@ get_header();
 
                             <div class="row mb-4">
                                 <label for="title" class="col-12 col-xl-1 col-form-label">Title <span class="text-danger">*</span></label>
-                                <div class="col-sm-4">
+                                <div class="col-sm-6 col-xl-4">
                                     <input type="text" class="form-control" id="episode-title" placeholder="Title" value="<?php echo $episode_title; ?>">
                                 </div>
                             </div>
@@ -58,7 +58,7 @@ get_header();
                             </div>
 
                             <div class="row mb-4">
-                                <div class="col-sm-9 offset-sm-1">
+                                <div class="col-sm-9 offset-xl-1">
                                     <button type="submit" class="btn btn-primary btn-sm pt-2">
                                         <?php if ($post_id): ?>
                                             <i class="fa-solid fa-floppy-disk"></i>

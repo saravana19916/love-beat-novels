@@ -17,6 +17,70 @@ get_header(); // Include the header
     // }
 ?>
 
+<?php
+// Add the extisting stories to post start
+// $main_blog_posts = get_posts(array(
+//     'post_type'   => ['main_blog', 'sub_blog', 'my_creation_blog', 'my_creation_sub_blog', 'competition_post', 'competition_episode'],
+//     'numberposts' => -1,
+//     'post_status' => 'publish',
+// ));
+
+// foreach ($main_blog_posts as $post) {
+//     $synced_post_id = get_post_meta($post->ID, '_synced_wp_post_id', true);
+
+//     $post_data = array(
+//         'post_title'   => $post->post_title,
+//         'post_content' => $post->post_content,
+//         'post_status'  => 'publish',
+//         'post_type'    => 'post',
+//     );
+
+//     if ($synced_post_id && get_post($synced_post_id)) {
+//         $post_data['ID'] = $synced_post_id;
+//         $original_thumb_id = get_post_thumbnail_id($post->ID);
+
+//         $updated_post_id = wp_update_post($post_data);
+
+        
+//     } else {
+//         $original_thumb_id = get_post_thumbnail_id($post->ID);
+//         $updated_post_id = wp_insert_post($post_data);
+
+//         if ($updated_post_id) {
+//             update_post_meta($post->ID, '_synced_wp_post_id', $updated_post_id);
+//         }
+//     }
+
+//     if ($original_thumb_id) {
+//         set_post_thumbnail($updated_post_id, $original_thumb_id);
+//     }
+
+//     if ($updated_post_id) {
+//         update_post_meta($updated_post_id, '_original_custom_post_id', $post->ID);
+//         update_post_meta($updated_post_id, '_original_custom_post_type', $post->post_type);
+//     }
+// }
+// Add the extisting stories to post end
+
+// Delete posts
+// $custom_posts = get_posts([
+//     'post_type'      => 'post',
+//     'posts_per_page' => -1,
+//     'post_status'    => 'any',
+// ]);
+
+// foreach ($custom_posts as $post) {
+
+//     if ($post->ID && get_post($post->ID)) {
+//         wp_delete_post($post->ID, true);
+
+//         delete_post_meta($post->ID, '_synced_wp_post_id');
+//         delete_post_meta($post->ID, '_original_custom_post_id');
+//         delete_post_meta($post->ID, '_original_custom_post_type');
+//     }
+// }
+?>
+
 <div id="bannerCarousel" class="carousel slide" data-bs-ride="carousel">
     <!-- Indicators -->
     <div class="carousel-indicators">
@@ -83,7 +147,7 @@ get_header(); // Include the header
             if ($latest_post_query->have_posts()) :
         ?>
             <div class="row">
-                <div class="col-md-10 px-4">
+                <div class="col-lg-10 px-4">
 
                     <?php
                         $main_stories = get_posts(array(
@@ -123,7 +187,9 @@ get_header(); // Include the header
                                 $sub_total += (int) get_post_meta($sub_story->ID, 'story_view_count', true);
                             }
 
-                            $total_views = $main_views + $sub_total;
+                            // $total_views = $main_views + $sub_total;
+
+                            $total_views = get_story_total_views($sub_post_type, $sub_meta_key, $main_id);
 
                             // Find average rating
                             $average_rating = get_story_average_rating($sub_post_type, $sub_meta_key, $main_id);
@@ -165,8 +231,8 @@ get_header(); // Include the header
 
                         $top_stories = array_slice($stories_with_views, 0, 10);
                     ?>
-                        <div class="row mb-5 shadow rounded d-none d-md-flex">
-                            <h5 class="text-primary px-4 py-2 text-white" style="background-color: #061148">Trending Stories</h5>
+                        <div class="row mb-5 shadow rounded d-none d-lg-flex">
+                            <h6 class="text-primary px-4 py-2 text-white" style="background-color: #061148">Trending Stories</h6>
                             <div class="row px-4">
                                 <?php 
                                 $count = 0;
@@ -182,13 +248,17 @@ get_header(); // Include the header
                                         <div class="card h-100">
                                             <div class="card-body">
                                                 <h6 class="card-title text-center fw-bold">
-                                                    <a href="<?php the_permalink(); ?>" class="text-decoration-none" style="color: #061148">
+                                                    <a href="<?php the_permalink(); ?>" class="text-decoration-none fs-14px" style="color: #061148">
                                                         <?php the_title(); ?>
                                                     </a>
                                                 </h6>
                                                 <?php if (has_post_thumbnail()) : ?>
                                                     <a href="<?php the_permalink(); ?>">
                                                         <?php the_post_thumbnail('medium', ['class' => 'img-fluid mx-auto d-block my-3']); ?>
+                                                    </a>
+                                                <?php else : ?>
+                                                    <a href="<?php the_permalink(); ?>">
+                                                        <img src="<?php echo get_template_directory_uri(); ?>/images/no-image.jpeg" class="img-fluid mx-auto d-block my-3" alt="Default Image" style="height: 300px;">
                                                     </a>
                                                 <?php endif; ?>
                                                 <p class="card-text"><?php echo wp_trim_words(get_the_excerpt(), 20); ?></p>
@@ -199,7 +269,7 @@ get_header(); // Include the header
                                                         <p class="me-4 mb-0"><i class="fa-solid fa-eye"></i>&nbsp;&nbsp;<?php echo format_view_count($views); ?></p>
                                                         <p class="mb-0"><i class="fa-solid fa-star" style="color: gold;"></i>&nbsp;&nbsp;<?php echo $average_rating; ?></p>
                                                     </div>
-                                                    <a href="<?php the_permalink(); ?>" class="btn btn-sm text-white" style="background-color: #061148">மேலும் படிக்க</a>
+                                                    <a href="<?php the_permalink(); ?>" class="btn btn-sm text-white fs-12px" style="background-color: #061148">மேலும் படிக்க</a>
                                                 </div>
                                             </div>
                                         </div>
@@ -216,8 +286,8 @@ get_header(); // Include the header
                             </div>
                         </div>
 
-                        <div class="row mb-5 d-md-none">
-                            <h5 class="text-primary px-4 py-2 text-white" style="background-color: #061148">Trending Stories</h5>
+                        <div class="row mb-5 d-lg-none">
+                            <h6 class="text-primary px-4 py-2 text-white" style="background-color: #061148">Trending Stories</h6>
                             <div class="swiper-container px-3">
                                 <div class="swiper-wrapper">
                                     <?php foreach ($top_stories as $item) :
@@ -227,14 +297,20 @@ get_header(); // Include the header
                                         setup_postdata($post);
                                     ?>
                                     <div class="swiper-slide custom-width">
-                                        <div class="col-md-3 py-3">
+                                        <div class="col-lg-3 py-3">
                                             <div class="card h-100">
                                                 <div class="card-body text-center px-0">
-                                                    <h6 class="card-title fw-bold">
-                                                        <a href="<?php the_permalink(); ?>" class="text-decoration-none" style="color: #061148;">
-                                                            <?php the_title(); ?>
-                                                        </a>
-                                                    </h6>
+                                                    <div class="title-wrapper d-flex align-items-center justify-content-center text-center px-2" style="height: 2rem;">
+                                                        <h6 class="card-title fw-bold fs-14px mb-0">
+                                                            <a href="<?php the_permalink(); ?>" class="text-decoration-none" style="color: #061148;">
+                                                                <?php
+                                                                    $title = get_the_title();
+                                                                    $trimmed_title = mb_strimwidth($title, 0, 50, '...');
+                                                                    echo esc_html($trimmed_title);
+                                                                ?>
+                                                            </a>
+                                                        </h6>
+                                                    </div>
 
                                                     <?php if (has_post_thumbnail()) : ?>
                                                         <a href="<?php the_permalink(); ?>">
@@ -242,6 +318,10 @@ get_header(); // Include the header
                                                                 'class' => 'img-fluid mx-3 d-block my-3',
                                                                 'style' => 'height: 250px; width: 165px;'
                                                             ]); ?>
+                                                        </a>
+                                                    <?php else : ?>
+                                                        <a href="<?php the_permalink(); ?>">
+                                                            <img src="<?php echo get_template_directory_uri(); ?>/images/no-image.jpeg" class="card-img-top img-fluid mx-3 d-block my-3" alt="Default Image" style="height: 250px; width: 165px;">
                                                         </a>
                                                     <?php endif; ?>
 
@@ -305,29 +385,43 @@ get_header(); // Include the header
                             $query = new WP_Query($args);
                             if ($query->have_posts()) :
                         ?>
-                            <div class="row mb-5 shadow rounded d-none d-md-flex">
-                                <h5 class="text-primary px-4 py-2 text-white" style="background-color: #061148"><?php echo esc_html($category->name); ?></h5>
+                            <div class="row mb-5 shadow rounded d-none d-lg-flex">
+                                <h6 class="text-primary px-4 py-2 text-white" style="background-color: #061148"><?php echo esc_html($category->name); ?></h6>
                                 <div class="row px-4">
                                     <?php 
                                     $count = 0;
                                     while ($query->have_posts()) : $query->the_post();
                                         $count++;
                                         $story_id = get_the_ID();
-                                        $total_views = get_story_total_views('sub_blog', 'parent_blog_id', $story_id);
-                                        $average_rating = get_story_average_rating('sub_blog', 'parent_blog_id', $story_id);
+
+                                        $post_type = get_post_type();
+                                        if ($post_type === 'main_blog') {
+                                            $sub_post_type = 'sub_blog';
+                                            $sub_meta_key  = 'parent_blog_id';
+                                        } elseif ($post_type === 'my_creation_blog') {
+                                            $sub_post_type = 'my_creation_sub_blog';
+                                            $sub_meta_key  = 'my_creation_parent_blog_id';
+                                        }
+
+                                        $total_views = get_story_total_views($sub_post_type, $sub_meta_key, $story_id);
+                                        $average_rating = get_story_average_rating($sub_post_type, $sub_meta_key, $story_id);
                                         $hidden_class = $count > 6 ? 'd-none more-post-'.$category->term_id : '';
                                     ?>
                                         <div class="col-md-4 p-3 <?php echo $hidden_class; ?>">
                                             <div class="card h-100">
                                                 <div class="card-body">
                                                     <h6 class="card-title text-center fw-bold">
-                                                        <a href="<?php the_permalink(); ?>" class="text-decoration-none" style="color: #061148">
+                                                        <a href="<?php the_permalink(); ?>" class="text-decoration-none fs-14px" style="color: #061148">
                                                             <?php the_title(); ?>
                                                         </a>
                                                     </h6>
                                                     <?php if (has_post_thumbnail()) : ?>
                                                         <a href="<?php the_permalink(); ?>">
                                                             <?php the_post_thumbnail('medium', ['class' => 'img-fluid mx-auto d-block my-3']); ?>
+                                                        </a>
+                                                    <?php else : ?>
+                                                        <a href="<?php the_permalink(); ?>">
+                                                            <img src="<?php echo get_template_directory_uri(); ?>/images/no-image.jpeg" class="img-fluid mx-auto d-block my-3" alt="Default Image" style="height: 300px;">
                                                         </a>
                                                     <?php endif; ?>
                                                     <p class="card-text"><?php echo wp_trim_words(get_the_excerpt(), 20); ?></p>
@@ -338,7 +432,7 @@ get_header(); // Include the header
                                                             <p class="me-4 mb-0"><i class="fa-solid fa-eye"></i>&nbsp;&nbsp;<?php echo format_view_count($total_views); ?></p>
                                                             <p class="mb-0"><i class="fa-solid fa-star" style="color: gold;"></i>&nbsp;&nbsp;<?php echo $average_rating; ?></p>
                                                         </div>
-                                                        <a href="<?php the_permalink(); ?>" class="btn btn-sm text-white" style="background-color: #061148">மேலும் படிக்க</a>
+                                                        <a href="<?php the_permalink(); ?>" class="btn btn-sm text-white fs-12px" style="background-color: #061148">மேலும் படிக்க</a>
                                                     </div>
                                                 </div>
                                             </div>
@@ -355,25 +449,40 @@ get_header(); // Include the header
                                 </div>
                             </div>
 
-                            <div class="row mb-5 d-md-none">
-                                <h5 class="text-primary px-4 py-2 text-white" style="background-color: #061148"><?php echo esc_html($category->name); ?></h5>
+                            <div class="row mb-5 d-lg-none">
+                                <h6 class="text-primary px-4 py-2 text-white" style="background-color: #061148"><?php echo esc_html($category->name); ?></h6>
                                 <div class="swiper-container px-3">
                                     <div class="swiper-wrapper">
                                         <?php while ($query->have_posts()) :
                                             $query->the_post();
                                             $story_id = get_the_ID();
-                                            $total_views = get_story_total_views('sub_blog', 'parent_blog_id', $story_id);
-                                            $average_rating = get_story_average_rating('sub_blog', 'parent_blog_id', $story_id);
+                                            $post_type = get_post_type();
+                                            if ($post_type === 'main_blog') {
+                                                $sub_post_type = 'sub_blog';
+                                                $sub_meta_key  = 'parent_blog_id';
+                                            } elseif ($post_type === 'my_creation_blog') {
+                                                $sub_post_type = 'my_creation_sub_blog';
+                                                $sub_meta_key  = 'my_creation_parent_blog_id';
+                                            }
+
+                                            $total_views = get_story_total_views($sub_post_type, $sub_meta_key, $story_id);
+                                            $average_rating = get_story_average_rating($sub_post_type, $sub_meta_key, $story_id);
                                         ?>
                                         <div class="swiper-slide custom-width">
-                                            <div class="col-md-3 py-3">
+                                            <div class="col-lg-3 py-3">
                                                 <div class="card h-100">
                                                     <div class="card-body text-center px-0">
-                                                        <h6 class="card-title fw-bold">
-                                                            <a href="<?php the_permalink(); ?>" class="text-decoration-none" style="color: #061148;">
-                                                                <?php the_title(); ?>
-                                                            </a>
-                                                        </h6>
+                                                        <div class="title-wrapper d-flex align-items-center justify-content-center text-center px-2" style="height: 2rem;">
+                                                            <h6 class="card-title fw-bold fs-14px mb-0">
+                                                                <a href="<?php the_permalink(); ?>" class="text-decoration-none" style="color: #061148;">
+                                                                    <?php
+                                                                        $title = get_the_title();
+                                                                        $trimmed_title = mb_strimwidth($title, 0, 50, '...');
+                                                                        echo esc_html($trimmed_title);
+                                                                    ?>
+                                                                </a>
+                                                            </h6>
+                                                        </div>
 
                                                         <?php if (has_post_thumbnail()) : ?>
                                                             <a href="<?php the_permalink(); ?>">
@@ -381,6 +490,10 @@ get_header(); // Include the header
                                                                     'class' => 'img-fluid mx-3 d-block my-3',
                                                                     'style' => 'height: 250px; width: 165px;'
                                                                 ]); ?>
+                                                            </a>
+                                                        <?php else : ?>
+                                                            <a href="<?php the_permalink(); ?>">
+                                                                <img src="<?php echo get_template_directory_uri(); ?>/images/no-image.jpeg" class="card-img-top img-fluid mx-3 d-block my-3" alt="Default Image" style="height: 250px; width: 165px;">
                                                             </a>
                                                         <?php endif; ?>
 
@@ -410,33 +523,33 @@ get_header(); // Include the header
                         
                         if ($query->have_posts()) :
                     ?>
-                        <div class="row mb-5 shadow rounded d-none d-md-flex">
-                            <h5 class="text-primary px-4 py-2 text-white" style="background-color: #061148">நாவல் போட்டி</h5>
+                        <div class="row mb-5 shadow rounded d-none d-lg-flex">
+                            <h6 class="text-primary px-4 py-2 text-white" style="background-color: #061148">நாவல் போட்டி</h6>
                             <div class="row px-4">
                                 <?php
                                     $count = 0;
                                     while ($query->have_posts()) :
                                     $query->the_post();
                                     $count++;
-                                    $hidden_class = $count > 6 ? 'd-none more-competitions' : '';
+                                    $hidden_class = $count > 8 ? 'd-none more-competitions' : '';
                                 ?>
-                                    <div class="col-12 col-md-6 col-lg-4 my-2 <?php echo $hidden_class; ?>">
+                                    <div class="col-12 col-lg-6 col-xl-4 col-xxl-3 my-2 <?php echo $hidden_class; ?>">                                                
                                         <a href="<?php the_permalink(); ?>" class="text-decoration-none">
                                             <div class="shadow p-3 mb-4 card-hover">
-                                                <div class="card-header py-2">
-                                                    <h5 class="mb-0 text-primary-color fw-bold"><?php the_title(); ?></h5>
+                                                <div class="card-header py-2 text-center">
+                                                    <h6 class="mb-0 text-primary-color fs-14px fw-bold"><?php the_title(); ?></h6>
                                                 </div>
                                                 <?php if (has_post_thumbnail()) : ?>
-                                                    <img src="<?php the_post_thumbnail_url('medium'); ?>" class="competition-img" alt="<?php the_title(); ?>">
+                                                    <img src="<?php the_post_thumbnail_url('medium'); ?>" class="card-img-top story-img-custom-size img-fluid mx-3 d-block my-3" alt="<?php the_title(); ?>">
                                                 <?php else : ?>
-                                                    <img src="<?php echo get_template_directory_uri(); ?>/assets/img/default-image.jpg" class="card-img-top" alt="Default Image">
+                                                    <img src="<?php echo get_template_directory_uri(); ?>/images/no-image.jpeg" class="card-img-top story-img-custom-size img-fluid mx-3 d-block my-3" alt="Default Image">
                                                 <?php endif; ?>
                                             </div>
                                         </a>
                                     </div>
                                 <?php endwhile; ?>
 
-                                <?php if ($query->post_count > 6): ?>
+                                <?php if ($query->post_count > 8): ?>
                                     <div class="text-center my-3">
                                         <button class="btn btn-primary btn-sm text-decoration-none" id="show-more-competitions">
                                             Show More
@@ -446,22 +559,28 @@ get_header(); // Include the header
                             </div>
                         </div>
 
-                        <div class="row mb-5 d-md-none">
-                            <h5 class="text-primary px-4 py-2 text-white" style="background-color: #061148">நாவல் போட்டி</h5>
+                        <div class="row mb-5 d-lg-none">
+                            <h6 class="text-primary px-4 py-2 text-white" style="background-color: #061148">நாவல் போட்டி</h6>
                             <div class="swiper-container px-3">
                                 <div class="swiper-wrapper">
                                     <?php while ($query->have_posts()) :
                                         $query->the_post();
                                     ?>
                                     <div class="swiper-slide custom-width">
-                                        <div class="col-md-3 py-3">
+                                        <div class="col-lg-3 py-3">
                                             <div class="card h-100">
                                                 <div class="card-body text-center px-0">
-                                                    <h6 class="card-title fw-bold">
-                                                        <a href="<?php the_permalink(); ?>" class="text-decoration-none" style="color: #061148;">
-                                                            <?php the_title(); ?>
-                                                        </a>
-                                                    </h6>
+                                                    <div class="title-wrapper d-flex align-items-center justify-content-center text-center px-2" style="height: 2rem;">
+                                                        <h6 class="card-title fw-bold fs-14px mb-0">
+                                                            <a href="<?php the_permalink(); ?>" class="text-decoration-none" style="color: #061148;">
+                                                                <?php
+                                                                    $title = get_the_title();
+                                                                    $trimmed_title = mb_strimwidth($title, 0, 50, '...');
+                                                                    echo esc_html($trimmed_title);
+                                                                ?>
+                                                            </a>
+                                                        </h6>
+                                                    </div>
 
                                                     <?php if (has_post_thumbnail()) : ?>
                                                         <a href="<?php the_permalink(); ?>">
@@ -469,6 +588,10 @@ get_header(); // Include the header
                                                                 'class' => 'img-fluid mx-3 d-block my-3',
                                                                 'style' => 'height: 250px; width: 165px;'
                                                             ]); ?>
+                                                        </a>
+                                                    <?php else : ?>
+                                                        <a href="<?php the_permalink(); ?>">
+                                                            <img src="<?php echo get_template_directory_uri(); ?>/images/no-image.jpeg" class="card-img-top img-fluid mx-3 d-block my-3" alt="Default Image" style="height: 250px; width: 165px;">
                                                         </a>
                                                     <?php endif; ?>
                                                 </div>
@@ -482,10 +605,10 @@ get_header(); // Include the header
                     <?php endif; ?>
                 </div>
 
-                <div class="col-md-2 px-4">
+                <div class="col-lg-2 px-4">
                     <div class="row mb-5 shadow rounded sticky-top" style="height: 25rem; top: 20px; overflow-y: auto">
                         <div class="col-md-12 p-0 text-center" id="latestPosts">
-                            <h5 class="text-primary px-4 py-2 text-white" style="background-color: #061148"><?php echo "Latest posts"; ?></h5>
+                            <h6 class="text-primary px-4 py-2 text-white" style="background-color: #061148"><?php echo "Latest posts"; ?></h6>
                             <?php
                                 // $latest_post_query = new WP_Query([
                                 //     'post_type'      => ['main_blog', 'sub_blog'],
