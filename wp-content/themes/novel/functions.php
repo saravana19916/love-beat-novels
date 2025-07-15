@@ -177,6 +177,263 @@ function custom_nav_menu($items) {
 }
 add_filter('wp_nav_menu_objects', 'custom_nav_menu');
 
+function register_blog_type_taxonomy() {
+    register_taxonomy(
+        'blog_type',
+        'post', // attach to default post type
+        array(
+            'label' => __('Blog Type'),
+            'hierarchical' => true,
+            'public' => true,
+            'show_ui' => true,
+            'show_admin_column' => true,
+            'show_in_rest' => true,
+            'rewrite' => array('slug' => 'blog-type'),
+        )
+    );
+}
+add_action('init', 'register_blog_type_taxonomy');
+
+function add_parent_blog_meta_box() {
+    add_meta_box(
+        'parent_blog_selector',
+        'Parent Blog',
+        'render_parent_blog_meta_box',
+        'post',
+        'side'
+    );
+}
+add_action('add_meta_boxes', 'add_parent_blog_meta_box');
+
+// function render_parent_blog_meta_box($post) {
+//     $selected_value = get_post_meta($post->ID, 'parent_blog_id', true);
+
+//     echo '<label for="parent_blog_meta_field">Select Parent Blog:</label>';
+//     echo '<select name="parent_blog_meta_field" class="widefat">';
+//     echo '<option value="">Select Parent Blog</option>';
+//     if (!empty($selected_value)) {
+//         $post_obj = get_post($selected_value);
+//         if ($post_obj) {
+//             echo '<option value="' . esc_attr($post_obj->ID) . '" selected>' . esc_html($post_obj->post_title) . '</option>';
+//         }
+//     }
+//     echo '</select>';
+// }
+
+function render_parent_blog_meta_box($post) {
+    $selected_value_main = get_post_meta($post->ID, 'parent_blog_id', true);
+    $selected_value_creation = get_post_meta($post->ID, 'my_creation_parent_blog_id', true);
+
+    $terms = wp_get_post_terms($post->ID, 'blog_type');
+    $blog_type = (!empty($terms)) ? $terms[0]->slug : '';
+
+    $parent_posts = [];
+
+    if ($blog_type === 'main-blog') {
+        $parent_posts = get_posts([
+            'post_type' => 'post',
+            'tax_query' => [[
+                'taxonomy' => 'blog_type',
+                'field'    => 'slug',
+                'terms'    => 'main-blog'
+            ]],
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'exclude' => [$post->ID],
+        ]);
+    } elseif ($blog_type === 'my-creation-blog') {
+        $parent_posts = get_posts([
+            'post_type' => 'post',
+            'tax_query' => [[
+                'taxonomy' => 'blog_type',
+                'field'    => 'slug',
+                'terms'    => 'my-creation-blog'
+            ]],
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'exclude' => [$post->ID],
+        ]);
+    }
+
+    echo '<select name="parent_blog_meta_field" class="widefat">';
+    echo '<option value="">Select Parent Blog</option>';
+    foreach ($parent_posts as $parent) {
+        $selected = '';
+        if ($blog_type === 'main-blog' && $selected_value_main == $parent->ID) {
+            $selected = 'selected';
+        } elseif ($blog_type === 'my-creation-blog' && $selected_value_creation == $parent->ID) {
+            $selected = 'selected';
+        }
+
+        echo '<option value="' . esc_attr($parent->ID) . '" ' . $selected . '>' . esc_html($parent->post_title) . '</option>';
+    }
+    echo '</select>';
+
+    if (empty($blog_type)) {
+        echo '<p style="color:#c00;"><strong>Select "Blog Type" first, then save to view parent options.</strong></p>';
+    }
+}
+
+add_action('admin_enqueue_scripts', function($hook) {
+    if ($hook === 'post-new.php' || $hook === 'post.php') {
+        wp_enqueue_script('blog-type-parent-meta', get_template_directory_uri() . '/js/blog-type-parent-meta.js', ['jquery'], null, true);
+        wp_localize_script('blog-type-parent-meta', 'BlogTypeMetaAjax', [
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('fetch_parent_blogs'),
+        ]);
+    }
+});
+
+add_action('wp_ajax_fetch_parent_blogs', function () {
+    check_ajax_referer('fetch_parent_blogs');
+    global $wpdb;
+
+    $blog_type_slug = sanitize_text_field($_POST['blogTypeSlug'] ?? '');
+    $current_post_id = intval($_POST['current_post_id'] ?? 0);
+
+    if (!$blog_type_slug) {
+        wp_send_json_error('Missing blog type');
+    }
+
+    $term = get_term_by('slug', $blog_type_slug, 'blog_type');
+
+    if ($term && !is_wp_error($term)) {
+        $term_id = $term->term_id;
+    } else {
+        $term_id = null;
+    }
+
+    $parent_posts = get_posts([
+        'post_type'      => 'post',
+        'post_status'    => 'publish',
+        'posts_per_page' => -1,
+        'tax_query'      => [
+            [
+                'taxonomy' => 'blog_type',
+                'field'    => 'term_id',
+                'terms'    => $term_id,
+            ],
+        ],
+        'exclude'        => $current_post_id ? [$current_post_id] : [],
+    ]);
+
+    $result = array_map(function ($post) {
+        return [
+            'ID' => $post->ID,
+            'title' => $post->post_title
+        ];
+    }, $parent_posts);
+
+    wp_send_json_success($result);
+});
+
+function save_parent_blog_meta($post_id) {
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
+
+    if (isset($_POST['parent_blog_meta_field'])) {
+        $parent_id = (int) $_POST['parent_blog_meta_field'];
+
+        // Detect current blog type
+        $terms = wp_get_post_terms($post_id, 'blog_type');
+        $blog_type = (!empty($terms)) ? $terms[0]->slug : '';
+
+        if ($blog_type === 'main-blog') {
+            update_post_meta($post_id, 'parent_blog_id', $parent_id);
+        } elseif ($blog_type === 'my-creation-blog') {
+            update_post_meta($post_id, 'my_creation_parent_blog_id', $parent_id);
+        }
+    }
+}
+add_action('save_post', 'save_parent_blog_meta');
+
+function enable_page_attributes_for_posts() {
+    add_post_type_support('post', 'page-attributes');
+}
+add_action('init', 'enable_page_attributes_for_posts');
+
+/////////////////////
+function convert_main_blogs_to_posts_with_term() {
+    // global $wpdb;
+
+    // $term_taxonomy_id = null;
+    // $term_id = $wpdb->get_var("
+    //     SELECT term_id FROM {$wpdb->terms}
+    //     WHERE slug = 'main-blog'
+    //     Limit 1
+    // ");
+
+    // if ($term_id) {
+    //    $term_taxonomy_id = $wpdb->get_var("
+    //         SELECT term_taxonomy_id FROM {$wpdb->term_taxonomy}
+    //         WHERE term_id = {$term_id}
+    //         Limit 1
+    //     ");
+
+    //     $converted_post_ids = [];
+
+    //     $main_blog_posts = $wpdb->get_results("
+    //         SELECT ID FROM {$wpdb->posts}
+    //         WHERE post_type = 'main_blog'
+    //         AND post_status = 'publish'
+    //         AND ID = 50
+    //     ");
+
+    //     foreach ($main_blog_posts as $main_post) {
+    //         $main_post_id = $main_post->ID;
+
+    //         $wpdb->update(
+    //             $wpdb->posts,
+    //             ['post_type' => 'post'],
+    //             ['ID' => $main_post_id]
+    //         );
+    //         $converted_post_ids[] = $main_post_id;
+
+    //         $wpdb->insert(
+    //             "{$wpdb->term_relationships}",
+    //             [
+    //                 'object_id' => $main_post_id,
+    //                 'term_taxonomy_id' => $term_taxonomy_id,
+    //             ]
+    //         );
+
+    //         $sub_blog_ids = $wpdb->get_col($wpdb->prepare("
+    //             SELECT post_id FROM {$wpdb->postmeta}
+    //             WHERE meta_key = 'parent_blog_id'
+    //             AND meta_value = %d
+    //         ", $main_post_id));
+
+    //         foreach ($sub_blog_ids as $sub_post_id) {
+    //             $wpdb->update(
+    //                 $wpdb->posts,
+    //                 ['post_type' => 'post'],
+    //                 ['ID' => $sub_post_id]
+    //             );
+    //             $converted_post_ids[] = $sub_post_id;
+
+    //             $wpdb->insert(
+    //                 "{$wpdb->term_relationships}",
+    //                 [
+    //                     'object_id' => $sub_post_id,
+    //                     'term_taxonomy_id' => $term_taxonomy_id,
+    //                 ]
+    //             );
+    //         }
+    //     }
+
+    //     $added_count = count($converted_post_ids);
+    //     $wpdb->query($wpdb->prepare("
+    //         UPDATE {$wpdb->term_taxonomy}
+    //         SET count = count + %d
+    //         WHERE term_id = %d
+    //     ", $added_count, $term_id));
+
+    //     echo "Updated {$added_count} posts and applied term_taxonomy_id = {$term_taxonomy_id}.";
+    // }
+}
+
+convert_main_blogs_to_posts_with_term();
+/////////////////////
+
 
 // category and blog start
 function create_custom_post_types() {
@@ -286,37 +543,37 @@ add_action('template_redirect', function () {
 });
 
 
-function add_parent_blog_meta_box() {
-    add_meta_box(
-        'parent_blog_meta',
-        'Select Parent Blog',
-        'parent_blog_meta_callback',
-        'sub_blog',
-        'side'
-    );
-}
+// function add_parent_blog_meta_box() {
+//     add_meta_box(
+//         'parent_blog_meta',
+//         'Select Parent Blog',
+//         'parent_blog_meta_callback',
+//         'sub_blog',
+//         'side'
+//     );
+// }
 
-function parent_blog_meta_callback($post) {
-    $selected = get_post_meta($post->ID, 'parent_blog_id', true);
-    $args = array('post_type' => 'main_blog', 'posts_per_page' => -1);
-    $blogs = get_posts($args);
+// function parent_blog_meta_callback($post) {
+//     $selected = get_post_meta($post->ID, 'parent_blog_id', true);
+//     $args = array('post_type' => 'main_blog', 'posts_per_page' => -1);
+//     $blogs = get_posts($args);
 
-    echo '<select name="parent_blog_id">';
-    echo '<option value="">Select a Main Blog</option>';
-    foreach ($blogs as $blog) {
-        echo '<option value="' . $blog->ID . '" ' . selected($selected, $blog->ID, false) . '>' . $blog->post_title . '</option>';
-    }
-    echo '</select>';
-}
+//     echo '<select name="parent_blog_id">';
+//     echo '<option value="">Select a Main Blog</option>';
+//     foreach ($blogs as $blog) {
+//         echo '<option value="' . $blog->ID . '" ' . selected($selected, $blog->ID, false) . '>' . $blog->post_title . '</option>';
+//     }
+//     echo '</select>';
+// }
 
-function save_parent_blog_meta($post_id) {
-    if (isset($_POST['parent_blog_id'])) {
-        update_post_meta($post_id, 'parent_blog_id', $_POST['parent_blog_id']);
-    }
-}
+// function save_parent_blog_meta($post_id) {
+//     if (isset($_POST['parent_blog_id'])) {
+//         update_post_meta($post_id, 'parent_blog_id', $_POST['parent_blog_id']);
+//     }
+// }
 
-add_action('add_meta_boxes', 'add_parent_blog_meta_box');
-add_action('save_post', 'save_parent_blog_meta');
+// add_action('add_meta_boxes', 'add_parent_blog_meta_box');
+// add_action('save_post', 'save_parent_blog_meta');
 
 function enable_comments_for_main_blog($post_types) {
     $post_types[] = 'main_blog'; // Ensure 'main_blog' supports comments
@@ -1153,10 +1410,12 @@ function increase_episode_view_count() {
 add_action('wp_head', 'increase_episode_view_count');
 
 function increase_story_view_count() {
-    global $post;
-    $count = get_post_meta($post->ID, 'story_view_count', true);
-    $count = $count ? $count + 1 : 1;
-    update_post_meta($post->ID, 'story_view_count', $count);
+    if (is_singular('post')) {
+        global $post;
+        $count = get_post_meta($post->ID, 'story_view_count', true);
+        $count = $count ? $count + 1 : 1;
+        update_post_meta($post->ID, 'story_view_count', $count);
+    }
 }
 add_action('wp_head', 'increase_story_view_count');
 
