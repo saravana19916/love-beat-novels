@@ -1,4 +1,6 @@
 <?php
+    $context = $args['context'] ?? '';
+
     $categories = get_categories([
         'orderby' => 'id',
         'order'   => 'ASC',
@@ -23,20 +25,67 @@
 
     foreach ($orderedCategories as $category) :
         $paged = (get_query_var('paged')) ? get_query_var('paged') : 1;
-    
+
+        if ($context && $context == 'my-creations') {
+            $blog_terms = ['my-creation-blog'];
+        } else {
+            $blog_terms = ['main-blog', 'my-creation-blog'];
+        }
+
+        $meta_query = array();
+
+        // Add filter for main-blog
+        if (in_array('main-blog', $blog_terms)) {
+            $meta_query[] = array(
+                'relation' => 'OR',
+                array(
+                    'key'     => 'parent_blog_id',
+                    'compare' => 'NOT EXISTS',
+                ),
+                array(
+                    'key'     => 'parent_blog_id',
+                    'value'   => '0',
+                    'compare' => '=',
+                ),
+            );
+        }
+
+        // Add filter for my-creation-blog
+        if (in_array('my-creation-blog', $blog_terms)) {
+            $meta_query[] = array(
+                'relation' => 'OR',
+                array(
+                    'key'     => 'my_creation_parent_blog_id',
+                    'compare' => 'NOT EXISTS',
+                ),
+                array(
+                    'key'     => 'my_creation_parent_blog_id',
+                    'value'   => '0',
+                    'compare' => '=',
+                ),
+            );
+        }
+
         $args = array(
-            'post_type' => ['main_blog', 'my_creation_blog'],
-            'tax_query' => array(
+            'post_type'      => 'post',
+            'tax_query'      => array(
+                'relation' => 'AND',
                 array(
                     'taxonomy' => 'category',
                     'field'    => 'slug',
                     'terms'    => $category->slug,
                 ),
+                array(
+                    'taxonomy' => 'blog_type',
+                    'field'    => 'slug',
+                    'terms'    => $blog_terms,
+                ),
             ),
-            'meta_key' => 'story_view_count',
-            'orderby' => 'meta_value_num',
+            'meta_query'     => $meta_query,
+            'meta_key'       => 'story_view_count',
+            'orderby'        => 'meta_value_num',
             'posts_per_page' => -1,
-            'paged' => $paged,
+            'paged'          => $paged,
         );
     
         $query = new WP_Query($args);
@@ -51,17 +100,21 @@
                     $count++;
                     $story_id = get_the_ID();
 
-                    $post_type = get_post_type();
-                    if ($post_type === 'main_blog') {
-                        $sub_post_type = 'sub_blog';
-                        $sub_meta_key  = 'parent_blog_id';
-                    } elseif ($post_type === 'my_creation_blog') {
-                        $sub_post_type = 'my_creation_sub_blog';
-                        $sub_meta_key  = 'my_creation_parent_blog_id';
+                    $terms = wp_get_post_terms($story_id, 'blog_type');
+                    if (empty($terms)) continue;
+
+                    $term_slug = $terms[0]->slug;
+
+                    if ($term_slug === 'main-blog') {
+                        $sub_meta_key = 'parent_blog_id';
+                    } elseif ($term_slug === 'my-creation-blog') {
+                        $sub_meta_key = 'my_creation_parent_blog_id';
+                    } else {
+                        continue;
                     }
 
-                    $total_views = get_story_total_views($sub_post_type, $sub_meta_key, $story_id);
-                    $average_rating = get_story_average_rating($sub_post_type, $sub_meta_key, $story_id);
+                    $total_views = get_story_total_views('post', $sub_meta_key, $story_id);
+                    $average_rating = get_story_average_rating('post', $sub_meta_key, $story_id);
                     $hidden_class = $count > 6 ? 'd-none more-post-'.$category->term_id : '';
                 ?>
                     <div class="col-md-4 p-3 <?php echo $hidden_class; ?>">
@@ -113,17 +166,22 @@
                     <?php while ($query->have_posts()) :
                         $query->the_post();
                         $story_id = get_the_ID();
-                        $post_type = get_post_type();
-                        if ($post_type === 'main_blog') {
-                            $sub_post_type = 'sub_blog';
-                            $sub_meta_key  = 'parent_blog_id';
-                        } elseif ($post_type === 'my_creation_blog') {
-                            $sub_post_type = 'my_creation_sub_blog';
-                            $sub_meta_key  = 'my_creation_parent_blog_id';
+
+                        $terms = wp_get_post_terms($story_id, 'blog_type');
+                        if (empty($terms)) continue;
+
+                        $term_slug = $terms[0]->slug;
+
+                        if ($term_slug === 'main-blog') {
+                            $sub_meta_key = 'parent_blog_id';
+                        } elseif ($term_slug === 'my-creation-blog') {
+                            $sub_meta_key = 'my_creation_parent_blog_id';
+                        } else {
+                            continue;
                         }
 
-                        $total_views = get_story_total_views($sub_post_type, $sub_meta_key, $story_id);
-                        $average_rating = get_story_average_rating($sub_post_type, $sub_meta_key, $story_id);
+                        $total_views = get_story_total_views('post', $sub_meta_key, $story_id);
+                        $average_rating = get_story_average_rating('post', $sub_meta_key, $story_id);
                     ?>
                     <div class="swiper-slide custom-width">
                         <div class="col-lg-3 py-3">

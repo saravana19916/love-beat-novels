@@ -1,8 +1,52 @@
 <?php
+    $blog_terms = ['main-blog', 'my-creation-blog'];
+
+    $meta_query = array();
+
+    // Add filter for main-blog
+    if (in_array('main-blog', $blog_terms)) {
+        $meta_query[] = array(
+            'relation' => 'OR',
+            array(
+                'key'     => 'parent_blog_id',
+                'compare' => 'NOT EXISTS',
+            ),
+            array(
+                'key'     => 'parent_blog_id',
+                'value'   => '0',
+                'compare' => '=',
+            ),
+        );
+    }
+
+    // Add filter for my-creation-blog
+    if (in_array('my-creation-blog', $blog_terms)) {
+        $meta_query[] = array(
+            'relation' => 'OR',
+            array(
+                'key'     => 'my_creation_parent_blog_id',
+                'compare' => 'NOT EXISTS',
+            ),
+            array(
+                'key'     => 'my_creation_parent_blog_id',
+                'value'   => '0',
+                'compare' => '=',
+            ),
+        );
+    }
+
     $main_stories = get_posts(array(
-        'post_type'      => ['main_blog', 'my_creation_blog'],
+        'post_type'      => 'post',
         'posts_per_page' => -1,
         'post_status'    => 'publish',
+        'tax_query'      => array(
+            array(
+                'taxonomy' => 'blog_type',
+                'field'    => 'slug',
+                'terms'    => ['main-blog', 'my-creation-blog'],
+            ),
+        ),
+        'meta_query'     => $meta_query,
     ));
 
     $stories_with_views = [];
@@ -10,13 +54,17 @@
     foreach ($main_stories as $story) {
         $main_id = $story->ID;
 
-        $post_type = get_post_type($story);
-        if ($post_type === 'main_blog') {
-            $sub_post_type = 'sub_blog';
-            $sub_meta_key  = 'parent_blog_id';
-        } elseif ($post_type === 'my_creation_blog') {
-            $sub_post_type = 'my_creation_sub_blog';
-            $sub_meta_key  = 'my_creation_parent_blog_id';
+        $terms = wp_get_post_terms($main_id, 'blog_type');
+        if (empty($terms)) continue;
+
+        $term_slug = $terms[0]->slug;
+
+        if ($term_slug === 'main-blog') {
+            $sub_meta_key = 'parent_blog_id';
+        } elseif ($term_slug === 'my-creation-blog') {
+            $sub_meta_key = 'my_creation_parent_blog_id';
+        } else {
+            continue; // Skip if term is not expected
         }
 
         // Main story views
@@ -24,7 +72,7 @@
 
         // Sum sub story views
         $sub_stories = get_posts(array(
-            'post_type'      => 'sub_blog',
+            'post_type'      => 'post',
             'post_status'    => 'publish',
             'meta_key'       => 'parent_blog_id',
             'meta_value'     => $main_id,
@@ -51,9 +99,16 @@
     }
 
     $competition_args = array(
-        'post_type'      => 'competition_post',
+        'post_type'      => 'post',
         'posts_per_page' => -1,
         'post_status'    => 'publish',
+        'tax_query'      => array(
+            array(
+                'taxonomy' => 'blog_type',
+                'field'    => 'slug',
+                'terms'    => ['competition-blog'], // slugs of your blog_type terms
+            ),
+        ),
     );
 
     $competition_query = new WP_Query($competition_args);

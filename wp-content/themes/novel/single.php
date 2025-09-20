@@ -5,18 +5,25 @@
     <?php
 
     $args = array(
-        'post_type' => 'post',
-        'meta_query' => array(
-            array(
-                'key' => 'parent_blog_id',
-                'value' => get_the_ID(),
-                'compare' => '='
-            )
-            ),
-            'orderby' => 'date',
-            'order'   => 'ASC',
-            'posts_per_page' => -1
-    );
+    'post_type'      => 'post',
+    'meta_query'     => array(
+        'relation' => 'OR',
+        array(
+            'key'     => 'parent_blog_id',
+            'value'   => get_the_ID(),
+            'compare' => '='
+        ),
+        array(
+            'key'     => 'my_creation_parent_blog_id',
+            'value'   => get_the_ID(),
+            'compare' => '='
+        ),
+    ),
+    'orderby'        => 'date',
+    'order'          => 'ASC',
+    'posts_per_page' => -1
+);
+
     $query = new WP_Query($args);
 
     if ($query->have_posts()) {
@@ -123,6 +130,11 @@
                 'order'   => 'ASC'
         );
         $mainQuery = new WP_Query($args);
+
+        if ($mainQuery->found_posts > 0) {
+            increase_story_view_count();
+        }
+
         if ($mainQuery->have_posts()) {
     ?>
     

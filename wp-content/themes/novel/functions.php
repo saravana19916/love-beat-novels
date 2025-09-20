@@ -180,7 +180,7 @@ add_filter('wp_nav_menu_objects', 'custom_nav_menu');
 function register_blog_type_taxonomy() {
     register_taxonomy(
         'blog_type',
-        'post', // attach to default post type
+        'post',
         array(
             'label' => __('Blog Type'),
             'hierarchical' => true,
@@ -223,6 +223,7 @@ add_action('add_meta_boxes', 'add_parent_blog_meta_box');
 function render_parent_blog_meta_box($post) {
     $selected_value_main = get_post_meta($post->ID, 'parent_blog_id', true);
     $selected_value_creation = get_post_meta($post->ID, 'my_creation_parent_blog_id', true);
+    $selected_value_competition = get_post_meta($post->ID, 'story_id', true);
 
     $terms = wp_get_post_terms($post->ID, 'blog_type');
     $blog_type = (!empty($terms)) ? $terms[0]->slug : '';
@@ -243,12 +244,40 @@ function render_parent_blog_meta_box($post) {
         ]);
     } elseif ($blog_type === 'my-creation-blog') {
         $parent_posts = get_posts([
-    'post_type'      => 'my_creation_blog',
-    'post_status'    => 'publish',
-    'posts_per_page' => -1,
-    'exclude'        => [$post->ID],
-]);
-$parent_posts = [];
+            'post_type' => 'post',
+            'tax_query' => [[
+                'taxonomy' => 'blog_type',
+                'field'    => 'slug',
+                'terms'    => 'my-creation-blog',
+            ]],
+            'meta_query' => [
+                'relation' => 'OR',
+                [
+                    'key'     => 'my_creation_parent_blog_id',
+                    'compare' => 'NOT EXISTS',
+                ],
+                [
+                    'key'     => 'my_creation_parent_blog_id',
+                    'value'   => '0',
+                    'compare' => '=',
+                ],
+            ],
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'exclude'        => [$post->ID],
+        ]);
+    } elseif ($blog_type === 'competition-blog') {
+        $parent_posts = get_posts([
+            'post_type' => 'post',
+            'tax_query' => [[
+                'taxonomy' => 'blog_type',
+                'field'    => 'slug',
+                'terms'    => 'competition-blog'
+            ]],
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'exclude' => [$post->ID],
+        ]);
     }
 
     echo '<select name="parent_blog_meta_field" class="widefat">';
@@ -258,6 +287,8 @@ $parent_posts = [];
         if ($blog_type === 'main-blog' && $selected_value_main == $parent->ID) {
             $selected = 'selected';
         } elseif ($blog_type === 'my-creation-blog' && $selected_value_creation == $parent->ID) {
+            $selected = 'selected';
+        } elseif ($blog_type === 'competition-blog' && $selected_value_competition == $parent->ID) {
             $selected = 'selected';
         }
 
@@ -269,7 +300,7 @@ $parent_posts = [];
         echo '<p style="color:#c00;"><strong>Select "Blog Type" first, then save to view parent options.</strong></p>';
     }
 }
-
+ 
 add_action('admin_enqueue_scripts', function($hook) {
     if ($hook === 'post-new.php' || $hook === 'post.php') {
         wp_enqueue_script('blog-type-parent-meta', get_template_directory_uri() . '/js/blog-type-parent-meta.js', ['jquery'], null, true);
@@ -308,6 +339,18 @@ add_action('wp_ajax_fetch_parent_blogs', function () {
                 'taxonomy' => 'blog_type',
                 'field'    => 'term_id',
                 'terms'    => $term_id,
+            ],
+        ],
+        'meta_query' => [
+            'relation' => 'OR',
+            [
+                'key'     => 'my_creation_parent_blog_id',
+                'compare' => 'NOT EXISTS',
+            ],
+            [
+                'key'     => 'my_creation_parent_blog_id',
+                'value'   => '0',
+                'compare' => '=',
             ],
         ],
         'exclude'        => $current_post_id ? [$current_post_id] : [],
@@ -354,7 +397,7 @@ function convert_main_blogs_to_posts_with_term() {
     // $term_taxonomy_id = null;
     // $term_id = $wpdb->get_var("
     //     SELECT term_id FROM {$wpdb->terms}
-    //     WHERE slug = 'main-blog'
+    //     WHERE slug = 'my-creation-blog'
     //     Limit 1
     // ");
 
@@ -370,8 +413,6 @@ function convert_main_blogs_to_posts_with_term() {
     //     $main_blog_posts = $wpdb->get_results("
     //         SELECT ID FROM {$wpdb->posts}
     //         WHERE post_type = 'main_blog'
-    //         AND post_status = 'publish'
-    //         AND ID = 50
     //     ");
 
     //     foreach ($main_blog_posts as $main_post) {
@@ -413,6 +454,15 @@ function convert_main_blogs_to_posts_with_term() {
     //                     'term_taxonomy_id' => $term_taxonomy_id,
     //                 ]
     //             );
+
+    //             $wpdb->update(
+    //                 $wpdb->postmeta,
+    //                 ['meta_key' => 'my_creation_parent_blog_id'],
+    //                 [
+    //                     'post_id'  => $sub_post_id,
+    //                     'meta_key' => 'parent_blog_id'
+    //                 ]
+    //             );
     //         }
     //     }
 
@@ -432,95 +482,95 @@ convert_main_blogs_to_posts_with_term();
 
 
 // category and blog start
-function create_custom_post_types() {
-    register_post_type('main_blog',
-        array(
-            'labels'      => array(
-                'name'          => __('Main Blogs'),
-                'singular_name' => __('Main Blog'),
-            ),
-            'public'      => true,
-            'has_archive' => true,
-            'supports'    => array('title', 'editor', 'thumbnail', 'custom-fields', 'comments'),
-            'taxonomies'  => array('category'),
-            'hierarchical' => true, 
-            'rewrite' => array('slug' => 'main-blog', 'with_front' => false), // Ensure correct slug
-        )
-    ); 
+// function create_custom_post_types() {
+//     register_post_type('main_blog',
+//         array(
+//             'labels'      => array(
+//                 'name'          => __('Main Blogs'),
+//                 'singular_name' => __('Main Blog'),
+//             ),
+//             'public'      => true,
+//             'has_archive' => true,
+//             'supports'    => array('title', 'editor', 'thumbnail', 'custom-fields', 'comments'),
+//             'taxonomies'  => array('category'),
+//             'hierarchical' => true, 
+//             'rewrite' => array('slug' => 'main-blog', 'with_front' => false),
+//         )
+//     ); 
 
-    register_post_type('sub_blog',
-        array(
-            'labels'      => array(
-                'name'          => __('Sub Blogs'),
-                'singular_name' => __('Sub Blog'),
-            ),
-            'public'      => true,
-            'has_archive' => true,
-            'supports'    => array('title', 'editor', 'thumbnail', 'custom-fields', 'comments'),
-            'taxonomies'  => array('category'), // Add category support if needed
-            'hierarchical' => false,
-            'rewrite' => array('slug' => 'sub-blogs'),
-        )
-    );
-}
-add_action('init', 'create_custom_post_types');
+//     register_post_type('sub_blog',
+//         array(
+//             'labels'      => array(
+//                 'name'          => __('Sub Blogs'),
+//                 'singular_name' => __('Sub Blog'),
+//             ),
+//             'public'      => true,
+//             'has_archive' => true,
+//             'supports'    => array('title', 'editor', 'thumbnail', 'custom-fields', 'comments'),
+//             'taxonomies'  => array('category'),
+//             'hierarchical' => false,
+//             'rewrite' => array('slug' => 'sub-blogs'),
+//         )
+//     );
+// }
+// add_action('init', 'create_custom_post_types');
 
 // Sync to create post when story create start
-function sync_custom_blog_to_post($post_id) {
-    remove_action('save_post_main_blog', 'sync_custom_blog_to_post');
-    remove_action('save_post_sub_blog', 'sync_custom_blog_to_post');
-    remove_action('save_post_my_creation_blog', 'sync_custom_blog_to_post');
-    remove_action('save_post_my_creation_sub_blog', 'sync_custom_blog_to_post');
-    remove_action('save_post_competition_post', 'sync_custom_blog_to_post');
-    remove_action('save_post_competition_episode', 'sync_custom_blog_to_post');
+// function sync_custom_blog_to_post($post_id) {
+//     remove_action('save_post_main_blog', 'sync_custom_blog_to_post');
+//     remove_action('save_post_sub_blog', 'sync_custom_blog_to_post');
+//     remove_action('save_post_my_creation_blog', 'sync_custom_blog_to_post');
+//     remove_action('save_post_my_creation_sub_blog', 'sync_custom_blog_to_post');
+//     remove_action('save_post_competition_post', 'sync_custom_blog_to_post');
+//     remove_action('save_post_competition_episode', 'sync_custom_blog_to_post');
 
-    $post = get_post($post_id);
+//     $post = get_post($post_id);
 
-    if ($post->post_status != 'publish') {
-        return;
-    }
+//     if ($post->post_status != 'publish') {
+//         return;
+//     }
 
-    $linked_post_id = get_post_meta($post_id, '_synced_wp_post_id', true);
+//     $linked_post_id = get_post_meta($post_id, '_synced_wp_post_id', true);
 
-    $post_data = array(
-        'post_title'    => $post->post_title,
-        'post_content'  => $post->post_content,
-        'post_status'   => 'publish',
-        'post_type'     => 'post',
-    );
+//     $post_data = array(
+//         'post_title'    => $post->post_title,
+//         'post_content'  => $post->post_content,
+//         'post_status'   => 'publish',
+//         'post_type'     => 'post',
+//     );
 
-    if (!empty($linked_post_id) && get_post_status($linked_post_id)) {
-        $post_data['ID'] = $linked_post_id;
-        $original_thumb_id = get_post_thumbnail_id($post_id);
+//     if (!empty($linked_post_id) && get_post_status($linked_post_id)) {
+//         $post_data['ID'] = $linked_post_id;
+//         $original_thumb_id = get_post_thumbnail_id($post_id);
 
-        $updated_post_id = wp_update_post($post_data);
-    } else {
-        $original_thumb_id = get_post_thumbnail_id($post_id);
+//         $updated_post_id = wp_update_post($post_data);
+//     } else {
+//         $original_thumb_id = get_post_thumbnail_id($post_id);
 
-        $updated_post_id = wp_insert_post($post_data);
-        if ($updated_post_id) {
-            update_post_meta($post_id, '_synced_wp_post_id', $updated_post_id);
-        }
-    }
+//         $updated_post_id = wp_insert_post($post_data);
+//         if ($updated_post_id) {
+//             update_post_meta($post_id, '_synced_wp_post_id', $updated_post_id);
+//         }
+//     }
 
-    if ($original_thumb_id) {
-        set_post_thumbnail($updated_post_id, $original_thumb_id);
-    }
+//     if ($original_thumb_id) {
+//         set_post_thumbnail($updated_post_id, $original_thumb_id);
+//     }
 
-    add_action('save_post_main_blog', 'sync_custom_blog_to_post');
-    add_action('save_post_sub_blog', 'sync_custom_blog_to_post');
-    add_action('save_post_my_creation_blog', 'sync_custom_blog_to_post');
-    add_action('save_post_my_creation_sub_blog', 'sync_custom_blog_to_post');
-    add_action('save_post_competition_post', 'sync_custom_blog_to_post');
-    add_action('save_post_competition_episode', 'sync_custom_blog_to_post');
-}
+//     add_action('save_post_main_blog', 'sync_custom_blog_to_post');
+//     add_action('save_post_sub_blog', 'sync_custom_blog_to_post');
+//     add_action('save_post_my_creation_blog', 'sync_custom_blog_to_post');
+//     add_action('save_post_my_creation_sub_blog', 'sync_custom_blog_to_post');
+//     add_action('save_post_competition_post', 'sync_custom_blog_to_post');
+//     add_action('save_post_competition_episode', 'sync_custom_blog_to_post');
+// }
 
-add_action('save_post_main_blog', 'sync_custom_blog_to_post');
-add_action('save_post_sub_blog', 'sync_custom_blog_to_post');
-add_action('save_post_my_creation_blog', 'sync_custom_blog_to_post');
-add_action('save_post_my_creation_sub_blog', 'sync_custom_blog_to_post');
-add_action('save_post_competition_post', 'sync_custom_blog_to_post');
-add_action('save_post_competition_episode', 'sync_custom_blog_to_post');
+// add_action('save_post_main_blog', 'sync_custom_blog_to_post');
+// add_action('save_post_sub_blog', 'sync_custom_blog_to_post');
+// add_action('save_post_my_creation_blog', 'sync_custom_blog_to_post');
+// add_action('save_post_my_creation_sub_blog', 'sync_custom_blog_to_post');
+// add_action('save_post_competition_post', 'sync_custom_blog_to_post');
+// add_action('save_post_competition_episode', 'sync_custom_blog_to_post');
 // Sync to create post when story create end
 
 add_action('template_redirect', function () {
@@ -586,40 +636,40 @@ add_filter('comments_open', function ($open, $post_id) {
 // category and blog end
 
 // My creation start
-function create_custom_post_types_for_my_creation() {
-    register_post_type('my_creation_blog',
-        array(
-            'labels'      => array(
-                'name'          => __('My Creation Blogs'),
-                'singular_name' => __('My Creation Blog'),
-            ),
-            'public'      => true,
-            'show_ui'     => true,
-            'show_in_menu' => true,
-            'has_archive' => true,
-            'supports'    => array('title', 'editor', 'thumbnail', 'custom-fields', 'comments'),
-            'taxonomies'  => array('category'),
-            'hierarchical' => true, 
-            'rewrite' => array('slug' => 'my-creation-blog', 'with_front' => false),
-        )
-    ); 
+// function create_custom_post_types_for_my_creation() {
+//     register_post_type('my_creation_blog',
+//         array(
+//             'labels'      => array(
+//                 'name'          => __('My Creation Blogs'),
+//                 'singular_name' => __('My Creation Blog'),
+//             ),
+//             'public'      => true,
+//             'show_ui'     => true,
+//             'show_in_menu' => true,
+//             'has_archive' => true,
+//             'supports'    => array('title', 'editor', 'thumbnail', 'custom-fields', 'comments'),
+//             'taxonomies'  => array('category'),
+//             'hierarchical' => true, 
+//             'rewrite' => array('slug' => 'my-creation-blog', 'with_front' => false),
+//         )
+//     ); 
 
-    register_post_type('my_creation_sub_blog',
-        array(
-            'labels'      => array(
-                'name'          => __('My Creation Sub Blogs'),
-                'singular_name' => __('My Creation Sub Blogs'),
-            ),
-            'public'      => true,
-            'has_archive' => true,
-            'supports'    => array('title', 'editor', 'thumbnail', 'custom-fields', 'comments'),
-            'taxonomies'  => array('category'),
-            'hierarchical' => false,
-            'rewrite' => array('slug' => 'my-creation-sub-blogs'),
-        )
-    );
-}
-add_action('init', 'create_custom_post_types_for_my_creation');
+//     register_post_type('my_creation_sub_blog',
+//         array(
+//             'labels'      => array(
+//                 'name'          => __('My Creation Sub Blogs'),
+//                 'singular_name' => __('My Creation Sub Blogs'),
+//             ),
+//             'public'      => true,
+//             'has_archive' => true,
+//             'supports'    => array('title', 'editor', 'thumbnail', 'custom-fields', 'comments'),
+//             'taxonomies'  => array('category'),
+//             'hierarchical' => false,
+//             'rewrite' => array('slug' => 'my-creation-sub-blogs'),
+//         )
+//     );
+// }
+// add_action('init', 'create_custom_post_types_for_my_creation');
 
 function add_parent_blog_meta_box_for_my_creation() {
     add_meta_box(
@@ -633,7 +683,12 @@ function add_parent_blog_meta_box_for_my_creation() {
 
 function my_creation_parent_blog_meta_callback($post) {
     $selected = get_post_meta($post->ID, 'my_creation_parent_blog_id', true);
-    $args = array('post_type' => 'my_creation_blog', 'posts_per_page' => -1);
+    $args = array(
+        'post_type'      => 'my_creation_blog',
+        'posts_per_page' => -1,
+        'post_status'    => 'publish',
+        'suppress_filters' => true
+    );
     $blogs = get_posts($args);
 
     echo '<select name="my_creation_parent_blog_id">';
@@ -671,19 +726,19 @@ function create_competition_cpt() {
 }
 add_action('init', 'create_competition_cpt');
 
-function create_competition_post_type() {
-    register_post_type('competition_post', array(
-        'labels' => array(
-            'name' => __('Competition Stories'),
-            'singular_name' => __('Competition Stories')
-        ),
-        'public' => true,
-        'has_archive' => true,
-        'rewrite' => array('slug' => 'competition-posts'),
-        'supports' => array('title', 'editor', 'author'),
-    ));
-}
-add_action('init', 'create_competition_post_type');
+// function create_competition_post_type() {
+//     register_post_type('competition_post', array(
+//         'labels' => array(
+//             'name' => __('Competition Stories'),
+//             'singular_name' => __('Competition Stories')
+//         ),
+//         'public' => true,
+//         'has_archive' => true,
+//         'rewrite' => array('slug' => 'competition-posts'),
+//         'supports' => array('title', 'editor', 'author'),
+//     ));
+// }
+// add_action('init', 'create_competition_post_type');
 
 //competition submit
 function handle_competition_post_submission() {
@@ -701,7 +756,7 @@ function handle_competition_post_submission() {
         'post_title'   => $post_title,
         'post_content' => $post_content,
         'post_status'  => 'publish',
-        'post_type'    => 'competition_post',
+        'post_type'    => 'post',
         'post_author'  => get_current_user_id(),
         'meta_input'   => ['competition_id' => $competition_id]
     ];
@@ -726,6 +781,11 @@ function handle_competition_post_submission() {
     }
 
     if ($post_id) {
+        if (term_exists('competition-blog', 'blog_type')) {
+            wp_insert_term('Competition Blog', 'blog_type', ['slug' => 'competition-blog']);
+        }
+        wp_set_object_terms($post_id, 'competition-blog', 'blog_type');
+
         $redirect_url = get_permalink($competition_id);
         wp_send_json_success(['redirect_url' => $redirect_url]);
     } else {
@@ -741,7 +801,7 @@ function fetch_competition_posts() {
     $posts_per_page = 10;
 
     $args = array(
-        'post_type'      => 'competition_post',
+        'post_type'      => 'post',
         'meta_query'     => array(
             array(
                 'key'   => 'competition_id',
@@ -761,8 +821,8 @@ function fetch_competition_posts() {
             $query->the_post();
             $user = get_userdata(get_the_author_meta('ID'));
             $story_id = get_the_ID();
-            $total_views = get_story_total_views('competition_episode', 'story_id', $story_id);
-            $average_rating = get_story_average_rating('competition_episode', 'story_id', $story_id);
+            $total_views = get_story_total_views('post', 'story_id', $story_id);
+            $average_rating = get_story_average_rating('post', 'story_id', $story_id);
 
             $date = get_the_date('j F Y');
             $tamil_months = array(
@@ -856,19 +916,19 @@ add_action('wp_ajax_fetch_competition_posts', 'fetch_competition_posts');
 add_action('wp_ajax_nopriv_fetch_competition_posts', 'fetch_competition_posts');
 
 // episodes
-function create_episode_post_type() {
-    register_post_type('competition_episode', array(
-        'labels' => array(
-            'name' => __('Competition Story - Episodes'),
-            'singular_name' => __('Competition Story - Episodes')
-        ),
-        'public' => true,
-        'has_archive' => true,
-        'rewrite' => array('slug' => 'episodes'),
-        'supports' => array('title', 'editor', 'author', 'comments'),
-    ));
-}
-add_action('init', 'create_episode_post_type');
+// function create_episode_post_type() {
+//     register_post_type('competition_episode', array(
+//         'labels' => array(
+//             'name' => __('Competition Story - Episodes'),
+//             'singular_name' => __('Competition Story - Episodes')
+//         ),
+//         'public' => true,
+//         'has_archive' => true,
+//         'rewrite' => array('slug' => 'episodes'),
+//         'supports' => array('title', 'editor', 'author', 'comments'),
+//     ));
+// }
+// add_action('init', 'create_episode_post_type');
 
 function add_episode_meta_boxes() {
     add_meta_box(
@@ -968,7 +1028,7 @@ function handle_episode_submission() {
         'post_title'   => $episode_title,
         'post_content' => $episode_content,
         'post_status'  => 'publish',
-        'post_type'    => 'competition_episode',
+        'post_type'    => 'post',
         'post_author'  => get_current_user_id()
     );
 
@@ -982,6 +1042,11 @@ function handle_episode_submission() {
     }
 
     if ($episode_id) {
+        if (term_exists('competition-blog', 'blog_type')) {
+            wp_insert_term('Competition Blog', 'blog_type', ['slug' => 'competition-blog']);
+        }
+        wp_set_object_terms($episode_id, 'competition-blog', 'blog_type');
+
         $redirect_url = get_permalink($story_id);
         wp_send_json_success(['redirect_url' => $redirect_url]);
     } else {
@@ -1387,7 +1452,7 @@ function bootstrap5_comment_callback($comment, $args, $depth) {
 
 
 function set_default_story_view_count($post_id) {
-    if (get_post_type($post_id) === 'main_blog' || get_post_type($post_id) === 'my_creation_blog') {
+    if (get_post_type($post_id) === 'post') {
         $views = get_post_meta($post_id, 'story_view_count', true);
         if ($views === '') { // If meta field does not exist, set it to 0
             update_post_meta($post_id, 'story_view_count', 0);
@@ -1398,22 +1463,35 @@ add_action('save_post', 'set_default_story_view_count');
 
 // Episode wise view count start
 function increase_episode_view_count() {
-    global $post;
-    $count = get_post_meta($post->ID, 'episode_view_count', true);
-    $count = $count ? $count + 1 : 1;
-    update_post_meta($post->ID, 'episode_view_count', $count);
+    if (is_singular('post')) {
+        global $post;
+        $count = get_post_meta($post->ID, 'episode_view_count', true);
+        $count = $count ? $count + 1 : 1;
+        update_post_meta($post->ID, 'episode_view_count', $count);
+    }
 }
 add_action('wp_head', 'increase_episode_view_count');
 
-function increase_story_view_count() {
-    if (is_singular('post')) {
-        global $post;
-        $count = get_post_meta($post->ID, 'story_view_count', true);
-        $count = $count ? $count + 1 : 1;
-        update_post_meta($post->ID, 'story_view_count', $count);
+// function increase_story_view_count() {
+//     if (is_singular('post')) {
+//         global $post;
+//         $count = get_post_meta($post->ID, 'story_view_count', true);
+//         $count = $count ? $count + 1 : 1;
+//         update_post_meta($post->ID, 'story_view_count', $count);
+//     }
+// }
+// add_action('wp_head', 'increase_story_view_count');
+
+function increase_story_view_count($post_id = null) {
+    if (!$post_id && is_singular('post')) {
+        $post_id = get_the_ID();
+    }
+
+    if ($post_id) {
+        $count = (int) get_post_meta($post_id, 'story_view_count', true);
+        update_post_meta($post_id, 'story_view_count', $count + 1);
     }
 }
-add_action('wp_head', 'increase_story_view_count');
 
 function format_view_count($count) {
     if ($count >= 1000000) {
@@ -1970,6 +2048,21 @@ function handle_ajax_reply_comment() {
     } else {
         wp_send_json_error('Failed to add comment');
     }
+}
+
+// Redirect single page to competition single page
+add_filter('template_include', 'load_custom_single_template');
+
+function load_custom_single_template($template) {
+    if (is_single() && get_post_type() === 'post') {
+        if (has_term('competition-blog', 'blog_type')) {
+            $new_template = locate_template(['single-competition_post.php']);
+            if ($new_template) {
+                return $new_template;
+            }
+        }
+    }
+    return $template;
 }
 
 

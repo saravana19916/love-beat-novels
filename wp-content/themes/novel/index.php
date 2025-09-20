@@ -138,7 +138,7 @@ get_header(); // Include the header
     <div class="col-md-12 mt-4">
         <?php 
             $latest_post_query = new WP_Query([
-                'post_type'      => ['main_blog', 'sub_blog'],
+                'post_type'      => 'post',
                 'posts_per_page' => 10,
                 'orderby'        => 'date',
                 'order'          => 'DESC',
@@ -168,13 +168,6 @@ get_header(); // Include the header
                         <div class="col-md-12 p-0 text-center" id="latestPosts">
                             <h6 class="text-primary px-4 py-2 text-white" style="background-color: #061148"><?php echo "Latest posts"; ?></h6>
                             <?php
-                                // $latest_post_query = new WP_Query([
-                                //     'post_type'      => ['main_blog', 'sub_blog'],
-                                //     'posts_per_page' => 10,
-                                //     'orderby'        => 'date',
-                                //     'order'          => 'DESC',
-                                // ]);
-
                                 if ($latest_post_query->have_posts()) :
                                     while ($latest_post_query->have_posts()) : $latest_post_query->the_post();
                                 ?>

@@ -40,6 +40,27 @@
         </div>
     </div>
 
+    <?php
+        $args = array(
+            'post_type' => 'post',
+            'meta_query' => array(
+                array(
+                    'key' => 'story_id',
+                    'value' => $story_id,
+                    'compare' => '='
+                ),
+            ),
+            'orderby' => 'date',
+            'order'   => 'ASC',
+            'posts_per_page' => -1
+        );
+        $query = new WP_Query($args);
+
+        if ($query->found_posts == 0) {
+            increase_story_view_count();
+        }
+    ?>
+
     <div class="row mt-5 mb-4">
         <div class="col-md-6">
             <h6 class="text-primary-color fw-bold">
@@ -65,20 +86,6 @@
     <div class="row mb-5 episode-padding">
         <?php
         $count = 0;
-        $args = array(
-            'post_type' => 'competition_episode',
-            'meta_query' => array(
-                array(
-                    'key' => 'story_id',
-                    'value' => $story_id,
-                    'compare' => '='
-                ),
-            ),
-            'orderby' => 'date',
-            'order'   => 'ASC',
-            'posts_per_page' => -1
-        );
-        $query = new WP_Query($args);
 
         if ($query->have_posts()) {
             while ($query->have_posts()) {
