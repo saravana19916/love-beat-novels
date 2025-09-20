@@ -1,0 +1,20 @@
+# Ignore everything by default
+/*
+
+# Allow wp-content directory
+!/wp-content/
+
+# Ignore everything inside wp-content except plugins
+/wp-content/*
+!/wp-content/plugins/
+
+# Ignore everything inside plugins except your plugin folders
+/wp-content/plugins/*
+!/wp-content/plugins/*/
+
+# Allow your specific plugin(s) (replace with actual folder names)
+!/wp-content/plugins/my-plugin/
+!/wp-content/plugins/another-plugin/
+
+# Keep .gitignore itself
+!.gitignore

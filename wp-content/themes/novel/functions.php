@@ -243,16 +243,12 @@ function render_parent_blog_meta_box($post) {
         ]);
     } elseif ($blog_type === 'my-creation-blog') {
         $parent_posts = get_posts([
-            'post_type' => 'post',
-            'tax_query' => [[
-                'taxonomy' => 'blog_type',
-                'field'    => 'slug',
-                'terms'    => 'my-creation-blog'
-            ]],
-            'post_status' => 'publish',
-            'posts_per_page' => -1,
-            'exclude' => [$post->ID],
-        ]);
+    'post_type'      => 'my_creation_blog',
+    'post_status'    => 'publish',
+    'posts_per_page' => -1,
+    'exclude'        => [$post->ID],
+]);
+$parent_posts = [];
     }
 
     echo '<select name="parent_blog_meta_field" class="widefat">';
