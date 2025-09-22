@@ -6,7 +6,7 @@ get_header();
 ?>
 
 <div class="container details-page my-5 text-primary-color">
-  <div class="shadow-lg rounded mt-3 p-4">
+  <div class="shadow-lg rounded mt-3 p-4 shadow-div">
       <div class="mb-4 mt-3ATBBwB8Lgs5H27fLSBHfM3C4uSBhC7226EFE">
         <h6 class="fw-bold">எங்களைப் பற்றி &nbsp;<i class="fa-solid fa-address-card"></i></h6>
       </div>

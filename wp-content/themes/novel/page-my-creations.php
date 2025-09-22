@@ -89,15 +89,15 @@ get_header();
 
                             if (!empty($external_novels)) :
                             ?>
-                                <div class="row mb-5 shadow rounded d-none d-lg-flex">
-                                    <h6 class="text-primary px-4 py-2 text-white" style="background-color: #061148">Other Novels</h6>
+                                <div class="row mb-5 shadow rounded d-none d-lg-flex shadow-div">
+                                    <h6 class="text-primary px-4 py-2 text-white bg-primary-color head-title">Other Novels</h6>
                                     <div class="row px-4">
                                         <?php foreach ($external_novels as $novel): ?>
                                             <div class="col-md-3 p-3">
-                                                <div class="card h-100">
+                                                <div class="card h-100 bg-transparent shadow-div">
                                                     <div class="card-body text-center">
                                                         <h6 class="card-title fw-bold">
-                                                            <a href="<?php echo esc_url($novel['url']); ?>" target="_blank" class="text-decoration-none fs-14px" style="color: #061148;">
+                                                            <a href="<?php echo esc_url($novel['url']); ?>" target="_blank" class="text-decoration-none fs-14px text-primary-color">
                                                                 <?php echo esc_html($novel['title']); ?>
                                                             </a>
                                                         </h6>
@@ -123,17 +123,17 @@ get_header();
                                 </div>
 
                                 <div class="row mb-5 d-lg-none">
-                                    <h6 class="text-primary px-4 py-2 text-white" style="background-color: #061148">Other Novels</h6>
+                                    <h6 class="text-primary px-4 py-2 text-white bg-primary-color head-title">Other Novels</h6>
                                     <div class="swiper-container px-3">
                                         <div class="swiper-wrapper">
                                             <?php foreach ($external_novels as $novel): ?>
                                             <div class="swiper-slide custom-width">
                                                 <div class="col-lg-3 py-3">
-                                                    <div class="card h-100">
+                                                    <div class="card h-100 bg-transparent shadow-div">
                                                         <div class="card-body text-center">
                                                             <div class="title-wrapper d-flex align-items-center justify-content-center text-center px-2" style="height: 2rem;">
                                                                 <h6 class="card-title fw-bold fs-14px mb-0">
-                                                                    <a href="<?php echo esc_url($novel['url']); ?>" target="_blank" class="text-decoration-none" style="color: #061148;">
+                                                                    <a href="<?php echo esc_url($novel['url']); ?>" target="_blank" class="text-decoration-none text-primary-color">
                                                                         <?php
                                                                             $title = $novel['title'];
                                                                             $trimmed_title = mb_strimwidth($title, 0, 50, '...');
@@ -169,9 +169,9 @@ get_header();
                 </div>
 
                 <div class="col-lg-2 px-4">
-                    <div class="row mb-5 shadow rounded sticky-top" style="height: 25rem; top: 20px; overflow-y: auto">
+                    <div class="row mb-5 shadow rounded sticky-top shadow-div" style="height: 25rem; top: 20px; overflow-y: auto">
                         <div class="col-md-12 p-0 text-center" id="latestPosts">
-                            <h6 class="text-primary px-4 py-2 text-white fs-14px" style="background-color: #061148"><?php echo "Latest posts"; ?></h6>
+                            <h6 class="text-primary px-4 py-2 text-white fs-14px bg-primary-color head-title"><?php echo "Latest posts"; ?></h6>
                             <?php
                                 $latest_post_query = new WP_Query([
                                     'post_type'      => 'post',
@@ -183,12 +183,12 @@ get_header();
                                 if ($latest_post_query->have_posts()) :
                                     while ($latest_post_query->have_posts()) : $latest_post_query->the_post();
                                 ?>
-                                    <p><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></p>
+                                    <p><a href="<?php the_permalink(); ?>" class="text-primary-color"><?php the_title(); ?></a></p>
                                 <?php
                                     endwhile;
                                     wp_reset_postdata();
                                 else :
-                                    echo '<p>No latest post found.</p>';
+                                    echo '<p class="text-primary-color">No latest post found.</p>';
                                 endif;
                                 ?>
                         </div>

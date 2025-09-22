@@ -123,17 +123,23 @@ get_header(); // Include the header
 
 
 <div class="container my-4">
-    <div class="shadow rounded px-4 d-flex align-items-center justify-content-center fw-bold text-primary-color h-auto h-lg-100">
-        <?php
-            $writePageUrl = get_permalink(get_page_by_path('write'));
-        ?>
-        <i class="fa-solid fa-book fa-lg"></i> &nbsp; &nbsp;
+    <?php
+        $writePageUrl = get_permalink(get_page_by_path('write'));
+        $messageFromAdmin = get_option('writer_invite_message');
+
+        $linkHtml = '&nbsp;<a class="text-underline text-danger" href="' . esc_url($writePageUrl) . '">click here</a>';
+        $message = str_replace('{write_url}', $linkHtml, $messageFromAdmin);
+    ?>
+
+    <?php if ($messageFromAdmin) { ?>
+        <div class="shadow rounded px-4 d-flex align-items-center justify-content-center fw-bold text-primary-color h-auto h-lg-100">
+            <i class="fa-solid fa-book fa-lg"></i> &nbsp; &nbsp;
             <span class="p-3">
-                வலைத்தளத்தில் எழுத புதிய எழுத்தாளர்கள் வரவேற்கப்படுகிறார்கள். உங்கள் பதிவை எழுத &nbsp;
-                <a class="text-underline text-danger" href="<?php echo esc_url($writePageUrl); ?>">click here</a>
+                <?= wp_kses_post($message); ?>
             </span>
-        &nbsp; &nbsp; <i class="fa-solid fa-book fa-lg"></i>
-    </div>
+            &nbsp; &nbsp; <i class="fa-solid fa-book fa-lg"></i>
+        </div>
+    <?php } ?>
 
     <div class="col-md-12 mt-4">
         <?php 
@@ -164,19 +170,19 @@ get_header(); // Include the header
                 </div>
 
                 <div class="col-lg-2 px-4">
-                    <div class="row mb-5 shadow rounded sticky-top" style="height: 25rem; top: 20px; overflow-y: auto">
+                    <div class="row mb-5 shadow rounded sticky-top shadow-div" style="height: 25rem; top: 20px; overflow-y: auto">
                         <div class="col-md-12 p-0 text-center" id="latestPosts">
-                            <h6 class="text-primary px-4 py-2 text-white" style="background-color: #061148"><?php echo "Latest posts"; ?></h6>
+                            <h6 class="text-primary px-4 py-2 text-white bg-primary-color head-title"><?php echo "Latest posts"; ?></h6>
                             <?php
                                 if ($latest_post_query->have_posts()) :
                                     while ($latest_post_query->have_posts()) : $latest_post_query->the_post();
                                 ?>
-                                    <p><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></p>
+                                    <p><a href="<?php the_permalink(); ?>" class="text-primary-color"><?php the_title(); ?></a></p>
                                 <?php
                                     endwhile;
                                     wp_reset_postdata();
                                 else :
-                                    echo '<p>No latest post found.</p>';
+                                    echo '<p class="text-primary-color">No latest post found.</p>';
                                 endif;
                                 ?>
                         </div>

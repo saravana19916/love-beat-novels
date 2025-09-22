@@ -7,10 +7,10 @@ $terms_page = get_page_by_path('terms-and-conditions');
 <?php if ($terms_page): ?>
 <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content text-primary-color">
+    <div class="modal-content text-primary-color shadow-div">
       <div class="modal-header">
         <h5 class="modal-title" id="termsModalLabel"><?php echo esc_html($terms_page->post_title); ?></h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body p-4">
         <?php echo apply_filters('the_content', $terms_page->post_content); ?>
@@ -27,10 +27,10 @@ $privacy_page = get_page_by_path('privacy-policy');
 <?php if ($privacy_page): ?>
 <div class="modal fade" id="privacyModal" tabindex="-1" aria-labelledby="privacyModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content text-primary-color">
+    <div class="modal-content text-primary-color shadow-div">
       <div class="modal-header">
         <h5 class="modal-title" id="privacyModalLabel"><?php echo esc_html($privacy_page->post_title); ?></h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body p-4">
         <?php echo apply_filters('the_content', $privacy_page->post_content); ?>
@@ -72,23 +72,20 @@ $privacy_page = get_page_by_path('privacy-policy');
 
             <div class="col-12 col-md-6 col-lg-3 m-3 my-md-3 mx-md-0 m-lg-0">
                 <h6 class="fw-bold footer-border">சமூக வலைதளங்களில் தொடர</h6>
-                <div class="d-flex align-items-center justify-content-center justify-content-md-start mt-4">
-                    <span>
-                        <a target="_blank" href="https://www.youtube.com/@SarmiCreations" class="nav-link">
-                            <img src="<?php echo get_template_directory_uri() . '/images/youtube.png'; ?>" alt="youtube" class="img-fluid rounded" style="width: 55px; height: 55px;">
-                        </a>
-                    </span>
-                    <span class="mr-3">
-                        <a target="_blank" href="https://www.facebook.com/Sarmi.SSfan" class="nav-link">
-                            <img src="<?php echo get_template_directory_uri() . '/images/facebook.png'; ?>" alt="facebook" class="img-fluid rounded" style="width: 50px; height: 50px; margin-left: 6px;">
-                        </a>
-                    </span>
-                    <span class="ml-3">
-                        <a target="_blank" href="https://www.instagram.com/sarmi_ss/" class="nav-link">
-                            <img src="<?php echo get_template_directory_uri() . '/images/instagram.png'; ?>" alt="instagram" class="img-fluid rounded" style="width: 50px; height: 50px; margin-left: 10px">
-                        </a>
-                    </span>
-                </div>
+                <?php
+                    $social_links = get_option('custom_social_links', []);
+                    if (!empty($social_links)):
+                ?>
+                    <div class="d-flex align-items-center justify-content-center justify-content-md-start mt-4">
+                        <?php foreach ($social_links as $link): ?>
+                            <span class="mx-2">
+                                <a target="_blank" href="<?= esc_url($link['url']) ?>" class="nav-link" title="<?= esc_attr($link['title']) ?>">
+                                    <img src="<?= esc_url($link['image']) ?>" alt="<?= esc_attr($link['title']) ?>" class="img-fluid rounded" style="width: 50px; height: 50px;">
+                                </a>
+                            </span>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
             </div>
 
         </div>
@@ -253,6 +250,61 @@ $privacy_page = get_page_by_path('privacy-policy');
         );
 
         button.innerText = isShowMore ? 'Show Less' : 'Show More';
+    });
+
+    // document.addEventListener('DOMContentLoaded', function () {
+    //     const toggle = document.getElementById('theme-toggle');
+    //     const body = document.body;
+    //     const currentTheme = localStorage.getItem('theme');
+
+    //     if (currentTheme === 'dark') {
+    //         body.classList.add('dark-mode');
+    //     }
+
+    //     toggle.addEventListener('click', () => {
+    //         body.classList.toggle('dark-mode');
+    //         let theme = body.classList.contains('dark-mode') ? 'dark' : 'light';
+    //         localStorage.setItem('theme', theme);
+    //     });
+    // });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const dropdown = document.getElementById('notificationDropdown');
+
+        if (dropdown) {
+            dropdown.addEventListener('click', () => {
+                fetch('<?php echo admin_url("admin-ajax.php?action=mark_notifications_seen"); ?>');
+            });
+        }
+
+         const moon = document.getElementById('moon');
+    const sun = document.getElementById('sun');
+    const body = document.body;
+    const currentTheme = localStorage.getItem('theme');
+
+    // Apply saved theme
+    if (currentTheme === 'dark') {
+      body.classList.add('dark-mode');
+      moon.style.display = 'none';
+      sun.style.display = 'inline';
+    }
+
+    function toggleTheme() {
+      body.classList.toggle('dark-mode');
+      let theme = body.classList.contains('dark-mode') ? 'dark' : 'light';
+      localStorage.setItem('theme', theme);
+
+      if (body.classList.contains('dark-mode')) {
+        moon.style.display = 'none';
+        sun.style.display = 'inline';
+      } else {
+        moon.style.display = 'inline';
+        sun.style.display = 'none';
+      }
+    }
+
+    moon.addEventListener('click', toggleTheme);
+    sun.addEventListener('click', toggleTheme);
     });
 
 </script>

@@ -28,7 +28,7 @@ get_header();
         </div>
     </div>
 
-    <div class="row align-items-center shadow m-2 p-3">
+    <div class="row align-items-center shadow m-2 p-3 shadow-div">
         <!-- Left Side Image -->
         <div class="col-12 col-md-6 d-none d-md-block">
             <img src="<?php echo get_template_directory_uri() . '/images/contact.png'; ?>" alt="Contact Us" class="img-fluid rounded" style="width: 70%;">

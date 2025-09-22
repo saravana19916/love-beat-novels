@@ -166,6 +166,41 @@ if (class_exists('Kirki')) {
 
 // Banner image end
 
+// home page mesage
+add_action('admin_menu', function () {
+    add_options_page('Site Message Settings', 'Site Message', 'manage_options', 'site-message', function () {
+        ?>
+        <div class="wrap">
+            <h1>Site Message</h1>
+            <form method="post" action="options.php">
+                <?php
+                settings_fields('site_message_group');
+                do_settings_sections('site-message');
+                submit_button();
+                ?>
+            </form>
+        </div>
+        <?php
+    });
+});
+
+add_action('admin_init', function () {
+    register_setting('site_message_group', 'writer_invite_message');
+
+    add_settings_section('site_message_section', '', null, 'site-message');
+
+    add_settings_field(
+        'writer_invite_message',
+        'Writer Invite Message',
+        function () {
+            $value = get_option('writer_invite_message', '');
+            echo "<textarea name='writer_invite_message' rows='6' cols='60' class='large-text code'>{$value}</textarea>";
+        },
+        'site-message',
+        'site_message_section'
+    );
+});
+
 // Header menu icon
 function custom_nav_menu($items) {
     foreach ($items as $item) {
@@ -1639,6 +1674,40 @@ function add_reaction() {
         );
     }
 
+    $notificationTable = $wpdb->prefix . 'author_notifications';
+
+    if ($reaction == 'thumb') {
+        $existsNotification = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $notificationTable WHERE post_id = %d AND user_id = %d",
+            $episode_id, $user_id
+        ));
+        if (!$existing_reaction && !$existsNotification) {
+            $author_id = get_post_field('post_author', $episode_id);
+            $commenter_id = get_current_user_id();
+
+            if ($author_id && $author_id != $commenter_id) {
+                $wpdb->insert("{$wpdb->prefix}author_notifications", [
+                    'user_id' => $author_id,
+                    'post_id' => $episode_id,
+                    'type' => 'like',
+                    'by_user_id'  => $commenter_id,
+                ]);
+            }
+        } else {
+            $user_id = get_current_user_id();
+            
+            $wpdb->update(
+                "{$wpdb->prefix}author_notifications",
+                ['seen' => 1],
+                [
+                    'user_id' => $user_id,
+                    'post_id' => $episode_id,
+                    'seen'    => 0
+                ]
+            );
+        }
+    }
+
     // Get updated reaction count
     $reaction_count = $wpdb->get_var($wpdb->prepare(
         "SELECT COUNT(*) FROM $table_name WHERE episode_id = %d AND reaction = %s",
@@ -2001,6 +2070,22 @@ function handle_ajax_comment() {
             'max_depth' => 1,
         ], [$comment_data]);
         $comment_html = ob_get_clean();
+
+        // Notification added for comment start
+        $episode_id = $comment_data->comment_post_ID;
+        $author_id = get_post_field('post_author', $episode_id);
+        $commenter_id = get_current_user_id();
+
+        if ($author_id && $author_id != $commenter_id) {
+            global $wpdb;
+            $wpdb->insert("{$wpdb->prefix}author_notifications", [
+                'user_id' => $author_id,
+                'post_id' => $episode_id,
+                'type' => 'comment',
+                'by_user_id'  => $commenter_id,
+            ]);
+        }
+        // Notification added for comment end
 
         wp_send_json_success(['comment_html' => $comment_html]);
     }

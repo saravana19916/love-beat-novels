@@ -30,6 +30,9 @@
             </div>
         </form>
 
+        <span id="moon" class="text-white" style="cursor: pointer;"><i class="fa-solid fa-moon fa-2xl"></i></span>
+        <span id="sun" class="text-white" style="display:none; cursor: pointer;"><i class="fa-solid fa-sun fa-2xl"></i></span>
+
         <button class="navbar-toggler bg-white m-3 my-md-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -66,6 +69,9 @@
                         </div>
                     </span>
                 </a>
+                <?php if (is_user_logged_in()): ?>
+                    <?php get_template_part('template-parts/header-notification'); ?>
+                <?php endif; ?>
             <?php } else { ?>
                 <a href="#" data-bs-toggle="modal" data-bs-target="#loginModal" class="text-white text-decoration-none" style="padding-left: 0.5rem;padding-right: 0.5rem;">
                     <span itemprop="name">
@@ -83,7 +89,7 @@
         <!-- Bootstrap Modal -->
         <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
-                <div class="modal-content">
+                <div class="modal-content shadow-div">
                     <div class="modal-header bg-primary-color">
                         <h5 class="modal-title text-white" id="loginModalLabel">Login &nbsp; <i class="fa-solid fa-user"></i></h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -94,7 +100,7 @@
                                 <img src="<?php echo get_template_directory_uri() . '/images/login.png'; ?>" alt="Registration" class="img-fluid rounded">
                             </div>
                             <div class="col-md-6 p-4 d-flex align-items-center justify-content-center">
-                                <form id="login-form">
+                                <form id="login-form" class="w-100">
                                     <div class="row mb-3 text-center">
                                         <i class="fa-solid fa-circle-user text-primary-color" style="font-size: 60px;"></i>
                                     </div>
@@ -135,7 +141,7 @@
 
         <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
-                <div class="modal-content">
+                <div class="modal-content shadow-div">
                     <div class="modal-header bg-primary-color">
                         <h5 class="modal-title text-white" id="registerModalLabel">Register  &nbsp; <i class="fa-solid fa-user-plus"></i></h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>

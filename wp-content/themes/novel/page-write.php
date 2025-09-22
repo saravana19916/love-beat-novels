@@ -67,7 +67,7 @@ if ($query->have_posts()) : ?>
             <?php while ($query->have_posts()) : $query->the_post(); ?>
                 <div class="col-sm-6 col-md-4 col-lg-3">
                     <a href="<?php the_permalink(); ?>" class="text-decoration-none">
-                        <div class="shadow p-3 mb-4 card-hover">
+                        <div class="shadow p-3 mb-4 card-hover shadow-div">
                             <div class="card-header py-2 text-center">
                                 <h6 class="mb-0 text-primary-color fw-bold"><?php the_title(); ?></h6>
                             </div>

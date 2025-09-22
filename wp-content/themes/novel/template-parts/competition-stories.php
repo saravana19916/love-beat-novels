@@ -7,8 +7,8 @@
     
     if ($query->have_posts()) :
 ?>
-    <div class="row mb-5 shadow rounded d-none d-lg-flex">
-        <h6 class="text-primary px-4 py-2 text-white" style="background-color: #061148">நாவல் போட்டி</h6>
+    <div class="row mb-5 shadow rounded d-none d-lg-flex shadow-div">
+        <h6 class="text-primary px-4 py-2 text-white bg-primary-color head-title">நாவல் போட்டி</h6>
         <div class="row px-4">
             <?php
                 $count = 0;
@@ -19,7 +19,7 @@
             ?>
                 <div class="col-12 col-lg-6 col-xl-4 col-xxl-3 my-2 <?php echo $hidden_class; ?>">                                                
                     <a href="<?php the_permalink(); ?>" class="text-decoration-none">
-                        <div class="shadow p-3 mb-4 card-hover">
+                        <div class="shadow p-3 mb-4 card-hover bg-transparent shadow-div">
                             <div class="card-header py-2 text-center">
                                 <h6 class="mb-0 text-primary-color fs-14px fw-bold"><?php the_title(); ?></h6>
                             </div>
@@ -44,7 +44,7 @@
     </div>
 
     <div class="row mb-5 d-lg-none">
-        <h6 class="text-primary px-4 py-2 text-white" style="background-color: #061148">நாவல் போட்டி</h6>
+        <h6 class="text-primary px-4 py-2 text-white bg-primary-color head-title">நாவல் போட்டி</h6>
         <div class="swiper-container px-3">
             <div class="swiper-wrapper">
                 <?php while ($query->have_posts()) :
@@ -52,11 +52,11 @@
                 ?>
                 <div class="swiper-slide custom-width">
                     <div class="col-lg-3 py-3">
-                        <div class="card h-100">
+                        <div class="card h-100 bg-transparent shadow-div">
                             <div class="card-body text-center px-0">
                                 <div class="title-wrapper d-flex align-items-center justify-content-center text-center px-2" style="height: 2rem;">
                                     <h6 class="card-title fw-bold fs-14px mb-0">
-                                        <a href="<?php the_permalink(); ?>" class="text-decoration-none" style="color: #061148;">
+                                        <a href="<?php the_permalink(); ?>" class="text-decoration-none text-primary-color">
                                             <?php
                                                 $title = get_the_title();
                                                 $trimmed_title = mb_strimwidth($title, 0, 50, '...');

@@ -91,8 +91,8 @@
         $query = new WP_Query($args);
         if ($query->have_posts()) :
     ?>
-        <div class="row mb-5 shadow rounded d-none d-lg-flex">
-            <h6 class="text-primary px-4 py-2 text-white" style="background-color: #061148"><?php echo esc_html($category->name); ?></h6>
+        <div class="row mb-5 shadow rounded d-none d-lg-flex shadow-div">
+            <h6 class="text-primary px-4 py-2 text-white bg-primary-color head-title"><?php echo esc_html($category->name); ?></h6>
             <div class="row px-4">
                 <?php 
                 $count = 0;
@@ -118,10 +118,10 @@
                     $hidden_class = $count > 6 ? 'd-none more-post-'.$category->term_id : '';
                 ?>
                     <div class="col-md-4 p-3 <?php echo $hidden_class; ?>">
-                        <div class="card h-100">
+                        <div class="card h-100 bg-transparent shadow-div">
                             <div class="card-body">
-                                <h6 class="card-title text-center fw-bold">
-                                    <a href="<?php the_permalink(); ?>" class="text-decoration-none fs-14px" style="color: #061148">
+                                <h6 class="card-title text-center fw-bold fs-14px">
+                                    <a href="<?php the_permalink(); ?>" class="text-decoration-none text-primary-color">
                                         <?php the_title(); ?>
                                     </a>
                                 </h6>
@@ -134,15 +134,15 @@
                                         <img src="<?php echo get_template_directory_uri(); ?>/images/no-image.jpeg" class="img-fluid mx-auto d-block my-3" alt="Default Image" style="height: 300px;">
                                     </a>
                                 <?php endif; ?>
-                                <p class="card-text"><?php echo wp_trim_words(get_the_excerpt(), 20); ?></p>
+                                <p class="card-text text-primary-color"><?php echo wp_trim_words(get_the_excerpt(), 20); ?></p>
                             </div>
-                            <div class="card-footer">
+                            <div class="card-footer shadow-div">
                                 <div class="d-flex justify-content-between align-items-center my-1">
                                     <div class="d-flex align-items-center">
-                                        <p class="me-4 mb-0"><i class="fa-solid fa-eye"></i>&nbsp;&nbsp;<?php echo format_view_count($total_views); ?></p>
-                                        <p class="mb-0"><i class="fa-solid fa-star" style="color: gold;"></i>&nbsp;&nbsp;<?php echo $average_rating; ?></p>
+                                        <p class="me-4 mb-0 text-primary-color"><i class="fa-solid fa-eye"></i>&nbsp;&nbsp;<?php echo format_view_count($total_views); ?></p>
+                                        <p class="mb-0 text-primary-color"><i class="fa-solid fa-star" style="color: gold;"></i>&nbsp;&nbsp;<?php echo $average_rating; ?></p>
                                     </div>
-                                    <a href="<?php the_permalink(); ?>" class="btn btn-sm text-white fs-12px" style="background-color: #061148">மேலும் படிக்க</a>
+                                    <a href="<?php the_permalink(); ?>" class="btn btn-sm text-white fs-12px primary-btn">மேலும் படிக்க</a>
                                 </div>
                             </div>
                         </div>
@@ -151,7 +151,7 @@
 
                 <?php if ($query->post_count > 6): ?>
                     <div class="text-center my-3">
-                        <button class="btn btn-primary btn-sm text-decoration-none show-more-btn" data-target="more-post-<?php echo $category->term_id; ?>" id="show-more-<?php echo $category->term_id; ?>">
+                        <button class="btn btn-sm text-decoration-none show-more-btn primary-btn" data-target="more-post-<?php echo $category->term_id; ?>" id="show-more-<?php echo $category->term_id; ?>">
                             Show More
                         </button>
                     </div>
@@ -160,7 +160,7 @@
         </div>
 
         <div class="row mb-5 d-lg-none">
-            <h6 class="text-primary px-4 py-2 text-white" style="background-color: #061148"><?php echo esc_html($category->name); ?></h6>
+            <h6 class="text-primary px-4 py-2 text-white bg-primary-color head-title"><?php echo esc_html($category->name); ?></h6>
             <div class="swiper-container px-3">
                 <div class="swiper-wrapper">
                     <?php while ($query->have_posts()) :
@@ -185,11 +185,11 @@
                     ?>
                     <div class="swiper-slide custom-width">
                         <div class="col-lg-3 py-3">
-                            <div class="card h-100">
+                            <div class="card h-100 bg-transparent shadow-div">
                                 <div class="card-body text-center px-0">
                                     <div class="title-wrapper d-flex align-items-center justify-content-center text-center px-2" style="height: 2rem;">
                                         <h6 class="card-title fw-bold fs-14px mb-0">
-                                            <a href="<?php the_permalink(); ?>" class="text-decoration-none" style="color: #061148;">
+                                            <a href="<?php the_permalink(); ?>" class="text-decoration-none text-primary-color">
                                                 <?php
                                                     $title = get_the_title();
                                                     $trimmed_title = mb_strimwidth($title, 0, 50, '...');
@@ -213,8 +213,8 @@
                                     <?php endif; ?>
 
                                     <div class="d-flex mx-3">
-                                        <p class="me-4 mb-0"><i class="fa-solid fa-eye"></i>&nbsp;&nbsp;<?php echo format_view_count($total_views); ?></p>
-                                        <p class="mb-0"><i class="fa-solid fa-star" style="color: gold;"></i>&nbsp;&nbsp;<?php echo $average_rating; ?></p>
+                                        <p class="me-4 mb-0 text-primary-color"><i class="fa-solid fa-eye"></i>&nbsp;&nbsp;<?php echo format_view_count($total_views); ?></p>
+                                        <p class="mb-0 text-primary-color"><i class="fa-solid fa-star" style="color: gold;"></i>&nbsp;&nbsp;<?php echo $average_rating; ?></p>
                                     </div>
                                 </div>
                             </div>
