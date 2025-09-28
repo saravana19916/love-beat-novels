@@ -70,7 +70,7 @@ get_header();
 
                         <div class="row mb-4 align-items-center">
                             <div class="col-sm-9 offset-xl-1">
-                                <button type="submit" class="btn btn-primary btn-sm pt-2">
+                                <button type="submit" class="btn primary-btn btn-sm pt-2">
                                     <?php if ($post_id): ?>
                                         <i class="fa-solid fa-floppy-disk"></i>
                                         &nbsp; Update

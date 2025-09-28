@@ -1,4 +1,5 @@
 :root {
+    color-scheme: light dark;
   --bg-color: #ffffff;
   --text-color: #000000;
 }
@@ -10,9 +11,16 @@ body {
 
 nav,
 .footer,
-.primary, .primary-btn, .bg-primary-color {
+.primary, .primary-btn, .bg-primary-color, .bg-category-color {
   --bg-color: #061148;
   --text-color: #ffffff;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+body.dark-mode .bg-category-color {
+  --bg-color: yellow;
+  --text-color: #061148;
   background-color: var(--bg-color);
   color: var(--text-color);
 }
@@ -111,6 +119,12 @@ body {
 
     .container.details-page {
         max-width: 1140px;
+    }
+}
+
+@media (min-width: 1200px) and (max-width: 1700px) {
+    .container {
+        max-width: 1250px !important;
     }
 }
 
@@ -860,4 +874,43 @@ body, html {
         height: 300px;
         width: 175px;
     }
+}
+
+.btn-close {
+  filter: invert(0%) grayscale(100%) brightness(50%);
+}
+
+/* Dark mode (auto) */
+@media (prefers-color-scheme: dark) {
+  .btn-close {
+    filter: invert(100%) grayscale(100%) brightness(200%);
+  }
+}
+
+/* OR class-based dark mode */
+body.dark-mode .btn-close {
+  filter: invert(100%) grayscale(100%) brightness(200%);
+}
+
+body.dark-mode .trumbowyg-button-pane {
+  background: #1e1e1e;
+  border-bottom: 1px solid #444;
+}
+
+body.dark-mode .trumbowyg-button-pane button {
+  color: #f1f1f1;
+}
+
+body.dark-mode .trumbowyg-button-pane button:hover {
+  background: #333;
+}
+
+body.dark-mode .trumbowyg-button-pane svg {
+  fill: #f1f1f1;
+  stroke: #f1f1f1;
+}
+
+body.dark-mode ::placeholder {
+  color: #aaa;
+  opacity: 1;
 }

@@ -136,7 +136,7 @@
     $top_stories = array_slice($stories_with_views, 0, 10);
 ?>
     <div class="row mb-5 shadow rounded d-none d-lg-flex shadow-div">
-        <h6 class="text-primary px-4 py-2 text-white bg-primary-color head-title">Trending Stories</h6>
+        <h6 class="px-4 py-2 bg-category-color head-title">Trending Stories</h6>
         <div class="row px-4">
             <?php 
             $count = 0;
@@ -191,7 +191,7 @@
     </div>
 
     <div class="row mb-5 d-lg-none">
-        <h6 class="text-primary px-4 py-2 text-white bg-primary-color head-title">Trending Stories</h6>
+        <h6 class="px-4 py-2 bg-category-color head-title">Trending Stories</h6>
         <div class="swiper-container px-3">
             <div class="swiper-wrapper">
                 <?php foreach ($top_stories as $item) :

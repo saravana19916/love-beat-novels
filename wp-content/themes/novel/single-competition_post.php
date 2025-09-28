@@ -108,7 +108,9 @@
                     <div class="d-flex justify-content-between align-items-center px-4 pt-4">
                         <h6 class="mb-0 fw-bold">
                             <?php echo sprintf("%2d", $count + 1); ?>.&nbsp
-                            <a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
+                            <a href="<?php echo add_query_arg('episode_id', get_the_ID(), get_permalink()); ?>">
+                                <?php the_title(); ?>
+                            </a>
                         </h6>
 
                         <?php 

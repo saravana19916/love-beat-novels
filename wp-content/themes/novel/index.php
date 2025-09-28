@@ -132,7 +132,7 @@ get_header(); // Include the header
     ?>
 
     <?php if ($messageFromAdmin) { ?>
-        <div class="shadow rounded px-4 d-flex align-items-center justify-content-center fw-bold text-primary-color h-auto h-lg-100">
+        <div class="shadow rounded px-4 d-flex align-items-center justify-content-center fw-bold text-primary-color h-auto h-lg-100 shadow-div">
             <i class="fa-solid fa-book fa-lg"></i> &nbsp; &nbsp;
             <span class="p-3">
                 <?= wp_kses_post($message); ?>
@@ -172,7 +172,7 @@ get_header(); // Include the header
                 <div class="col-lg-2 px-4">
                     <div class="row mb-5 shadow rounded sticky-top shadow-div" style="height: 25rem; top: 20px; overflow-y: auto">
                         <div class="col-md-12 p-0 text-center" id="latestPosts">
-                            <h6 class="text-primary px-4 py-2 text-white bg-primary-color head-title"><?php echo "Latest posts"; ?></h6>
+                            <h6 class="px-4 py-2 bg-category-color head-title"><?php echo "Latest posts"; ?></h6>
                             <?php
                                 if ($latest_post_query->have_posts()) :
                                     while ($latest_post_query->have_posts()) : $latest_post_query->the_post();

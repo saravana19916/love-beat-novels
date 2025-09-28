@@ -30,17 +30,56 @@
             </div>
         </form>
 
-        <span id="moon" class="text-white" style="cursor: pointer;"><i class="fa-solid fa-moon fa-2xl"></i></span>
-        <span id="sun" class="text-white" style="display:none; cursor: pointer;"><i class="fa-solid fa-sun fa-2xl"></i></span>
-
         <button class="navbar-toggler bg-white m-3 my-md-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
     </div>
 
+    <div class="col-12 col-xl-auto mt-3 mt-xl-0 d-none d-sm-flex justify-content-between justify-content-xl-end align-items-center">
+
+            <div class="d-flex align-items-center mt-2">
+                <span class="theme-toggle moon text-white d-flex flex-column align-items-center me-3" style="cursor:pointer;">
+                    <i class="fa-solid fa-moon fa-xl"></i>
+                    <span class="menu-text mt-2 pt-1">Dark Mode</span>
+                </span>
+                <span class="theme-toggle sun text-white d-flex flex-column align-items-center me-3 d-none" style="cursor:pointer;">
+                    <i class="fa-solid fa-sun fa-xl"></i>
+                    <span class="menu-text mt-2 pt-1">Light Mode</span>
+                </span>
+            </div>
+
+            <div class="notification-wrapper">
+                <?php get_template_part('template-parts/header-notification', null, ['view' => 'desktop']); ?>
+            </div>
+        </div>
+
     <!-- Second Row: Search Form (Visible below logo on mobile) -->
     <div class="row mt-2 d-sm-none w-100">
-        <div class="col-12">
+       <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                
+                <!-- Dark/Light Toggle (Left) -->
+                <div class="d-flex align-items-center">
+                    <span class="theme-toggle moon text-white me-3" style="cursor:pointer;">
+                        <i class="fa-solid fa-moon fa-xl"></i>
+                        <span class="ms-2">Dark Mode</span>
+                    </span>
+
+                    <span class="theme-toggle sun text-white me-3 d-none" style="cursor:pointer;">
+                        <i class="fa-solid fa-sun fa-xl"></i>
+                        <span class="ms-2">Light Mode</span>
+                    </span>
+                </div>
+
+                <!-- Notification (Right) -->
+                <div class="notification-wrapper">
+                    <?php get_template_part('template-parts/header-notification', null, ['view' => 'mobile']); ?>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="col-12 mt-3">
             <form class="d-flex align-items-center search-form" method="get" action="<?php echo esc_url(home_url('/')); ?>">
                 <div class="position-relative search-container w-100">
                     <input type="text" name="s" class="form-control search-input" placeholder="தேடு..." value="<?php echo get_search_query(); ?>">
@@ -69,9 +108,6 @@
                         </div>
                     </span>
                 </a>
-                <?php if (is_user_logged_in()): ?>
-                    <?php get_template_part('template-parts/header-notification'); ?>
-                <?php endif; ?>
             <?php } else { ?>
                 <a href="#" data-bs-toggle="modal" data-bs-target="#loginModal" class="text-white text-decoration-none" style="padding-left: 0.5rem;padding-right: 0.5rem;">
                     <span itemprop="name">
@@ -92,7 +128,7 @@
                 <div class="modal-content shadow-div">
                     <div class="modal-header bg-primary-color">
                         <h5 class="modal-title text-white" id="loginModalLabel">Login &nbsp; <i class="fa-solid fa-user"></i></h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                         <div class="row">

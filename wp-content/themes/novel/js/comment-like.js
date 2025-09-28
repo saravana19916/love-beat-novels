@@ -3,6 +3,7 @@ jQuery(document).ready(function ($) {
     $(document).on("click", ".like-comment", function () {
         var $this = $(this);
         var commentId = $this.data("comment-id");
+        var postId = $this.data("post-id");
         var likeCountSpan = $this.find(".like-count");
 
         $.ajax({
@@ -11,6 +12,7 @@ jQuery(document).ready(function ($) {
             data: {
                 action: "like_comment",
                 comment_id: commentId,
+                post_id: postId,
             },
             success: function (response) {
                 if (response.success) {

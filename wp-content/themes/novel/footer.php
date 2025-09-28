@@ -277,34 +277,35 @@ $privacy_page = get_page_by_path('privacy-policy');
             });
         }
 
-         const moon = document.getElementById('moon');
-    const sun = document.getElementById('sun');
-    const body = document.body;
-    const currentTheme = localStorage.getItem('theme');
+        const moons = document.querySelectorAll('.moon');
+        const suns = document.querySelectorAll('.sun');
+        const body = document.body;
 
-    // Apply saved theme
-    if (currentTheme === 'dark') {
-      body.classList.add('dark-mode');
-      moon.style.display = 'none';
-      sun.style.display = 'inline';
+        function applyTheme(theme) {
+        if (theme === 'dark') {
+            body.classList.add('dark-mode');
+            moons.forEach(m => m.classList.add('d-none'));
+            suns.forEach(s => s.classList.remove('d-none'));
+        } else {
+            body.classList.remove('dark-mode');
+            moons.forEach(m => m.classList.remove('d-none'));
+            suns.forEach(s => s.classList.add('d-none'));
+        }
     }
 
-    function toggleTheme() {
-      body.classList.toggle('dark-mode');
-      let theme = body.classList.contains('dark-mode') ? 'dark' : 'light';
-      localStorage.setItem('theme', theme);
+        // Apply saved theme on page load
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        applyTheme(savedTheme);
 
-      if (body.classList.contains('dark-mode')) {
-        moon.style.display = 'none';
-        sun.style.display = 'inline';
-      } else {
-        moon.style.display = 'inline';
-        sun.style.display = 'none';
-      }
-    }
+        function toggleTheme() {
+            const newTheme = body.classList.contains('dark-mode') ? 'light' : 'dark';
+            localStorage.setItem('theme', newTheme);
+            applyTheme(newTheme);
+        }
 
-    moon.addEventListener('click', toggleTheme);
-    sun.addEventListener('click', toggleTheme);
+        moons.forEach(m => m.addEventListener('click', toggleTheme));
+        suns.forEach(s => s.addEventListener('click', toggleTheme));
+
     });
 
 </script>

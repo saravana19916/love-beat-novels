@@ -29,7 +29,7 @@ if (post_password_required()) {
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="commentsModalLabel"><?php echo $comments_count . ' Comments'; ?></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" style="height: 31rem; overflow-y: scroll;">
                     <?php
@@ -94,7 +94,7 @@ if (post_password_required()) {
                         } else {
                     ?>
                         <div class="text-end">
-                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#loginModal">You must log in to reply here</button>
+                            <button class="btn primary-btn btn-sm" data-bs-toggle="modal" data-bs-target="#loginModal">You must log in to reply here</button>
                         </div>
                     <?php } ?>
                 </div>

@@ -32,7 +32,7 @@
         <div class="container mt-5">
             <div class="row justify-content-center">
                 <div class="col-md-12">
-                    <div class="shadow-lg p-4 rounded">
+                    <div class="shadow-lg p-4 rounded shadow-div">
                         <div class="row">
                             <div class="col-md-3 text-center">
                                 <?php if (has_post_thumbnail()) : ?>
@@ -68,11 +68,11 @@
                     $average_rating = get_average_episode_rating($episode_id);
                 ?>
                     <div class="col-lg-6 col-xxl-4">
-                        <div class="shadow-lg rounded mt-4">
+                        <div class="shadow-lg rounded mt-4 shadow-div">
                             <div class="d-flex justify-content-between align-items-center px-4 pt-4">
                                 <h6 class="mb-0 fw-bold">
                                     <?php echo sprintf("%2d", $count + 1); ?>.&nbsp
-                                    <a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
+                                    <a href="<?php the_permalink(); ?>" class="text-primary-color"><?php the_title(); ?></a>
                                 </h6>
 
                                 <?php 
@@ -95,7 +95,7 @@
                                     $tamil_date = str_replace(array_keys($tamil_months), array_values($tamil_months), $date); 
                                 ?>
 
-                                <span class="text-muted fs-custom"><?php echo $tamil_date; ?></span>
+                                <span class="text-muted fs-custom text-primary-color"><p class="text-primary-color"><?php echo $tamil_date; ?></p></span>
                             </div>
                             <div class="d-flex align-items-center px-5 my-3 fs-custom">
                                 <p class="me-4">
@@ -143,7 +143,7 @@
                     <div class="col-md-12">
                         <h5 class="fw-bold text-center my-4 text-primary-color"><?php the_title(); ?></h5>
                         
-                        <div class="shadow-lg rounded mt-4 p-4">
+                        <div class="shadow-lg rounded mt-4 p-4 shadow-div">
                             <div class="mb-5 fs-6 custom-content">
                                 <?php echo wpautop(get_the_content()); ?>
                             </div>
@@ -166,7 +166,7 @@
                                             }
                                         ?>
 
-                                        <div class="emoji-reactions sec-comment" data-episode="<?php echo $episode_id; ?>" data-user="<?php echo $user_id; ?>">
+                                        <div class="emoji-reactions sec-comment bg-transparent shadow-div" data-episode="<?php echo $episode_id; ?>" data-user="<?php echo $user_id; ?>">
                                             <?php foreach ($emojis as $key => $emoji) : ?>
                                                 <button class="emoji-btn" data-emo-symbol="<?php echo $key; ?>" data-emoji="<?php echo $emoji; ?>">
                                                     <?php echo $emoji; ?> <span class="count" data-emoji="<?php echo $emoji; ?>"><?php echo $emoji_counts[$key] > 0 ? $emoji_counts[$key] : ''; ?></span>

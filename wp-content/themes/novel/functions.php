@@ -1,5 +1,7 @@
 <?php
 require_once get_template_directory() . '/inc/wp-bootstrap-navwalker.php';
+require_once get_template_directory() . '/inc/author-notification.php';
+require_once get_template_directory() . '/inc/social-media.php';
 
 // Enqueue Bootstrap and Font Awesome
 function my_theme_enqueue_styles() {
@@ -878,8 +880,8 @@ function fetch_competition_posts() {
             $tamil_date = str_replace(array_keys($tamil_months), array_values($tamil_months), $date);
 
             $output .= '<tr>
-                <td class="px-4 class="align-middle"">
-                    <a class="fw-bold" href="' . get_permalink(get_the_ID()) . '">' . get_the_title() . '</a>
+                <td class="px-4 class="align-middle text-primary-colo"">
+                    <a class="fw-bold text-primary-color" href="' . get_permalink(get_the_ID()) . '">' . get_the_title() . '</a>
                     <p style="font-size: 0.8rem;" class="m-0">' . esc_html($user->display_name) . '</p>
                 </td>
                 <td class="align-middle">
@@ -1302,26 +1304,31 @@ function handle_frontend_login() {
 }
 add_action('init', 'handle_frontend_login');
 
-function get_like_button($comment_id) {
+function get_like_button($comment_id, $post_id) {
     $likes = get_comment_meta($comment_id, 'likes', true) ?: 0;
-    return '<a href="javascript:void(0);" class="like-comment" data-comment-id="' . $comment_id . '">
-                <i class="fa-solid fa-thumbs-up fa-lg"></i> <span class="like-count">' . format_view_count($likes) . '</span>
+    return '<a href="javascript:void(0);" class="like-comment" data-comment-id="' . $comment_id . '" data-post-id="' . $post_id . '">
+                <i class="fa-solid fa-thumbs-up fa-lg text-primary-color"></i> <span class="like-count text-primary-color">' . format_view_count($likes) . '</span>
             </a>';
 }
 
 function get_unlike_button($comment_id) {
     $unlikes = get_comment_meta($comment_id, 'unlikes', true) ?: 0;
     return '<a href="javascript:void(0);" class="text-danger unlike-comment" data-comment-id="' . $comment_id . '">
-                <i class="fa-solid fa-thumbs-down fa-lg"></i> <span class="unlike-count">' . format_view_count($unlikes) . '</span>
+                <i class="fa-solid fa-thumbs-down fa-lg"></i> <span class="unlike-count text-primary-color">' . format_view_count($unlikes) . '</span>
             </a>';
 }
 
 // Handle Like button click
 function handle_comment_like() {
     $comment_id = intval($_POST['comment_id']);
+    $post_id = intval($_POST['post_id']);
 
     if (!$comment_id) {
         wp_send_json_error('Invalid comment ID');
+    }
+
+    if (!$post_id) {
+        wp_send_json_error('Invalid post ID');
     }
 
     $user_id = get_current_user_id();
@@ -1341,6 +1348,22 @@ function handle_comment_like() {
 
     update_comment_meta($comment_id, 'likes', $likes);
     update_comment_meta($comment_id, 'liked_users', $liked_users);
+
+    // Notification added for comment start
+    $commentData = get_comment( $comment_id );
+    $author_id = $commentData->user_id;
+    $commenter_id = get_current_user_id();
+
+    if ($author_id && $author_id != $commenter_id && $commentData) {
+        global $wpdb;
+        $wpdb->insert("{$wpdb->prefix}author_notifications", [
+            'user_id' => $author_id,
+            'post_id' => $post_id,
+            'type' => 'like comment',
+            'by_user_id'  => $commenter_id,
+        ]);
+    }
+    // Notification added for comment end
 
     wp_send_json_success($likes);
 }
@@ -1380,6 +1403,8 @@ function bootstrap5_comment_callback($comment, $args, $depth) {
     $user_id = $comment->user_id;
     $rating = get_user_meta($user_id, "episode_rating_{$episode_id}", true);
 
+    $current_user_id = get_current_user_id();
+
     // Get child comments
     $child_comments = get_comments([
         'parent' => $comment_id,
@@ -1407,24 +1432,34 @@ function bootstrap5_comment_callback($comment, $args, $depth) {
                     <small class="text-muted"><?php echo date('F j, Y', strtotime($comment->comment_date)); ?></small>
                 </div>
 
-                <div class="mt-2 d-inline-block p-2 border rounded comment-text" style="background-color: #f3f3f3;">
+                <div class="mt-2 d-inline-block p-2 border rounded comment-text bg-transparent shadow-div">
                     <p class="mb-0 text-wrap"><?php comment_text(); ?></p>
                 </div>
 
                 <div class="d-flex align-items-center gap-4 mt-3">
-                    <?php echo get_like_button($comment_id); ?>
+                    <?php if ($current_user_id && $current_user_id !== $user_id): ?>
+        
+                        <?php echo get_like_button($comment_id, $episode_id); ?>
 
-                    <?php if (is_user_logged_in()) { ?>
                         <?php if ($child_count > 0): ?>
-                            <a href="#" class="text-decoration-none text-primary-color" onclick="event.preventDefault(); toggleChildComments(<?php echo $comment_id; ?>)">
-                                <i class="fa fa-reply"></i> <span class="<?php echo 'reply-count-' . $comment_id; ?>"><?php echo $child_count; ?></span> <span class="<?php echo 'reply-count-text-' . $comment_id; ?>"><?php echo _n('Reply', 'Replies', $child_count); ?></span>
+                            <a href="#" class="text-decoration-none text-primary-color"
+                            onclick="event.preventDefault(); toggleChildComments(<?php echo $comment_id; ?>)">
+                                <i class="fa fa-reply"></i>
+                                <span class="<?php echo 'reply-count-' . $comment_id; ?>"><?php echo $child_count; ?></span>
+                                <span class="<?php echo 'reply-count-text-' . $comment_id; ?>">
+                                    <?php echo _n('Reply', 'Replies', $child_count); ?>
+                                </span>
                             </a>
                         <?php else: ?>
-                            <a href="#" class="text-decoration-none text-primary-color" onclick="event.preventDefault(); toggleChildComments(<?php echo $comment_id; ?>)">
-                                <i class="fa fa-reply"></i> <span class="<?php echo 'reply-count-' . $comment_id; ?>"></span> <span class="<?php echo 'reply-count-text-' . $comment_id; ?>"> Reply</span>
+                            <a href="#" class="text-decoration-none text-primary-color"
+                            onclick="event.preventDefault(); toggleChildComments(<?php echo $comment_id; ?>)">
+                                <i class="fa fa-reply"></i>
+                                <span class="<?php echo 'reply-count-' . $comment_id; ?>"></span>
+                                <span class="<?php echo 'reply-count-text-' . $comment_id; ?>">Reply</span>
                             </a>
                         <?php endif; ?>
-                    <?php } ?>
+
+                    <?php endif; ?>
                 </div>
 
                 <!-- Child Comments Container -->
@@ -1443,7 +1478,7 @@ function bootstrap5_comment_callback($comment, $args, $depth) {
                                         <small class="text-muted"><?php echo date('F j, Y', strtotime($child_comment->comment_date)); ?></small>
                                     </div>
 
-                                    <div class="mt-2 d-inline-block p-2 border rounded comment-text" style="background-color: #f3f3f3;">
+                                    <div class="mt-2 d-inline-block p-2 border rounded comment-text bg-transparent shadow-div">
                                         <p class="mb-0 text-wrap"><?php echo esc_html($child_comment->comment_content); ?></p>
                                     </div>
                                 </div>
@@ -2108,6 +2143,28 @@ function handle_ajax_reply_comment() {
 
     if ($comment_id) {
         $comment = get_comment($comment_id);
+
+        $parent_comment = get_comment($comment->comment_parent);
+
+        // Notification added for comment start
+        $episode_id = $comment->comment_post_ID;
+        $commenter_id = get_current_user_id();
+
+        if ($parent_comment) {
+            $author_id = $parent_comment->user_id;
+
+            if ($author_id && $author_id != $commenter_id) {
+                global $wpdb;
+                $wpdb->insert("{$wpdb->prefix}author_notifications", [
+                    'user_id'    => $author_id,
+                    'post_id'    => $episode_id,
+                    'type'       => 'reply comment',
+                    'by_user_id' => $commenter_id,
+                ]);
+            }
+        }
+        // Notification added for comment end
+
         ob_start();
         // Render your single comment HTML structure
         ?>
@@ -2136,19 +2193,23 @@ function handle_ajax_reply_comment() {
 }
 
 // Redirect single page to competition single page
-add_filter('template_include', 'load_custom_single_template');
+add_filter('template_include', function($template) {
+    // Handle competition episode (details page)
+    if (is_single() && get_post_type() === 'post' && isset($_GET['episode_id'])) {
+        $new_template = locate_template(['single-competition_episode.php']);
+        if ($new_template) return $new_template;
+    }
 
-function load_custom_single_template($template) {
-    if (is_single() && get_post_type() === 'post') {
-        if (has_term('competition-blog', 'blog_type')) {
-            $new_template = locate_template(['single-competition_post.php']);
-            if ($new_template) {
-                return $new_template;
-            }
+    // Handle competition post (list of episodes)
+    if (is_single() && get_post_type() === 'post' && has_term('competition-blog', 'blog_type')) {
+        $new_template = locate_template(['single-competition_post.php']);
+        if ($new_template) {
+            return $new_template;
         }
     }
+
     return $template;
-}
+});
 
 
 
