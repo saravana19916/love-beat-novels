@@ -5,7 +5,7 @@
 !/wp-content/
 
 # Ignore everything inside wp-content except plugins
-/wp-content/*
+/wp-content/uploads/*
 !/wp-content/plugins/
 
 # Ignore everything inside plugins except your plugin folders
