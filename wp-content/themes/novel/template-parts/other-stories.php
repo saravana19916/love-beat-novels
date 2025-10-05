@@ -1,5 +1,6 @@
 <?php
     $context = $args['context'] ?? '';
+    $user_id = $args['user_id'] ?? '';
 
     $categories = get_categories([
         'orderby' => 'id',
@@ -68,6 +69,7 @@
 
         $args = array(
             'post_type'      => 'post',
+            'author'         => $user_id ? $user_id : '',
             'tax_query'      => array(
                 'relation' => 'AND',
                 array(

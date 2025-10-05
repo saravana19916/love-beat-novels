@@ -47,6 +47,51 @@
                                 <div class="mb-3 col-md-9">
                                     <?php echo wpautop(get_the_content()); ?>
                                 </div>
+
+                                <div class="mt-4">
+                                    <?php
+                                        $author_id = get_post_field('post_author', get_the_ID());
+                                        $author_name = get_the_author_meta('display_name', $author_id);
+                                        $profile_picture_id = get_user_meta($author_id, 'profile_picture', true);
+                                        $profile_picture_url = $profile_picture_id ? wp_get_attachment_url($profile_picture_id) : get_template_directory_uri() . '/images/profile-no-image.jpg';
+                                        $post_count = count_user_posts($author_id, 'post');
+
+                                        if ($post_count > 0) {
+                                            $icon_html = '<i class="fa-solid fa-pen-nib me-1"></i>';
+                                        } else {
+                                            $icon_html = '<i class="fa-solid fa-book-reader me-1"></i>';
+                                        }
+                                    ?>
+                                        <a href="<?php echo site_url('/profile/?user_id=' . $author_id); ?>" class="fs-16px text-primary-color text-decoration-underline mb-1">
+                                            <img src="<?php echo esc_url($profile_picture_url); ?>" alt="<?php echo $author_id ?>" class="rounded-circle me-2" height="40" width="40">
+                                            <?php echo $icon_html; ?>
+                                            <?php echo esc_html($author_name); ?>
+                                        </a>
+
+                                        <?php
+                                        $current_user_id = get_current_user_id();
+                                        $author_id = get_post_field('post_author', get_the_ID());
+
+                                        // Don't show follow button for current user
+                                        if ($current_user_id && $current_user_id != $author_id) {
+
+                                            // Get current user's following list
+                                            $following = get_user_meta($current_user_id, 'following_users', true);
+                                            $following = is_array($following) ? $following : array();
+
+                                            $is_following = in_array($author_id, $following);
+                                            $btn_text = $is_following ? 'Following' : 'Follow';
+                                            $btn_disabled = $is_following ? 'disabled' : '';
+                                            ?>
+                                            <div class="mt-2">
+                                                <button class="btn btn-primary btn-sm follow-btn" 
+                                                        data-author-id="<?php echo $author_id; ?>" 
+                                                        <?php echo $btn_disabled; ?>>
+                                                    <?php echo $btn_text; ?>
+                                                </button>
+                                            </div>
+                                        <?php } ?>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -146,6 +191,66 @@
                         <div class="shadow-lg rounded mt-4 p-4 shadow-div">
                             <div class="mb-5 fs-6 custom-content">
                                 <?php echo wpautop(get_the_content()); ?>
+                                <?php track_recently_read_post(get_the_ID()); ?>
+                            </div>
+
+                            <!-- Next & Previous Episode Navigation -->
+                            <?php
+                            $parent_blog_id = get_post_meta(get_the_ID(), 'parent_blog_id', true);
+                            $my_creation_parent_blog_id = get_post_meta(get_the_ID(), 'my_creation_parent_blog_id', true);
+
+                            // Fetch all episodes of the parent blog in ascending order
+                            $args = array(
+                                'post_type'      => 'post',
+                                'posts_per_page' => -1,
+                                'meta_query'     => array(
+                                    'relation' => 'OR',
+                                    array(
+                                        'key'     => 'parent_blog_id',
+                                        'value'   => $parent_blog_id,
+                                        'compare' => '='
+                                    ),
+                                    array(
+                                        'key'     => 'my_creation_parent_blog_id',
+                                        'value'   => $my_creation_parent_blog_id,
+                                        'compare' => '='
+                                    ),
+                                ),
+                                'orderby'        => 'date',
+                                'order'          => 'ASC',
+                            );
+                            $episodes = get_posts($args);
+
+                            $current_index = -1;
+                            foreach ($episodes as $index => $episode) {
+                                if ($episode->ID == get_the_ID()) {
+                                    $current_index = $index;
+                                    break;
+                                }
+                            }
+
+                            $prev_episode = ($current_index > 0) ? $episodes[$current_index - 1] : null;
+                            $next_episode = ($current_index < count($episodes) - 1) ? $episodes[$current_index + 1] : null;
+                            ?>
+
+                            <div class="navigation my-4">
+                                <div class="d-flex justify-content-between">
+                                    <div class="prev-episode">
+                                        <?php if ($prev_episode): ?>
+                                            <a href="<?php echo get_permalink($prev_episode->ID); ?>" class="btn btn-primary btn-sm">
+                                                <i class="fa-solid fa-eye"></i>&nbsp முந்திய பாகத்தை படிக்க
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <div class="next-episode">
+                                        <?php if ($next_episode): ?>
+                                            <a href="<?php echo get_permalink($next_episode->ID); ?>" class="btn btn-primary btn-sm">
+                                                <i class="fa-solid fa-eye"></i>&nbsp அடுத்த பாகத்தை படிக்க
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Reaction start -->

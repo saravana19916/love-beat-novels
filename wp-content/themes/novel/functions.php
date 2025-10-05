@@ -2,6 +2,7 @@
 require_once get_template_directory() . '/inc/wp-bootstrap-navwalker.php';
 require_once get_template_directory() . '/inc/author-notification.php';
 require_once get_template_directory() . '/inc/social-media.php';
+require_once get_template_directory() . '/inc/register.php';
 
 // Enqueue Bootstrap and Font Awesome
 function my_theme_enqueue_styles() {
@@ -1170,17 +1171,31 @@ add_action('wp_enqueue_scripts', 'enqueue_register_script');
 
 function ajax_register_user() {
     // check_ajax_referer('register_nonce', 'security');
+    require_once(ABSPATH . 'wp-admin/includes/file.php');
+    require_once(ABSPATH . 'wp-admin/includes/image.php');
+    require_once(ABSPATH . 'wp-admin/includes/media.php');
 
+    $user_id = intval($_POST['user_id']);
     $username = sanitize_user($_POST['username']);
     $password = $_POST['password'];
-    $email = sanitize_text_field($_POST['email']);
+    $email = sanitize_email($_POST['email']);
     $firstname = sanitize_text_field($_POST['firstname']);
     $lastname = sanitize_text_field($_POST['lastname']);
+    $aboutUser = sanitize_text_field($_POST['about_user']);
 
     $errors = [];
 
-    if (empty($username) || empty($password) || empty($email) || empty($firstname) || empty($lastname)) {
-        wp_send_json_error('All fields are required.');
+    $required_fields = ['email', 'firstname', 'lastname'];
+
+    if (empty($user_id)) {
+        $required_fields[] = 'username';
+        $required_fields[] = 'password';
+    }
+
+    foreach ($required_fields as $field) {
+        if (empty($$field)) {
+            wp_send_json_error('All fields are required.');
+        }
     }
 
     if (!is_email($email)) {
@@ -1191,27 +1206,137 @@ function ajax_register_user() {
         wp_send_json_error('Username is already taken.');
     }
 
-    if (email_exists($email)) {
+    $existing_user_id = email_exists($email);
+
+    if ($existing_user_id && $existing_user_id != $user_id) {
         wp_send_json_error('Email is already registered.');
     }
 
-    $user_id = wp_insert_user([
-        'user_login' => $username,
-        'user_pass' => $password,
-        'user_nicename' => $username,
-        'user_email' => $email,
-        'display_name' => $firstname . ' ' . $lastname,
-        'role' => 'subscriber',
-    ]);
+    if ($user_id) {
+       $update_data = [
+            'ID'           => $user_id,
+            'user_email'   => $email,
+            'display_name' => trim($firstname . ' ' . $lastname),
+        ];
 
-    if (is_wp_error($user_id)) {
-        wp_send_json_error('An error occurred: ' . $user_id->get_error_message());
+        if (!empty($password)) {
+            $update_data['user_pass'] = $password;
+        }
+
+        wp_update_user($update_data);
+
+        update_user_meta($user_id, 'about_user', sanitize_textarea_field($_POST['about_user']));
+
+        wp_send_json_success(['message' => 'Profile updated successfully', 'user_id' => $user_id]);
+    } else {
+        $user_id = wp_insert_user([
+            'user_login' => $username,
+            'user_pass' => $password,
+            'user_nicename' => $username,
+            'user_email' => $email,
+            'display_name' => $firstname . ' ' . $lastname,
+            'role' => 'subscriber',
+        ]);
+
+        if (is_wp_error($user_id)) {
+            wp_send_json_error('An error occurred: ' . $user_id->get_error_message());
+        }
+
+        update_user_meta($user_id, 'about_user', $aboutUser);
+
+        if (isset($_FILES['profile_picture']) && !empty($_FILES['profile_picture']['tmp_name'])) {
+            $uploaded = media_handle_upload('profile_picture', 0);
+            if (!is_wp_error($uploaded)) {
+                update_user_meta($user_id, 'profile_picture', $uploaded);
+            }
+        }
+
+        wp_send_json_success(['message' => 'Registration successful!', 'user_id' => ''] );
     }
-
-    wp_send_json_success('Registration successful!');
 }
 add_action('wp_ajax_register_user', 'ajax_register_user');
 add_action('wp_ajax_nopriv_register_user', 'ajax_register_user');
+
+function my_theme_enqueue_scripts() {
+    wp_enqueue_script(
+        'profile-js', 
+        get_template_directory_uri() . '/js/profile.js', // adjust path
+        array('jquery'), 
+        null, 
+        true
+    );
+
+    // Localize ajax object
+    wp_localize_script('profile-js', 'ajax_object', array(
+        'ajax_url' => admin_url('admin-ajax.php'),
+        'nonce'    => wp_create_nonce('about_user_nonce'),
+    ));
+}
+add_action('wp_enqueue_scripts', 'my_theme_enqueue_scripts');
+
+add_action('wp_ajax_save_about_user', 'save_about_user_callback');
+
+function save_about_user_callback() {
+    // Security check
+    check_ajax_referer('about_user_nonce', 'security');
+
+    $user_id = get_current_user_id();
+    $about_user = sanitize_textarea_field($_POST['about_user']);
+
+    if (!$user_id) {
+        wp_send_json_error('You must be logged in.');
+    }
+
+    update_user_meta($user_id, 'about_user', $about_user);
+
+    wp_send_json_success('About user updated successfully.');
+}
+
+add_action('wp_ajax_follow_user', 'follow_user_callback');
+function follow_user_callback() {
+    check_ajax_referer('about_user_nonce', 'security');
+
+    $current_user_id = get_current_user_id();
+    $author_id = intval($_POST['author_id']);
+
+    if (!$current_user_id || $current_user_id == $author_id) {
+        wp_send_json_error('Invalid request.');
+    }
+
+    // Get current following list
+    $following = get_user_meta($current_user_id, 'following_users', true);
+    $following = is_array($following) ? $following : array();
+
+    if (!in_array($author_id, $following)) {
+        $following[] = $author_id;
+        update_user_meta($current_user_id, 'following_users', $following);
+    }
+
+    // Recalculate counts
+    $all_users = get_users();
+    $followers_count = 0;
+    foreach ($all_users as $user) {
+        $user_following = get_user_meta($user->ID, 'following_users', true);
+        if (is_array($user_following) && in_array($author_id, $user_following)) {
+            $followers_count++;
+        }
+    }
+    $author_following = get_user_meta($author_id, 'following_users', true);
+    $author_following_count = is_array($author_following) ? count($author_following) : 0;
+
+    global $wpdb;
+    $wpdb->insert("{$wpdb->prefix}author_notifications", [
+        'user_id' => $author_id,
+        'type' => 'follow',
+        'by_user_id'  => $current_user_id,
+        'created_at' => current_time('mysql')
+    ]);
+
+    wp_send_json_success(array(
+        'followers' => $followers_count,
+        'following' => $author_following_count
+    ));
+}
 
 // login
 function enqueue_ajax_login_script() {
@@ -1361,6 +1486,7 @@ function handle_comment_like() {
             'post_id' => $post_id,
             'type' => 'like comment',
             'by_user_id'  => $commenter_id,
+            'created_at' => current_time('mysql')
         ]);
     }
     // Notification added for comment end
@@ -1416,10 +1542,14 @@ function bootstrap5_comment_callback($comment, $args, $depth) {
     <li id="comment-<?php comment_ID(); ?>">
         <div class="row">
             <div class="col-2">
-                <?php echo get_avatar($comment, 64, '', '', ['class' => 'rounded-circle img-fluid']); ?>
+                <a href="<?php echo site_url('/profile/?user_id=' . $user_id); ?>">
+                    <?php echo get_avatar($comment, 64, '', '', ['class' => 'rounded-circle img-fluid']); ?>
+                </a>
             </div>
             <div class="col-10 text-start">
-                <h6 class="mb-0"><?php comment_author(); ?></h6>
+                <a href="<?php echo site_url('/profile/?user_id=' . $user_id); ?>">
+                    <h6 class="mb-0 text-primary-color"><?php comment_author(); ?></h6>
+                </a>
                 <div class="d-flex align-items-center justify-content-between">
                     <?php if ($rating): ?>
                         <div class="comment-rating">
@@ -1429,7 +1559,7 @@ function bootstrap5_comment_callback($comment, $args, $depth) {
                         </div>
                     <?php endif; ?>
 
-                    <small class="text-muted"><?php echo date('F j, Y', strtotime($comment->comment_date)); ?></small>
+                    <small class="text-primary-color"><?php echo date('F j, Y', strtotime($comment->comment_date)); ?></small>
                 </div>
 
                 <div class="mt-2 d-inline-block p-2 border rounded comment-text bg-transparent shadow-div">
@@ -1466,14 +1596,19 @@ function bootstrap5_comment_callback($comment, $args, $depth) {
                 <div id="child-comments-<?php echo $comment_id; ?>" class="mt-3 d-none">
                     <?php
                         foreach ($child_comments as $child_comment) { ?>
+                            <?php $childUserId = $child_comment->user_id; ?>
                             <hr/>
                             <div class="row">
                                 <div class="col-2">
-                                    <?php echo get_avatar($comment, 64, '', '', ['class' => 'rounded-circle img-fluid']); ?>
+                                    <a href="<?php echo site_url('/profile/?user_id=' . $childUserId); ?>">
+                                        <?php echo get_avatar($comment, 64, '', '', ['class' => 'rounded-circle img-fluid']); ?>
+                                    </a>
                                 </div>
                                 <div class="col-10 text-start">
                                     <div class="d-flex align-items-center justify-content-between">
-                                        <h6 class="mb-0"><?php echo get_comment_author($child_comment); ?></h6>
+                                        <a href="<?php echo site_url('/profile/?user_id=' . $childUserId); ?>">
+                                            <h6 class="mb-0"><?php echo get_comment_author($child_comment); ?></h6>
+                                        </a>
 
                                         <small class="text-muted"><?php echo date('F j, Y', strtotime($child_comment->comment_date)); ?></small>
                                     </div>
@@ -1726,6 +1861,7 @@ function add_reaction() {
                     'post_id' => $episode_id,
                     'type' => 'like',
                     'by_user_id'  => $commenter_id,
+                    'created_at' => current_time('mysql')
                 ]);
             }
         } else {
@@ -2118,6 +2254,7 @@ function handle_ajax_comment() {
                 'post_id' => $episode_id,
                 'type' => 'comment',
                 'by_user_id'  => $commenter_id,
+                'created_at' => current_time('mysql')
             ]);
         }
         // Notification added for comment end
@@ -2160,6 +2297,7 @@ function handle_ajax_reply_comment() {
                     'post_id'    => $episode_id,
                     'type'       => 'reply comment',
                     'by_user_id' => $commenter_id,
+                    'created_at' => current_time('mysql')
                 ]);
             }
         }
@@ -2211,7 +2349,24 @@ add_filter('template_include', function($template) {
     return $template;
 });
 
+function track_recently_read_post($post_id) {
+    if (!is_user_logged_in()) return;
 
+    $user_id = get_current_user_id();
+    $history = get_user_meta($user_id, 'recently_read_posts', true);
 
+    if (!is_array($history)) $history = [];
+
+    // Remove if already exists to avoid duplicates
+    $history = array_diff($history, [$post_id]);
+
+    // Add new post ID at the beginning
+    array_unshift($history, $post_id);
+
+    // Keep only last 20 posts
+    $history = array_slice($history, 0, 20);
+
+    update_user_meta($user_id, 'recently_read_posts', $history);
+}
 
 ?>

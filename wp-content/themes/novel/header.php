@@ -6,6 +6,17 @@
     <link rel="profile" href="http://gmpg.org/xfn/11">
     <?php wp_head(); ?> <!-- WordPress hook for adding scripts/styles -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil&display=swap" rel="stylesheet">
+
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark-mode');
+                document.querySelectorAll('.moon').forEach(m => m.classList.add('d-none'));
+                document.querySelectorAll('.sun').forEach(s => s.classList.remove('d-none'));
+            }
+        })();
+    </script>
 </head>
 <body <?php body_class(); ?> class="height: 100%">
 <div class="wrapper" style="min-height: 90vh; /* Full viewport height */
@@ -35,23 +46,43 @@
         </button>
     </div>
 
-    <div class="col-12 col-xl-auto mt-3 mt-xl-0 d-none d-sm-flex justify-content-between justify-content-xl-end align-items-center">
+    <div class="col-12 col-xl-auto mt-3 mt-xl-0 d-flex justify-content-between align-items-center">
 
-            <div class="d-flex align-items-center mt-2">
-                <span class="theme-toggle moon text-white d-flex flex-column align-items-center me-3" style="cursor:pointer;">
-                    <i class="fa-solid fa-moon fa-xl"></i>
-                    <span class="menu-text mt-2 pt-1">Dark Mode</span>
-                </span>
-                <span class="theme-toggle sun text-white d-flex flex-column align-items-center me-3 d-none" style="cursor:pointer;">
-                    <i class="fa-solid fa-sun fa-xl"></i>
-                    <span class="menu-text mt-2 pt-1">Light Mode</span>
-                </span>
-            </div>
+        <div class="d-none d-sm-flex align-items-center mt-2">
+            <span class="theme-toggle moon text-white d-flex flex-column align-items-center me-3" style="cursor:pointer;">
+                <i class="fa-solid fa-moon fa-xl"></i>
+                <span class="menu-text mt-2 pt-1">Dark Mode</span>
+            </span>
+            <span class="theme-toggle sun text-white d-flex flex-column align-items-center me-3 d-none" style="cursor:pointer;">
+                <i class="fa-solid fa-sun fa-xl"></i>
+                <span class="menu-text mt-2 pt-1">Light Mode</span>
+            </span>
+        </div>
 
-            <div class="notification-wrapper">
+        <div class="d-none d-sm-flex align-items-center">
+            <div class="notification-wrapper me-3">
                 <?php get_template_part('template-parts/header-notification', null, ['view' => 'desktop']); ?>
             </div>
+
+            <div class="position-relative">
+                <button id="userToggleDesktop" class="btn btn-link text-white p-0">
+                    <i class="fas fa-user fa-lg"></i>
+                </button>
+                <div id="userDropdownDesktop" class="dropdown-menu dropdown-menu-end p-2 shadow border-0 fs-13px"
+                    style="min-width: 200px; display: none; position: absolute; top: 100%; right: 0; z-index: 1000;">
+                    <?php if (is_user_logged_in()) : $current_user = wp_get_current_user(); ?>
+                        <span class="dropdown-item text-center">Welcome <?php echo esc_html( $current_user->user_login ); ?> </span>
+                        <a href="<?php echo site_url('/profile'); ?>" class="dropdown-item text-center">My Profile</a>
+                        <a href="<?php echo wp_logout_url(site_url('/')); ?>" class="dropdown-item text-center">Logout</a>
+                    <?php else : ?>
+                        <a data-bs-toggle="modal" data-bs-target="#loginModal" class="dropdown-item text-center">Login</a>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
+
+    </div>
+
 
     <!-- Second Row: Search Form (Visible below logo on mobile) -->
     <div class="row mt-2 d-sm-none w-100">
@@ -72,8 +103,26 @@
                 </div>
 
                 <!-- Notification (Right) -->
-                <div class="notification-wrapper">
-                    <?php get_template_part('template-parts/header-notification', null, ['view' => 'mobile']); ?>
+                <div class="d-flex align-items-center">
+                    <div class="notification-wrapper me-3">
+                        <?php get_template_part('template-parts/header-notification', null, ['view' => 'mobile']); ?>
+                    </div>
+
+                    <div class="position-relative">
+                        <button id="userToggleMobile" class="btn btn-link text-white p-0">
+                            <i class="fas fa-user fa-lg"></i>
+                        </button>
+                        <div id="userDropdownMobile" class="dropdown-menu dropdown-menu-end p-2 shadow border-0 fs-13px"
+                            style="min-width: 200px; display: none; position: absolute; top: 100%; right: 0; z-index: 1000;">
+                            <?php if (is_user_logged_in()) : $current_user = wp_get_current_user(); ?>
+                                <span class="dropdown-item text-center">Welcome <?php echo esc_html( $current_user->user_login ); ?> </span>
+                                <a href="<?php echo site_url('/profile'); ?>" class="dropdown-item text-center">My Profile</a>
+                                <a href="<?php echo wp_logout_url(site_url('/')); ?>" class="dropdown-item text-center">Logout</a>
+                            <?php else : ?>
+                                <a data-bs-toggle="modal" data-bs-target="#loginModal" class="dropdown-item text-center">Login</a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
                 </div>
 
             </div>
@@ -97,29 +146,6 @@
                 'depth' => 2,
                 'walker' => new WP_Bootstrap_Navwalker()
             )); ?>
-            <?php if (is_user_logged_in()) { ?>
-                <a href="<?php echo esc_url( add_query_arg('custom_logout', '1', get_permalink()) ); ?>" class="text-white text-decoration-none" style="padding-left: 0.5rem;padding-right: 0.5rem;">
-                    <span itemprop="name">
-                        <div class="menu-icon text-center custom-menu-icon">
-                            <i class="fa-solid fa-right-from-bracket"></i>
-                        </div>
-                        <div class="text-center custom-menu row col-12">
-                            <span class="menu-text">வெளியேறு</span>
-                        </div>
-                    </span>
-                </a>
-            <?php } else { ?>
-                <a href="#" data-bs-toggle="modal" data-bs-target="#loginModal" class="text-white text-decoration-none" style="padding-left: 0.5rem;padding-right: 0.5rem;">
-                    <span itemprop="name">
-                        <div class="menu-icon text-center custom-menu-icon">
-                            <i class="fa-solid fa-right-to-bracket"></i>
-                        </div>
-                        <div class="text-center custom-menu row col-12">
-                            <span class="menu-text">உள்நுழைக</span>
-                        </div>
-                    </span>
-                </a>
-            <?php } ?>
         </div>
 
         <!-- Bootstrap Modal -->
@@ -179,8 +205,8 @@
             <div class="modal-dialog modal-lg">
                 <div class="modal-content shadow-div">
                     <div class="modal-header bg-primary-color">
-                        <h5 class="modal-title text-white" id="registerModalLabel">Register  &nbsp; <i class="fa-solid fa-user-plus"></i></h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <h5 class="modal-title text-white" id="regHeader">Register  &nbsp; <i class="fa-solid fa-user-plus"></i></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body p-4 px-5">
                         <div class="row">
@@ -189,6 +215,8 @@
                             </div>
                             <div class="col-md-6">
                                 <form id="registerForm">
+                                    <input type="hidden" name="action" value="register_user" id="formAction">
+                                    <input type="hidden" name="user_id" id="user_id">
                                     <div class="row mb-3 text-center">
                                         <i class="fa-solid fa-circle-user text-primary-color" style="font-size: 60px;"></i>
                                     </div>
@@ -197,7 +225,7 @@
 
                                     <div class="row mb-3">
                                         <div class="col-sm-12">
-                                            <input type="text" class="form-control" id="username" name="username" placeholder="Username *">
+                                            <input type="text" class="form-control" id="regUsername" name="username" placeholder="Username *">
                                         </div>
                                     </div>
 
@@ -219,9 +247,21 @@
                                         </div>
                                     </div>
 
-                                    <div class="row mb-4">
+                                    <div class="row mb-3">
                                         <div class="col-sm-12">
                                             <input type="text" class="form-control" id="lastname" name="lastname" placeholder="Last Name *">
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-sm-12">
+                                            <textarea class="form-control" id="about_user" name="about_user" placeholder="About"></textarea>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-sm-12">
+                                            <input type="file" class="form-control" id="profile_picture" name="profile_picture" accept="image/*">
                                         </div>
                                     </div>
 
@@ -229,7 +269,7 @@
                                     <div class="row mb-3 align-items-center">
                                         <div class="col-sm-12">
                                             <button type="submit" class="btn btn-primary">
-                                                <i class="fa-solid fa-floppy-disk me-2"></i> Register
+                                                <i class="fa-solid fa-floppy-disk me-2"></i> <span id="regSubmit">Register</span>
                                             </button>
                                             <button type="button" data-bs-dismiss="modal" class="btn btn-secondary ms-3">
                                             <i class="fa-solid fa-xmark me-2"></i> Close
@@ -237,7 +277,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="row mb-3">
+                                    <div class="row mb-3" id="loginLink">
                                         <a href="#" class="text-primary-color text-decoration-none" data-bs-toggle="modal" data-bs-target="#loginModal">Already have an account?</a>
                                     </div>
                                 </form>

@@ -27,9 +27,9 @@ if (post_password_required()) {
     <div class="modal fade" id="commentsModal" tabindex="-1" aria-labelledby="commentsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-md">
             <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header bg-primary-color">
                     <h5 class="modal-title" id="commentsModalLabel"><?php echo $comments_count . ' Comments'; ?></h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" style="height: 31rem; overflow-y: scroll;">
                     <?php
@@ -72,7 +72,9 @@ if (post_password_required()) {
                                         <div class="d-flex align-items-start">
                                             <!-- Author Photo -->
                                             <div class="me-2">
-                                                <img src="' . get_avatar_url(get_current_user_id(), ["size" => 50]) . '" class="rounded-circle" alt="Author">
+                                                <a href="'. site_url('/profile/?user_id=' . get_current_user_id()). '">
+                                                    <img src="' . get_avatar_url(get_current_user_id(), ["size" => 50]) . '" class="rounded-circle" alt="Author">
+                                                </a>
                                             </div>
                                             <!-- Comment Input -->
                                             <div class="flex-grow-1 position-relative">

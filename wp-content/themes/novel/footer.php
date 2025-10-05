@@ -8,9 +8,9 @@ $terms_page = get_page_by_path('terms-and-conditions');
 <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content text-primary-color shadow-div">
-      <div class="modal-header">
+      <div class="modal-header bg-primary-color">
         <h5 class="modal-title" id="termsModalLabel"><?php echo esc_html($terms_page->post_title); ?></h5>
-         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body p-4">
         <?php echo apply_filters('the_content', $terms_page->post_content); ?>
@@ -28,9 +28,9 @@ $privacy_page = get_page_by_path('privacy-policy');
 <div class="modal fade" id="privacyModal" tabindex="-1" aria-labelledby="privacyModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content text-primary-color shadow-div">
-      <div class="modal-header">
+      <div class="modal-header bg-primary-color">
         <h5 class="modal-title" id="privacyModalLabel"><?php echo esc_html($privacy_page->post_title); ?></h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body p-4">
         <?php echo apply_filters('the_content', $privacy_page->post_content); ?>
@@ -116,14 +116,9 @@ $privacy_page = get_page_by_path('privacy-policy');
 </html>
 
 <script>
-    // For not allow screenshot and copy the text start
     document.addEventListener('contextmenu', function (e) {
         e.preventDefault();
     });
-
-    // document.addEventListener('selectstart', function (e) {
-    //     e.preventDefault();
-    // });
 
     document.addEventListener('keydown', function (e) {
         if (e.ctrlKey && (e.key === 'c' || e.key === 'u' || e.key === 'p')) {
@@ -277,34 +272,63 @@ $privacy_page = get_page_by_path('privacy-policy');
             });
         }
 
+        const mobileDropdown = document.getElementById('mobileNotificationDropdown');
+
+        if (mobileDropdown) {
+            mobileDropdown.addEventListener('click', () => {
+                fetch('<?php echo admin_url("admin-ajax.php?action=mark_notifications_seen"); ?>');
+            });
+        }
+
+        // user dropdown start
+        function setupToggle(toggleId, dropdownId) {
+            const toggleBtn = document.getElementById(toggleId);
+            const dropdown = document.getElementById(dropdownId);
+
+            if (toggleBtn && dropdown) {
+                toggleBtn.addEventListener("click", function () {
+                    dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+                });
+
+                // Close dropdown if clicked outside
+                document.addEventListener("click", function (e) {
+                    if (!toggleBtn.contains(e.target) && !dropdown.contains(e.target)) {
+                        dropdown.style.display = "none";
+                    }
+                });
+            }
+        }
+
+        setupToggle("userToggleDesktop", "userDropdownDesktop");
+        setupToggle("userToggleMobile", "userDropdownMobile");
+        // user dropdown end
+
+        // dark and light mode start
         const moons = document.querySelectorAll('.moon');
         const suns = document.querySelectorAll('.sun');
-        const body = document.body;
+        const element = document.documentElement;
 
         function applyTheme(theme) {
-        if (theme === 'dark') {
-            body.classList.add('dark-mode');
-            moons.forEach(m => m.classList.add('d-none'));
-            suns.forEach(s => s.classList.remove('d-none'));
-        } else {
-            body.classList.remove('dark-mode');
-            moons.forEach(m => m.classList.remove('d-none'));
-            suns.forEach(s => s.classList.add('d-none'));
+            if (theme === 'dark') {
+                element.classList.add('dark-mode');
+                moons.forEach(m => m.classList.add('d-none'));
+                suns.forEach(s => s.classList.remove('d-none'));
+            } else {
+                element.classList.remove('dark-mode');
+                moons.forEach(m => m.classList.remove('d-none'));
+                suns.forEach(s => s.classList.add('d-none'));
+            }
         }
-    }
-
-        // Apply saved theme on page load
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        applyTheme(savedTheme);
 
         function toggleTheme() {
-            const newTheme = body.classList.contains('dark-mode') ? 'light' : 'dark';
+            const newTheme = element.classList.contains('dark-mode') ? 'light' : 'dark';
             localStorage.setItem('theme', newTheme);
             applyTheme(newTheme);
         }
 
         moons.forEach(m => m.addEventListener('click', toggleTheme));
         suns.forEach(s => s.addEventListener('click', toggleTheme));
+        // dark and light mode end
 
     });
 
