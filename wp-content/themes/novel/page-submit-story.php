@@ -40,10 +40,33 @@ get_header();
                         if ($post_id && has_post_thumbnail($post_id)) {
                             $image_url = get_the_post_thumbnail_url($post_id, 'medium');
                         }
+
+                        $default_category_id = get_post_meta($competition_id, '_default_category', true);
+                        $category_name = '';
+                        if ($default_category_id) {
+                            $category = get_category($default_category_id);
+                            $category_name = $category ? $category->name : '';
+                        }
                 ?>
                     <form id="competition-post-form" class="p-0 p-xl-4">
                         <input type="hidden" id="post-id" value="<?php echo $post_id; ?>">
                         <input type="hidden" id="competition-id" value="<?php echo $competition_id; ?>">
+                         <div class="row mb-4">
+                            <label for="category" class="col-12 col-xl-1 col-form-label">Category</label>
+                            <div class="col-sm-6 col-xl-4">
+                                <select class="form-select" id="default-category" name="default_category" disabled>
+                                    <?php if ($category_name): ?>
+                                        <option value="<?php echo esc_attr($default_category_id); ?>" selected>
+                                            <?php echo esc_html($category_name); ?>
+                                        </option>
+                                    <?php else: ?>
+                                        <option value="">No category selected</option>
+                                    <?php endif; ?>
+                                </select>
+                                <!-- hidden field to pass value since disabled fields are not submitted -->
+                                <input type="hidden" id="default_category_hidden" name="default_category_hidden" value="<?php echo esc_attr($default_category_id); ?>">
+                            </div>
+                        </div>
                         <div class="row mb-4">
                             <label for="title" class="col-12 col-xl-1 col-form-label">Title <span class="text-danger">*</span></label>
                             <div class="col-sm-6 col-xl-4">
@@ -171,6 +194,7 @@ jQuery(document).ready(function($) {
         e.preventDefault();
 
         let isValid = true;
+        let category = $('#default_category_hidden').val().trim();
         let title = $('#post-title').val().trim();
         let content = $('#post-content').val().trim();
         let image = $('#post-image')[0].files[0];
@@ -197,6 +221,7 @@ jQuery(document).ready(function($) {
 
         const formData = new FormData();
         formData.append('action', 'submit_competition_post');
+        formData.append('post_category', category);
         formData.append('post_title', title);
         formData.append('post_content', content);
         formData.append('competition_id', $('#competition-id').val());
