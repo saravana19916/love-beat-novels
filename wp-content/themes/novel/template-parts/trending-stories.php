@@ -135,60 +135,56 @@
 
     $top_stories = array_slice($stories_with_views, 0, 10);
 ?>
-    <div class="row mb-5 shadow rounded d-none d-lg-flex shadow-div">
-        <h6 class="px-4 py-2 bg-category-color head-title">Trending Stories</h6>
-        <div class="row px-4">
+    <div class="row mb-5 shadow rounded shadow-div overflow-hidden">
+    <h6 class="px-4 py-2 bg-category-color head-title">Trending Stories</h6>
+
+    <div class="marquee-wrapper py-3">
+        <div class="marquee-content d-flex align-items-stretch">
             <?php 
-            $count = 0;
             foreach ($top_stories as $item) {
                 $post = $item['post'];
                 $views = $item['views'];
                 $average_rating = $item['average_rating'];
                 setup_postdata($post);
-                $count++;
-                $hidden_class = $count > 3 ? 'd-none more-trending-stories' : '';
             ?>
-                <div class="col-md-4 p-3 <?php echo $hidden_class; ?>">
-                    <div class="card h-100 bg-transparent shadow-div">
-                        <div class="card-body">
-                            <h6 class="card-title text-center fw-bold">
-                                <a href="<?php the_permalink(); ?>" class="text-decoration-none fs-14px text-primary-color">
-                                    <?php the_title(); ?>
-                                </a>
-                            </h6>
-                            <?php if (has_post_thumbnail()) : ?>
-                                <a href="<?php the_permalink(); ?>">
-                                    <?php the_post_thumbnail('medium', ['class' => 'img-fluid mx-auto d-block my-3']); ?>
-                                </a>
-                            <?php else : ?>
-                                <a href="<?php the_permalink(); ?>">
-                                    <img src="<?php echo get_template_directory_uri(); ?>/images/no-image.jpeg" class="img-fluid mx-auto d-block my-3" alt="Default Image" style="height: 300px;">
-                                </a>
-                            <?php endif; ?>
-                            <p class="card-text text-primary-color"><?php echo wp_trim_words(get_the_excerpt(), 20); ?></p>
-                        </div>
-                        <div class="card-footer shadow-div">
-                            <div class="d-flex justify-content-between align-items-center my-1">
-                                <div class="d-flex align-items-center">
-                                    <p class="me-4 mb-0 text-primary-color"><i class="fa-solid fa-eye"></i>&nbsp;&nbsp;<?php echo format_view_count($views); ?></p>
-                                    <p class="mb-0 text-primary-color"><i class="fa-solid fa-star" style="color: gold;"></i>&nbsp;&nbsp;<?php echo $average_rating; ?></p>
-                                </div>
-                                <a href="<?php the_permalink(); ?>" class="btn btn-sm text-white fs-12px primary-btn">மேலும் படிக்க</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            <?php } ?>
+            <div class="card h-100 mx-3 bg-transparent shadow-div" style="min-width: 300px; flex: 0 0 auto;">
+                <div class="card-body">
+                    <h6 class="card-title text-center fw-bold">
+                        <a href="<?php the_permalink(); ?>" class="text-decoration-none fs-14px text-primary-color">
+                            <?php the_title(); ?>
+                        </a>
+                    </h6>
 
-            <?php if (count($top_stories) > 3): ?>
-                <div class="text-center my-3">
-                    <button class="btn btn-sm text-decoration-none primary-btn" id="trendingStories">
-                        Show More
-                    </button>
+                    <?php if (has_post_thumbnail()) : ?>
+                        <a href="<?php the_permalink(); ?>">
+                            <?php the_post_thumbnail('medium', [
+                                'class' => 'img-fluid mx-auto d-block my-3',
+                                'style' => 'height: 300px;'
+                            ]); ?>
+                        </a>
+                    <?php else : ?>
+                        <a href="<?php the_permalink(); ?>">
+                            <img src="<?php echo get_template_directory_uri(); ?>/images/no-image.jpeg" class="img-fluid mx-auto d-block my-3" alt="Default Image" style="height: 300px;">
+                        </a>
+                    <?php endif; ?>
+
+                    <p class="card-text text-primary-color text-center">
+                        <?php echo wp_trim_words(get_the_excerpt(), 20); ?>
+                    </p>
                 </div>
-            <?php endif; ?>
+                <div class="card-footer text-center">
+                    <p class="mb-0 text-primary-color d-inline me-4">
+                        <i class="fa-solid fa-eye"></i>&nbsp;<?php echo format_view_count($views); ?>
+                    </p>
+                    <p class="mb-0 text-primary-color d-inline">
+                        <i class="fa-solid fa-star" style="color: gold;"></i>&nbsp;<?php echo $average_rating; ?>
+                    </p>
+                </div>
+            </div>
+            <?php } ?>
         </div>
     </div>
+</div>
 
     <div class="row mb-5 d-lg-none">
         <h6 class="px-4 py-2 bg-category-color head-title">Trending Stories</h6>

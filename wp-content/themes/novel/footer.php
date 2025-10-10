@@ -332,5 +332,11 @@ $privacy_page = get_page_by_path('privacy-policy');
 
     });
 
+    document.addEventListener("DOMContentLoaded", function() {
+  // Duplicate content to make the scroll seamless
+  const marquee = document.querySelector('.marquee-content');
+  marquee.innerHTML += marquee.innerHTML;
+});
+
 </script>
 

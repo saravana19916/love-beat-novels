@@ -12,10 +12,21 @@
 
     <div>
         <?php if (have_posts()) :
-            while (have_posts()) : the_post(); ?>
+            the_post();
+
+            $competition_id = get_the_ID();
+            $default_category_id = get_post_meta($competition_id, '_default_category', true);
+            $category_name = '';
+            if ($default_category_id) {
+                $category = get_category($default_category_id);
+                $category_name = $category ? $category->name : '';
+            }
+        ?>
+            
 
                 <!-- List Existing Posts -->
                  <h4 class="text-primary-color fw-bold text-center"><?php the_title(); ?></h4>
+                 <h6 class="text-primary-color fw-bold text-center">Category: <?php echo $category_name; ?></h6>
                 <div class="card border border-2 border-primary rounded">
                     <div class="card-body p-0">
                         <div class="card-text mt-3 px-3 py-2" style="max-height: 600px; overflow-y: auto;">
@@ -50,120 +61,77 @@
                     </div>
                 </div>
 
-                <?php
-// Get competition ID
-$competition_id = get_the_ID();
+                <?php 
+                    $related_args = array(
+                        'post_type'      => 'post',
+                        'meta_query'     => array(
+                            array(
+                                'key'   => 'competition_id',
+                                'value' => $competition_id,
+                                'compare' => '='
+                            ),
+                        ),
+                        'posts_per_page' => $posts_per_page,
+                        'paged'          => $paged,
+                    );
 
-// Get default category ID stored in meta
-$default_category_id = get_post_meta($competition_id, '_default_category', true);
+                    $query = new WP_Query($related_args);
 
-// Only show related stories if category exists
-if ($default_category_id) :
-    // Query posts in that category
-
-    $related_args = array(
-        'post_type'      => 'post',
-        'cat'            => $default_category_id,
-        'meta_query'     => array(
-            array(
-                'key'   => 'competition_id',
-                'value' => $competition_id,
-                'compare' => '='
-            ),
-        ),
-        'post_status'    => 'publish',
-        'posts_per_page' => 6,
-    );
-
-    $related_query = new WP_Query($related_args);
-
-    if ($related_query->have_posts()) :
-?>
-        <div class="related-stories mt-4">
-            <div class="row">
-                <?php while ($related_query->have_posts()) : $related_query->the_post(); ?>
-                    <div class="col-md-4 mb-3">
-                        <div class="card h-100 border border-secondary rounded shadow-sm">
-                            <?php if (has_post_thumbnail()) : ?>
-                                <div class="card-img-top overflow-hidden" style="max-height:180px;">
-                                    <a href="<?php the_permalink(); ?>">
-                                        <?php the_post_thumbnail('medium', ['class' => 'img-fluid w-100']); ?>
-                                    </a>
-                                </div>
-                            <?php endif; ?>
+                    if ($query->have_posts()) :
+                ?>
+                    <div class="related-stories mt-4">
+                        <div class="row">
+                           <?php 
+                $count = 0;
+                while ($query->have_posts()) : $query->the_post();
+                    $count++;
+                    $story_id = get_the_ID();
+            $total_views = get_story_total_views('post', 'story_id', $story_id);
+            $average_rating = get_story_average_rating('post', 'story_id', $story_id);
+                ?>
+                    <div class="col-md-4 p-3">
+                        <div class="card h-100 bg-transparent shadow-div">
                             <div class="card-body">
-                                <h6 class="card-title text-primary fw-bold">
-                                    <a href="<?php the_permalink(); ?>" class="text-decoration-none text-primary">
+                                <h6 class="card-title text-center fw-bold fs-14px">
+                                    <a href="<?php the_permalink(); ?>" class="text-decoration-none text-primary-color">
                                         <?php the_title(); ?>
                                     </a>
                                 </h6>
-                                <p class="card-text small text-muted mb-2">
-                                    <?php echo wp_trim_words(get_the_content(), 20, '...'); ?>
-                                </p>
+                                <?php if (has_post_thumbnail()) : ?>
+                                    <a href="<?php the_permalink(); ?>">
+                                        <?php the_post_thumbnail('medium', ['class' => 'img-fluid mx-auto d-block my-3']); ?>
+                                    </a>
+                                <?php else : ?>
+                                    <a href="<?php the_permalink(); ?>">
+                                        <img src="<?php echo get_template_directory_uri(); ?>/images/no-image.jpeg" class="img-fluid mx-auto d-block my-3" alt="Default Image" style="height: 300px;">
+                                    </a>
+                                <?php endif; ?>
+                                <p class="card-text text-primary-color"><?php echo wp_trim_words(get_the_excerpt(), 20); ?></p>
                             </div>
-                            <div class="card-footer bg-transparent text-end">
-                                <a href="<?php the_permalink(); ?>" class="btn btn-outline-primary btn-sm">Read More</a>
+                            <div class="card-footer shadow-div">
+                                <div class="d-flex justify-content-between align-items-center my-1">
+                                    <div class="d-flex align-items-center">
+                                        <p class="me-4 mb-0 text-primary-color"><i class="fa-solid fa-eye"></i>&nbsp;&nbsp;<?php echo format_view_count($total_views); ?></p>
+                                        <p class="mb-0 text-primary-color"><i class="fa-solid fa-star" style="color: gold;"></i>&nbsp;&nbsp;<?php echo $average_rating; ?></p>
+                                    </div>
+                                    <a href="<?php the_permalink(); ?>" class="btn btn-sm text-white fs-12px primary-btn">மேலும் படிக்க</a>
+                                </div>
                             </div>
                         </div>
                     </div>
                 <?php endwhile; ?>
-            </div>
-        </div>
-<?php
-    endif;
-    wp_reset_postdata();
-endif;
-?>
 
+                        </div>
+                    </div>
+                <?php
+                    endif;
+                    wp_reset_postdata();
+                ?>
 
-                <table class="mt-4 table" style="border: 1px solid lightgray;">
-                    <thead>
-                    </thead>
-                    <tbody id="competition-table-body">
-                    </tbody>
-                </table>
-
-                <div id="competition-pagination">
-                </div>
-
-            <?php endwhile;
+            <?php
         endif; ?>
     </div>
 </div>
 
 <?php get_footer(); ?>
-
-<script>
-jQuery(document).ready(function($) {
-    function loadCompetitionPosts(competition_id, page = 1) {
-        $.ajax({
-            type: 'POST',
-            url: '<?php echo admin_url('admin-ajax.php'); ?>',
-            data: {
-                action: 'fetch_competition_posts',
-                competition_id: competition_id,
-                paged: page
-            },
-            beforeSend: function() {
-                $('#competition-table-body').html('<tr><td colspan="2">Loading...</td></tr>');
-            },
-            success: function(response) {
-                if (response.success) {
-                    $('#competition-table-body').html(response.data.table_data);
-                    $('#competition-pagination').html(response.data.pagination);
-                }
-            }
-        });
-    }
-
-    let competition_id = $('#competition-id').val();
-    loadCompetitionPosts(competition_id);
-
-    $(document).on('click', '.pagination-link', function(e) {
-        e.preventDefault();
-        let page = $(this).data('page');
-        loadCompetitionPosts(competition_id, page);
-    });
-});
-</script>
 

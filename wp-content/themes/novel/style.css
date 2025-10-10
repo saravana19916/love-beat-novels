@@ -928,3 +928,30 @@ html.dark-mode ::placeholder {
   color: #aaa;
   opacity: 1;
 }
+
+
+.marquee-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.marquee-content {
+  display: flex;
+  width: max-content;
+  animation: marquee-scroll 60s linear infinite;
+}
+
+@keyframes marquee-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Optional — Duplicate content for seamless loop */
+.marquee-content::after {
+  content: attr(data-duplicate);
+}
