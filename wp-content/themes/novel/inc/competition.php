@@ -139,8 +139,8 @@ function handle_competition_post_submission() {
         $post_id = wp_insert_post($post_data);
     }
 
-    if ($category_id > 0 && $post_id) {
-        wp_set_post_terms($post_id, [$category_id], 'category', false);
+   if (!is_wp_error($post_id) && $post_id && $category_id > 0) {
+        wp_set_post_categories($post_id, [(int)$category_id]);
     }
 
     // Handle image upload

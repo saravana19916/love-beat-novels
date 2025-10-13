@@ -885,7 +885,7 @@ function handle_episode_submission() {
     } else {
         $post_data['post_parent'] = $story_id;
         $episode_id = wp_insert_post($post_data);
-        update_post_meta($episode_id, 'story_id', $story_id);
+        update_post_meta($episode_id, 'competition_parent_id', $story_id);
     }
 
     if ($episode_id) {

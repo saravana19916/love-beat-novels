@@ -84,7 +84,11 @@ get_header();
             if ($latest_post_query->have_posts()) :
         ?>
             <div class="row">
-                <div class="col-lg-10 px-4">
+                <div class="col-lg-12 px-4">
+
+                    <!-- Latest stories start -->
+                    <?php get_template_part('template-parts/latest-stories'); ?>
+                    <!-- Latest stories end -->
 
                     <!-- Other stories start -->
                     <?php get_template_part('template-parts/other-stories', null, ['context' => 'my-creations']); ?>
@@ -172,33 +176,6 @@ get_header();
                                 </div>
                             <?php endif; ?>
 
-                </div>
-
-                <div class="col-lg-2 px-4">
-                    <div class="row mb-5 shadow rounded sticky-top shadow-div" style="height: 25rem; top: 20px; overflow-y: auto">
-                        <div class="col-md-12 p-0 text-center" id="latestPosts">
-                            <h6 class="px-4 py-2 fs-14px bg-category-color head-title"><?php echo "Latest posts"; ?></h6>
-                            <?php
-                                $latest_post_query = new WP_Query([
-                                    'post_type'      => 'post',
-                                    'posts_per_page' => 10,
-                                    'orderby'        => 'date',
-                                    'order'          => 'DESC',
-                                ]);
-
-                                if ($latest_post_query->have_posts()) :
-                                    while ($latest_post_query->have_posts()) : $latest_post_query->the_post();
-                                ?>
-                                    <p><a href="<?php the_permalink(); ?>" class="text-primary-color"><?php the_title(); ?></a></p>
-                                <?php
-                                    endwhile;
-                                    wp_reset_postdata();
-                                else :
-                                    echo '<p class="text-primary-color">No latest post found.</p>';
-                                endif;
-                                ?>
-                        </div>
-                    </div>
                 </div>
             </div>
         <?php else : ?>

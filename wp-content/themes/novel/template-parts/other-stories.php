@@ -30,7 +30,7 @@
         if ($context && $context == 'my-creations') {
             $blog_terms = ['my-creation-blog'];
         } else {
-            $blog_terms = ['main-blog', 'my-creation-blog'];
+            $blog_terms = ['main-blog', 'my-creation-blog', 'competition-blog'];
         }
 
         $meta_query = array();
@@ -67,16 +67,40 @@
             );
         }
 
+        // Add filter for competition-blog
+        if (in_array('competition-blog', $blog_terms)) {
+            $meta_query[] = array(
+                'relation' => 'OR',
+                array(
+                    'key'     => 'competition_parent_id',
+                    'compare' => 'NOT EXISTS',
+                ),
+                array(
+                    'key'     => 'competition_parent_id',
+                    'value'   => '0',
+                    'compare' => '=',
+                ),
+            );
+        }
+
         $args = array(
             'post_type'      => 'post',
             'author'         => $user_id ? $user_id : '',
             'tax_query'      => array(
                 'relation' => 'AND',
                 array(
-                    'taxonomy' => 'category',
-                    'field'    => 'slug',
-                    'terms'    => $category->slug,
-                ),
+            'relation' => 'OR', // Internal OR between two category filters
+            array(
+                'taxonomy' => 'category',
+                'field'    => 'term_id',
+                'terms'    => [$category->id],
+            ),
+            array(
+                'taxonomy' => 'category',
+                'field'    => 'slug',
+                'terms'    => [$category->slug],
+            ),
+        ),
                 array(
                     'taxonomy' => 'blog_type',
                     'field'    => 'slug',
@@ -111,6 +135,8 @@
                         $sub_meta_key = 'parent_blog_id';
                     } elseif ($term_slug === 'my-creation-blog') {
                         $sub_meta_key = 'my_creation_parent_blog_id';
+                    } elseif ($term_slug === 'competition-blog') {
+                        $sub_meta_key = 'competition_parent_id';
                     } else {
                         continue;
                     }
@@ -178,6 +204,8 @@
                             $sub_meta_key = 'parent_blog_id';
                         } elseif ($term_slug === 'my-creation-blog') {
                             $sub_meta_key = 'my_creation_parent_blog_id';
+                        }  elseif ($term_slug === 'competition-blog') {
+                            $sub_meta_key = 'competition_parent_id';
                         } else {
                             continue;
                         }

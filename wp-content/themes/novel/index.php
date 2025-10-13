@@ -153,11 +153,15 @@ get_header(); // Include the header
             if ($latest_post_query->have_posts()) :
         ?>
             <div class="row">
-                <div class="col-lg-10 px-4">
+                <div class="col-lg-12 px-4">
 
                     <!-- Trending stories start -->
                     <?php get_template_part('template-parts/trending-stories'); ?>
                     <!-- Trending stories end -->
+
+                    <!-- Latest stories start -->
+                    <?php get_template_part('template-parts/latest-stories'); ?>
+                    <!-- Latest stories end -->
 
                     <!-- Other stories start -->
                     <?php get_template_part('template-parts/other-stories'); ?>
@@ -167,26 +171,6 @@ get_header(); // Include the header
                     <?php get_template_part('template-parts/competition-stories'); ?>
                     <!-- Competition stories end -->                  
 
-                </div>
-
-                <div class="col-lg-2 px-4">
-                    <div class="row mb-5 shadow rounded sticky-top shadow-div" style="height: 25rem; top: 20px; overflow-y: auto">
-                        <div class="col-md-12 p-0 text-center" id="latestPosts">
-                            <h6 class="px-4 py-2 bg-category-color head-title"><?php echo "Latest posts"; ?></h6>
-                            <?php
-                                if ($latest_post_query->have_posts()) :
-                                    while ($latest_post_query->have_posts()) : $latest_post_query->the_post();
-                                ?>
-                                    <p><a href="<?php the_permalink(); ?>" class="text-primary-color"><?php the_title(); ?></a></p>
-                                <?php
-                                    endwhile;
-                                    wp_reset_postdata();
-                                else :
-                                    echo '<p class="text-primary-color">No latest post found.</p>';
-                                endif;
-                                ?>
-                        </div>
-                    </div>
                 </div>
             </div>
             <?php else : ?>

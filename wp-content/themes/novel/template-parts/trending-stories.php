@@ -136,104 +136,52 @@
     $top_stories = array_slice($stories_with_views, 0, 10);
 ?>
     <div class="row mb-5 shadow rounded shadow-div overflow-hidden">
-    <h6 class="px-4 py-2 bg-category-color head-title">Trending Stories</h6>
-
-    <div class="marquee-wrapper py-3">
-        <div class="marquee-content d-flex align-items-stretch">
-            <?php 
-            foreach ($top_stories as $item) {
-                $post = $item['post'];
-                $views = $item['views'];
-                $average_rating = $item['average_rating'];
-                setup_postdata($post);
-            ?>
-            <div class="card h-100 mx-3 bg-transparent shadow-div" style="min-width: 300px; flex: 0 0 auto;">
-                <div class="card-body">
-                    <h6 class="card-title text-center fw-bold">
-                        <a href="<?php the_permalink(); ?>" class="text-decoration-none fs-14px text-primary-color">
-                            <?php the_title(); ?>
-                        </a>
-                    </h6>
-
-                    <?php if (has_post_thumbnail()) : ?>
-                        <a href="<?php the_permalink(); ?>">
-                            <?php the_post_thumbnail('medium', [
-                                'class' => 'img-fluid mx-auto d-block my-3',
-                                'style' => 'height: 300px;'
-                            ]); ?>
-                        </a>
-                    <?php else : ?>
-                        <a href="<?php the_permalink(); ?>">
-                            <img src="<?php echo get_template_directory_uri(); ?>/images/no-image.jpeg" class="img-fluid mx-auto d-block my-3" alt="Default Image" style="height: 300px;">
-                        </a>
-                    <?php endif; ?>
-
-                    <p class="card-text text-primary-color text-center">
-                        <?php echo wp_trim_words(get_the_excerpt(), 20); ?>
-                    </p>
-                </div>
-                <div class="card-footer text-center">
-                    <p class="mb-0 text-primary-color d-inline me-4">
-                        <i class="fa-solid fa-eye"></i>&nbsp;<?php echo format_view_count($views); ?>
-                    </p>
-                    <p class="mb-0 text-primary-color d-inline">
-                        <i class="fa-solid fa-star" style="color: gold;"></i>&nbsp;<?php echo $average_rating; ?>
-                    </p>
-                </div>
-            </div>
-            <?php } ?>
-        </div>
-    </div>
-</div>
-
-    <div class="row mb-5 d-lg-none">
         <h6 class="px-4 py-2 bg-category-color head-title">Trending Stories</h6>
-        <div class="swiper-container px-3">
-            <div class="swiper-wrapper">
-                <?php foreach ($top_stories as $item) :
+
+        <div class="marquee-wrapper py-3">
+            <div class="marquee-content d-flex align-items-stretch">
+                <?php 
+                foreach ($top_stories as $item) {
                     $post = $item['post'];
                     $views = $item['views'];
                     $average_rating = $item['average_rating'];
                     setup_postdata($post);
                 ?>
-                <div class="swiper-slide custom-width">
-                    <div class="col-lg-3 py-3">
-                        <div class="card h-100 bg-transparent shadow-div">
-                            <div class="card-body text-center px-0">
-                                <div class="title-wrapper d-flex align-items-center justify-content-center text-center px-2" style="height: 2rem;">
-                                    <h6 class="card-title fw-bold fs-14px mb-0">
-                                        <a href="<?php the_permalink(); ?>" class="text-decoration-none text-primary-color">
-                                            <?php
-                                                $title = get_the_title();
-                                                $trimmed_title = mb_strimwidth($title, 0, 50, '...');
-                                                echo esc_html($trimmed_title);
-                                            ?>
-                                        </a>
-                                    </h6>
-                                </div>
+                <div class="card mx-3 bg-transparent shadow-div h-max-100" style="min-width: 500px; flex: 0 0 180px;">
+                    <div class="card-body">
+                        <h6 class="card-title text-center fw-bold">
+                            <a href="<?php the_permalink(); ?>" class="text-decoration-none fs-14px text-primary-color">
+                                <?php the_title(); ?>
+                            </a>
+                        </h6>
 
-                                <?php if (has_post_thumbnail()) : ?>
-                                    <a href="<?php the_permalink(); ?>">
-                                        <?php the_post_thumbnail('medium', [
-                                            'class' => 'img-fluid mx-3 d-block my-3',
-                                            'style' => 'height: 250px; width: 165px;'
-                                        ]); ?>
-                                    </a>
-                                <?php else : ?>
-                                    <a href="<?php the_permalink(); ?>">
-                                        <img src="<?php echo get_template_directory_uri(); ?>/images/no-image.jpeg" class="card-img-top img-fluid mx-3 d-block my-3" alt="Default Image" style="height: 250px; width: 165px;">
-                                    </a>
-                                <?php endif; ?>
+                        <?php if (has_post_thumbnail()) : ?>
+                            <a href="<?php the_permalink(); ?>">
+                                <?php the_post_thumbnail('medium', [
+                                    'class' => 'img-fluid mx-auto d-block my-3',
+                                    'style' => 'height: 300px;'
+                                ]); ?>
+                            </a>
+                        <?php else : ?>
+                            <a href="<?php the_permalink(); ?>">
+                                <img src="<?php echo get_template_directory_uri(); ?>/images/no-image.jpeg" class="img-fluid mx-auto d-block my-3" alt="Default Image" style="height: 300px;">
+                            </a>
+                        <?php endif; ?>
 
-                                <div class="d-flex mx-3">
-                                    <p class="me-4 mb-0 text-primary-color"><i class="fa-solid fa-eye"></i>&nbsp;&nbsp;<?php echo format_view_count($views); ?></p>
-                                    <p class="mb-0 text-primary-color"><i class="fa-solid fa-star" style="color: gold;"></i>&nbsp;&nbsp;<?php echo $average_rating; ?></p>
-                                </div>
-                            </div>
-                        </div>
+                        <p class="card-text text-primary-color">
+                            <?php echo wp_trim_words(get_the_excerpt(), 20); ?>
+                        </p>
+                    </div>
+                    <div class="card-footer">
+                        <p class="mb-0 text-primary-color d-inline me-4">
+                            <i class="fa-solid fa-eye"></i>&nbsp;<?php echo format_view_count($views); ?>
+                        </p>
+                        <p class="mb-0 text-primary-color d-inline">
+                            <i class="fa-solid fa-star" style="color: gold;"></i>&nbsp;<?php echo $average_rating; ?>
+                        </p>
                     </div>
                 </div>
-                <?php endforeach; ?>
+                <?php } ?>
             </div>
         </div>
     </div>

@@ -39,13 +39,13 @@
                 </div>
 
                 <input type="hidden" id="competition-id" value="<?php echo get_the_ID(); ?>">
-                <div class="row mt-5">
-                    <div class="col-md-6">
+                <div class="row mt-5 mb-3">
+                    <div class="col-6">
                         <h5 class="text-primary-color fw-bold">
-                            Related stories
-                        </h>
+                            Competition Stories
+                        </h5>
                     </div>
-                    <div class="col-md-6 text-end">
+                    <div class="col-6 text-end">
                         <?php if (is_user_logged_in()) { ?>
                             <?php
                                 $submit_story_url = get_permalink(get_page_by_path('submit-story')) . '?competition_id=' . get_the_ID();
@@ -86,11 +86,11 @@
                 while ($query->have_posts()) : $query->the_post();
                     $count++;
                     $story_id = get_the_ID();
-            $total_views = get_story_total_views('post', 'story_id', $story_id);
-            $average_rating = get_story_average_rating('post', 'story_id', $story_id);
+                    $total_views = get_story_total_views('post', 'story_id', $story_id);
+                    $average_rating = get_story_average_rating('post', 'story_id', $story_id);
                 ?>
-                    <div class="col-md-4 p-3">
-                        <div class="card h-100 bg-transparent shadow-div">
+                    <div class="col-lg-4 col-xxl-3 p-3 d-none d-lg-flex">
+                        <div class="card h-100 bg-transparent shadow-div w-100">
                             <div class="card-body">
                                 <h6 class="card-title text-center fw-bold fs-14px">
                                     <a href="<?php the_permalink(); ?>" class="text-decoration-none text-primary-color">
@@ -123,6 +123,62 @@
 
                         </div>
                     </div>
+                <?php else : ?>
+                    <p class="mt-4">No stories found.</p>
+                <?php
+                    endif;
+                    wp_reset_postdata();
+                ?>
+
+                <?php if ($query->have_posts()) : ?>
+                    <div class="row mb-5 d-lg-none">
+                        <div class="swiper-container px-3">
+                            <div class="swiper-wrapper">
+                                <?php $count = 0;
+                                    while ($query->have_posts()) : $query->the_post();
+                                        $count++;
+                                        $story_id = get_the_ID();
+                                        $total_views = get_story_total_views('post', 'story_id', $story_id);
+                                        $average_rating = get_story_average_rating('post', 'story_id', $story_id);
+                                ?>
+                                    <div class="swiper-slide custom-width">
+                                        <div class="card h-100 bg-transparent shadow-div">
+                                            <div class="card-body">
+                                                <h6 class="card-title text-center fw-bold fs-14px">
+                                                    <a href="<?php the_permalink(); ?>" class="text-decoration-none text-primary-color">
+                                                        <?php the_title(); ?>
+                                                    </a>
+                                                </h6>
+                                                <?php if (has_post_thumbnail()) : ?>
+                                                    <a href="<?php the_permalink(); ?>">
+                                                        <?php the_post_thumbnail('medium', [
+                                                            'class' => 'img-fluid mx-auto d-block my-3',
+                                                            'style' => 'height: 250px; width: 165px;'
+                                                        ]); ?>
+                                                    </a>
+                                                <?php else : ?>
+                                                    <a href="<?php the_permalink(); ?>">
+                                                        <img src="<?php echo get_template_directory_uri(); ?>/images/no-image.jpeg" class="img-fluid mx-auto d-block my-3" alt="Default Image" style="height: 250px; width: 165px;">
+                                                    </a>
+                                                <?php endif; ?>
+                                                <p class="card-text text-primary-color"><?php echo wp_trim_words(get_the_excerpt(), 20); ?></p>
+                                            </div>
+                                            <div class="card-footer shadow-div">
+                                                <div class="d-flex justify-content-between align-items-center my-1">
+                                                    <div class="d-flex align-items-center">
+                                                        <p class="me-4 mb-0 text-primary-color"><i class="fa-solid fa-eye"></i>&nbsp;&nbsp;<?php echo format_view_count($total_views); ?></p>
+                                                        <p class="mb-0 text-primary-color"><i class="fa-solid fa-star" style="color: gold;"></i>&nbsp;&nbsp;<?php echo $average_rating; ?></p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endwhile; ?>
+                            </div>
+                        </div>
+                    </div>
+                <?php else : ?>
+                    <p class="mt-4">No stories found.</p>
                 <?php
                     endif;
                     wp_reset_postdata();
