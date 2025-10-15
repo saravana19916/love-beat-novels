@@ -116,7 +116,7 @@ function handle_competition_post_submission() {
         wp_send_json_error("You must be logged in to submit a story.");
     }
 
-    $category_id = isset($_POST['category']) ? intval($_POST['category']) : 0;
+    $category_id = isset($_POST['post_category']) ? intval($_POST['post_category']) : 0;
     $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
     $post_title = sanitize_text_field($_POST['post_title']);
     $post_content = wp_kses_post(wp_unslash($_POST['post_content']));

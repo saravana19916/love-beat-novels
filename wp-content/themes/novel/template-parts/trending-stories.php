@@ -136,18 +136,19 @@
     $top_stories = array_slice($stories_with_views, 0, 10);
 ?>
     <div class="row mb-5 shadow rounded shadow-div overflow-hidden">
-        <h6 class="px-4 py-2 bg-category-color head-title">Trending Stories</h6>
+    <h6 class="px-4 py-2 bg-category-color head-title">Trending Stories</h6>
 
-        <div class="marquee-wrapper py-3">
-            <div class="marquee-content d-flex align-items-stretch">
-                <?php 
-                foreach ($top_stories as $item) {
-                    $post = $item['post'];
-                    $views = $item['views'];
-                    $average_rating = $item['average_rating'];
-                    setup_postdata($post);
-                ?>
-                <div class="card mx-3 bg-transparent shadow-div h-max-100" style="min-width: 500px; flex: 0 0 180px;">
+    <div class="swiper trending-swiper px-4 py-3">
+        <div class="swiper-wrapper">
+            <?php 
+            foreach ($top_stories as $item) {
+                $post = $item['post'];
+                $views = $item['views'];
+                $average_rating = $item['average_rating'];
+                setup_postdata($post);
+            ?>
+            <div class="swiper-slide">
+                <div class="card mx-3 bg-transparent shadow-div h-100">
                     <div class="card-body">
                         <h6 class="card-title text-center fw-bold">
                             <a href="<?php the_permalink(); ?>" class="text-decoration-none fs-14px text-primary-color">
@@ -159,12 +160,15 @@
                             <a href="<?php the_permalink(); ?>">
                                 <?php the_post_thumbnail('medium', [
                                     'class' => 'img-fluid mx-auto d-block my-3',
-                                    'style' => 'height: 300px;'
+                                    'style' => 'height: 300px; object-fit: cover;'
                                 ]); ?>
                             </a>
                         <?php else : ?>
                             <a href="<?php the_permalink(); ?>">
-                                <img src="<?php echo get_template_directory_uri(); ?>/images/no-image.jpeg" class="img-fluid mx-auto d-block my-3" alt="Default Image" style="height: 300px;">
+                                <img src="<?php echo get_template_directory_uri(); ?>/images/no-image.jpeg"
+                                     class="img-fluid mx-auto d-block my-3"
+                                     alt="Default Image"
+                                     style="height: 300px; object-fit: cover;">
                             </a>
                         <?php endif; ?>
 
@@ -172,16 +176,54 @@
                             <?php echo wp_trim_words(get_the_excerpt(), 20); ?>
                         </p>
                     </div>
-                    <div class="card-footer">
-                        <p class="mb-0 text-primary-color d-inline me-4">
-                            <i class="fa-solid fa-eye"></i>&nbsp;<?php echo format_view_count($views); ?>
-                        </p>
-                        <p class="mb-0 text-primary-color d-inline">
-                            <i class="fa-solid fa-star" style="color: gold;"></i>&nbsp;<?php echo $average_rating; ?>
-                        </p>
+                    <div class="card-footer shadow-div">
+                        <div class="d-flex justify-content-between align-items-center my-1">
+                            <div class="d-flex align-items-center">
+                                <p class="me-4 mb-0 text-primary-color"><i class="fa-solid fa-eye"></i>&nbsp;&nbsp;<?php echo format_view_count($views); ?></p>
+                                <p class="mb-0 text-primary-color"><i class="fa-solid fa-star" style="color: gold;"></i>&nbsp;&nbsp;<?php echo $average_rating; ?></p>
+                            </div>
+                            <a href="<?php the_permalink(); ?>" class="btn btn-sm text-white fs-12px primary-btn">மேலும் படிக்க</a>
+                        </div>
                     </div>
                 </div>
-                <?php } ?>
             </div>
+            <?php } ?>
         </div>
+
+        <!-- Navigation buttons -->
+        <div class="swiper-button-prev"></div>
+        <div class="swiper-button-next"></div>
+
+        <!-- Pagination (optional) -->
+        <div class="swiper-pagination"></div>
     </div>
+</div>
+
+<?php wp_reset_postdata(); ?>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    new Swiper(".trending-swiper", {
+        slidesPerView: 1,
+        spaceBetween: 20,
+        loop: true,
+        navigation: {
+            nextEl: ".swiper-button-next",
+            prevEl: ".swiper-button-prev",
+        },
+        pagination: {
+            el: ".swiper-pagination",
+            clickable: true,
+        },
+        autoplay: {
+            delay: 2000,
+            disableOnInteraction: false,
+            pauseOnMouseEnter: true,
+        },
+        breakpoints: {
+            768: { slidesPerView: 2 },
+            1024: { slidesPerView: 3 },
+        },
+    });
+});
+</script>

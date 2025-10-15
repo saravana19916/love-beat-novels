@@ -955,3 +955,23 @@ html.dark-mode ::placeholder {
 .marquee-content::after {
   content: attr(data-duplicate);
 }
+
+.trending-swiper .swiper-button-next::after,
+.trending-swiper .swiper-button-prev::after {
+  color: #061148; /* 🔸 change this to your preferred color */
+  font-size: 24px; /* optional: make arrows bigger */
+  font-weight: bold;
+}
+
+/* Optional: adjust hover color */
+.trending-swiper .swiper-button-next:hover::after,
+.trending-swiper .swiper-button-prev:hover::after {
+  color: #061148; /* darker hover color */
+}
+
+html.dark-mode .trending-swiper .swiper-button-next::after,
+html.dark-mode .trending-swiper .swiper-button-prev::after,
+html.dark-mode .trending-swiper .swiper-button-next:hover::after,
+html.dark-mode .trending-swiper .swiper-button-prev:hover::after {
+  color: #ffff;
+}
