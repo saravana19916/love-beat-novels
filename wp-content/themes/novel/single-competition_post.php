@@ -120,12 +120,12 @@
                     <?php if ($current_user_id == $story_author_id && $competition_closed != '1') {
                         $submit_story_url = get_permalink(get_page_by_path('submit-competition-episode')) . '?story_id=' . $story_id;
                     ?>
-                        <button class="btn btn-primary btn-sm" onclick="window.location.href='<?php echo esc_url($submit_story_url); ?>'">
+                        <button class="btn primary-btn btn-sm" onclick="window.location.href='<?php echo esc_url($submit_story_url); ?>'">
                             <i class="fa-solid fa-plus fa-lg"></i>&nbsp; Create Episode
                         </button>
                     <?php } ?>
                 <?php } else { ?>
-                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#loginModal">Login to create episodes</button>
+                    <button class="btn primary-btn btn-sm" data-bs-toggle="modal" data-bs-target="#loginModal">Login to create episodes</button>
                 <?php } ?>
             </div>
         </div>
@@ -151,11 +151,11 @@
                 $current_date = date('Y-m-d');
             ?>
                 <div class="col-lg-6 col-xxl-4">
-                    <div class="shadow-lg rounded mt-4">
+                    <div class="shadow-lg rounded mt-4 shadow-div">
                         <div class="d-flex justify-content-between align-items-center px-4 pt-4">
                             <h6 class="mb-0 fw-bold">
                                 <?php echo sprintf("%2d", $count + 1); ?>.&nbsp
-                                <a href="<?php echo add_query_arg('episode_id', get_the_ID(), get_permalink()); ?>">
+                                <a class="text-primary-color" href="<?php echo add_query_arg('episode_id', get_the_ID(), get_permalink()); ?>">
                                     <?php the_title(); ?>
                                 </a>
                             </h6>
@@ -180,7 +180,7 @@
                                 $tamil_date = str_replace(array_keys($tamil_months), array_values($tamil_months), $date); 
                             ?>
 
-                            <span class="text-muted fs-custom"><?php echo $tamil_date; ?></span>
+                            <span class="text-primary-color fs-custom"><?php echo $tamil_date; ?></span>
                         </div>
 
                         <div>
@@ -291,6 +291,15 @@
                             <div class="mb-5 fs-6 custom-content">
                                 <?php echo wpautop(get_the_content()); ?>
                                 <?php track_recently_read_post(get_the_ID()); ?>
+                            </div>
+
+                            <div class="my-4 text-center">
+                                <span class="fs-16px"><strong>Author:<strong>&nbsp;&nbsp;&nbsp;</span>
+                                <a href="<?php echo site_url('/profile/?user_id=' . $author_id); ?>" class="fs-16px text-primary-color text-decoration-underline mb-1">
+                                    <img src="<?php echo esc_url($profile_picture_url); ?>" alt="<?php echo $author_id ?>" class="rounded-circle me-2" height="40" width="40">
+                                    <?php echo $icon_html; ?>
+                                    <?php echo esc_html($author_name); ?>
+                                </a>
                             </div>
 
                             <!-- Reaction start -->

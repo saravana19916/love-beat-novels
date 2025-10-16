@@ -239,6 +239,15 @@
                                 <?php track_recently_read_post(get_the_ID()); ?>
                             </div>
 
+                            <div class="my-4 text-center">
+                                <span class="fs-16px"><strong>Author:<strong>&nbsp;&nbsp;&nbsp;</span>
+                                <a href="<?php echo site_url('/profile/?user_id=' . $author_id); ?>" class="fs-16px text-primary-color text-decoration-underline mb-1">
+                                    <img src="<?php echo esc_url($profile_picture_url); ?>" alt="<?php echo $author_id ?>" class="rounded-circle me-2" height="40" width="40">
+                                    <?php echo $icon_html; ?>
+                                    <?php echo esc_html($author_name); ?>
+                                </a>
+                            </div>
+
                             <!-- Next & Previous Episode Navigation -->
                             <?php
                             $parent_blog_id = get_post_meta(get_the_ID(), 'parent_blog_id', true);

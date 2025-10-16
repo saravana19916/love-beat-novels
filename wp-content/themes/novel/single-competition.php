@@ -27,15 +27,13 @@
                 <!-- List Existing Posts -->
                  <h4 class="text-primary-color fw-bold text-center"><?php the_title(); ?></h4>
                  <h6 class="text-primary-color fw-bold text-center">Category: <?php echo $category_name; ?></h6>
-                <div class="card border border-2 border-primary rounded">
-                    <div class="card-body p-0">
-                        <div class="card-text mt-3 px-3 py-2" style="max-height: 600px; overflow-y: auto;">
+                 <div class="shadow-lg rounded mt-4 p-4 shadow-div">
+                    <div class="card-text mt-3 px-3 py-2" style="max-height: 600px; overflow-y: auto;">
                             <?php
                                 $content = get_post_meta(get_the_ID(), '_rules', true);
                                 echo wpautop(wp_strip_all_tags($content));
                             ?>
                         </div>
-                    </div>
                 </div>
 
                 <input type="hidden" id="competition-id" value="<?php echo get_the_ID(); ?>">

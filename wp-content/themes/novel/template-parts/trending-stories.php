@@ -136,7 +136,7 @@
     $top_stories = array_slice($stories_with_views, 0, 10);
 ?>
     <div class="row mb-5 shadow rounded shadow-div overflow-hidden">
-    <h6 class="px-4 py-2 bg-category-color head-title">Trending Stories</h6>
+    <h6 class="px-4 py-2 bg-category-color head-title">🔥 Trending 🔥</h6>
 
     <div class="swiper trending-swiper px-4 py-3">
         <div class="swiper-wrapper">
@@ -182,7 +182,7 @@
                                 <p class="me-4 mb-0 text-primary-color"><i class="fa-solid fa-eye"></i>&nbsp;&nbsp;<?php echo format_view_count($views); ?></p>
                                 <p class="mb-0 text-primary-color"><i class="fa-solid fa-star" style="color: gold;"></i>&nbsp;&nbsp;<?php echo $average_rating; ?></p>
                             </div>
-                            <a href="<?php the_permalink(); ?>" class="btn btn-sm text-white fs-12px primary-btn">மேலும் படிக்க</a>
+                            <a href="<?php the_permalink(); ?>" class="btn btn-sm text-white fs-12px primary-btn d-none d-lg-flex">மேலும் படிக்க</a>
                         </div>
                     </div>
                 </div>

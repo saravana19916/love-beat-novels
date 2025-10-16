@@ -8,7 +8,7 @@
     if ($latest_post_query->have_posts()) :
 ?>
     <div class="row mb-5 shadow rounded d-none d-lg-flex shadow-div">
-        <h6 class="px-4 py-2 bg-category-color head-title">Latest Stories</h6>
+        <h6 class="px-4 py-2 bg-category-color head-title">Latest Updates</h6>
 
         <div class="row px-4">
             <?php 
@@ -117,7 +117,7 @@
     </div>
 
     <div class="row mb-5 d-lg-none">
-        <h6 class="px-4 py-2 bg-category-color head-title">Latest Stories</h6>
+        <h6 class="px-4 py-2 bg-category-color head-title">Latest Updates</h6>
 
         <div class="swiper-container px-3">
             <div class="swiper-wrapper">
@@ -141,6 +141,22 @@
                         continue;
                     }
 
+                    $parent_id = get_post_meta($story_id, $sub_meta_key, true);
+
+                    if ($parent_id) {
+                        $episodes = get_posts([
+                            'post_type'   => 'post',
+                            'meta_key'    => $sub_meta_key,
+                            'meta_value'  => $parent_id,
+                            'numberposts' => 1,
+                            'fields'      => 'ids',
+                        ]);
+
+                        if (empty($episodes)) {
+                            continue;
+                        }
+                    }
+
                     $total_views = get_story_total_views('post', $sub_meta_key, $story_id);
                     $average_rating = get_story_average_rating('post', $sub_meta_key, $story_id);
                 ?>
@@ -161,16 +177,26 @@
                                     </h6>
                                 </div>
 
-                                <?php if (has_post_thumbnail()) : ?>
-                                    <a href="<?php the_permalink(); ?>">
-                                        <?php the_post_thumbnail('medium', [
-                                            'class' => 'img-fluid mx-3 d-block my-3',
-                                            'style' => 'height: 250px; width: 165px;'
+                                <?php if (has_post_thumbnail($story_id)) : ?>
+                                    <a href="<?php echo get_permalink($story_id); ?>">
+                                        <?php echo get_the_post_thumbnail($story_id, 'medium', [
+                                            'class' => 'img-fluid mx-auto d-block my-3',
+                                            'style' => 'height: 300px;',
+                                        ]); ?>
+                                    </a>
+                                <?php elseif ($parent_id && has_post_thumbnail($parent_id)) : ?>
+                                    <a href="<?php echo get_permalink($story_id); ?>">
+                                        <?php echo get_the_post_thumbnail($parent_id, 'medium', [
+                                            'class' => 'img-fluid mx-auto d-block my-3',
+                                            'style' => 'height: 300px;',
                                         ]); ?>
                                     </a>
                                 <?php else : ?>
-                                    <a href="<?php the_permalink(); ?>">
-                                        <img src="<?php echo get_template_directory_uri(); ?>/images/no-image.jpeg" class="card-img-top img-fluid mx-3 d-block my-3" alt="Default Image" style="height: 250px; width: 165px;">
+                                    <a href="<?php echo get_permalink($story_id); ?>">
+                                        <img src="<?php echo get_template_directory_uri(); ?>/images/no-image.jpeg"
+                                            class="img-fluid mx-auto d-block my-3"
+                                            alt="Default Image"
+                                            style="height: 300px;">
                                     </a>
                                 <?php endif; ?>
 
