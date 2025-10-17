@@ -151,6 +151,14 @@
                                         $story_id = get_the_ID();
                                         $total_views = get_story_total_views('post', 'story_id', $story_id);
                                         $average_rating = get_story_average_rating('post', 'story_id', $story_id);
+
+                                        $edit_url = get_permalink(get_page_by_path('submit-story')) . '?competition_id=' . $competition_id . '&post_id=' . $story_id;
+
+                                        $story_created_date = get_the_date('Y-m-d', $story_id);
+                                        $two_days_after = date('Y-m-d', strtotime($story_created_date . ' +2 days'));
+                                        $current_date = date('Y-m-d');
+                                        $story_author_id = get_post_field('post_author', $story_id);
+                                        $current_user_id = get_current_user_id();
                                 ?>
                                     <div class="swiper-slide custom-width">
                                         <div class="card h-100 bg-transparent shadow-div">
@@ -178,7 +186,12 @@
                                                 <div class="d-flex justify-content-between align-items-center my-1">
                                                     <div class="d-flex align-items-center">
                                                         <p class="me-4 mb-0 text-primary-color"><i class="fa-solid fa-eye"></i>&nbsp;&nbsp;<?php echo format_view_count($total_views); ?></p>
-                                                        <p class="mb-0 text-primary-color"><i class="fa-solid fa-star" style="color: gold;"></i>&nbsp;&nbsp;<?php echo $average_rating; ?></p>
+                                                        <p class="me-4 mb-0 text-primary-color"><i class="fa-solid fa-star" style="color: gold;"></i>&nbsp;&nbsp;<?php echo $average_rating; ?></p>
+                                                        <?php if ($current_user_id == $story_author_id && $current_date <= $two_days_after) { ?>
+                                                            <a href="<?php echo esc_url($edit_url); ?>" class="text-muted">
+                                                                <i class="fa-solid fa-pen-to-square fa-lg text-primary-color"></i>
+                                                            </a>
+                                                        <?php } ?>
                                                     </div>
                                                 </div>
                                             </div>

@@ -17,6 +17,8 @@
                 $latest_post_query->the_post();
                 $story_id = get_the_ID();
 
+                $categories = get_the_category();
+
                 $terms = wp_get_post_terms($story_id, 'blog_type');
                 if (empty($terms)) continue;
 
@@ -32,20 +34,8 @@
                     continue;
                 }
 
-                $parent_id = get_post_meta($story_id, $sub_meta_key, true);
-
-                if ($parent_id) {
-                    $episodes = get_posts([
-                        'post_type'   => 'post',
-                        'meta_key'    => $sub_meta_key,
-                        'meta_value'  => $parent_id,
-                        'numberposts' => 1,
-                        'fields'      => 'ids',
-                    ]);
-
-                    if (empty($episodes)) {
-                        continue;
-                    }
+                if (strtolower($categories[0]->slug) === 'novel' || strtolower($categories[0]->slug) === 'novels' || $categories[0]->slug === 'நாவல்') {
+                    continue;
                 }
 
                 $count++;
@@ -54,10 +44,10 @@
                 $hidden_class = $count > 6 ? 'd-none more-latest-post' : '';
             ?>
             <div class="col-md-4 p-3 <?php echo $hidden_class; ?>">
-                <div class="card mx-3 bg-transparent shadow-div h-100">
+                <div class="card bg-transparent shadow-div h-100">
                     <div class="card-body">
-                        <h6 class="card-title text-center fw-bold">
-                            <a href="<?php the_permalink(); ?>" class="text-decoration-none fs-14px text-primary-color">
+                        <h6 class="card-title text-center fw-bold fs-14px">
+                            <a href="<?php the_permalink(); ?>" class="text-decoration-none text-primary-color">
                                 <?php the_title(); ?>
                             </a>
                         </h6>
@@ -126,6 +116,8 @@
                     $latest_post_query->the_post();
                     $story_id = get_the_ID();
 
+                    $categories = get_the_category();
+
                     $terms = wp_get_post_terms($story_id, 'blog_type');
                     if (empty($terms)) continue;
 
@@ -141,20 +133,8 @@
                         continue;
                     }
 
-                    $parent_id = get_post_meta($story_id, $sub_meta_key, true);
-
-                    if ($parent_id) {
-                        $episodes = get_posts([
-                            'post_type'   => 'post',
-                            'meta_key'    => $sub_meta_key,
-                            'meta_value'  => $parent_id,
-                            'numberposts' => 1,
-                            'fields'      => 'ids',
-                        ]);
-
-                        if (empty($episodes)) {
-                            continue;
-                        }
+                    if (strtolower($categories[0]->slug) === 'novel' || strtolower($categories[0]->slug) === 'novels' || $categories[0]->slug === 'நாவல்') {
+                        continue;
                     }
 
                     $total_views = get_story_total_views('post', $sub_meta_key, $story_id);
@@ -164,7 +144,6 @@
                     <div class="col-lg-3 py-3">
                         <div class="card h-100 bg-transparent shadow-div">
                             <div class="card-body text-center px-0">
-
                                 <div class="title-wrapper d-flex align-items-center justify-content-center text-center px-2" style="height: 2rem;">
                                     <h6 class="card-title fw-bold fs-14px mb-0">
                                         <a href="<?php the_permalink(); ?>" class="text-decoration-none text-primary-color">
@@ -180,23 +159,23 @@
                                 <?php if (has_post_thumbnail($story_id)) : ?>
                                     <a href="<?php echo get_permalink($story_id); ?>">
                                         <?php echo get_the_post_thumbnail($story_id, 'medium', [
-                                            'class' => 'img-fluid mx-auto d-block my-3',
-                                            'style' => 'height: 300px;',
+                                            'class' => 'img-fluid mx-3 d-block my-3',
+                                            'style' => 'height: 250px; width: 165px;',
                                         ]); ?>
                                     </a>
                                 <?php elseif ($parent_id && has_post_thumbnail($parent_id)) : ?>
                                     <a href="<?php echo get_permalink($story_id); ?>">
                                         <?php echo get_the_post_thumbnail($parent_id, 'medium', [
-                                            'class' => 'img-fluid mx-auto d-block my-3',
-                                            'style' => 'height: 300px;',
+                                            'class' => 'img-fluid mx-3 d-block my-3',
+                                            'style' => 'height: 250px; width: 165px;',
                                         ]); ?>
                                     </a>
                                 <?php else : ?>
                                     <a href="<?php echo get_permalink($story_id); ?>">
                                         <img src="<?php echo get_template_directory_uri(); ?>/images/no-image.jpeg"
-                                            class="img-fluid mx-auto d-block my-3"
+                                            class="img-fluid mx-3 d-block my-3"
                                             alt="Default Image"
-                                            style="height: 300px;">
+                                            style="height: 250px; width: 165px;">
                                     </a>
                                 <?php endif; ?>
 
