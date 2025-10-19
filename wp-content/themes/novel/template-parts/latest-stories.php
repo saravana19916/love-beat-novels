@@ -34,7 +34,9 @@
                     continue;
                 }
 
-                if (strtolower($categories[0]->slug) === 'novel' || strtolower($categories[0]->slug) === 'novels' || $categories[0]->slug === 'நாவல்') {
+                $parent_id = get_post_meta($story_id, $sub_meta_key, true);
+
+                if ((strtolower($categories[0]->slug) === 'novel' || strtolower($categories[0]->slug) === 'novels' || $categories[0]->slug === 'நாவல்') && !$parent_id) {
                     continue;
                 }
 
@@ -136,6 +138,8 @@
                     if (strtolower($categories[0]->slug) === 'novel' || strtolower($categories[0]->slug) === 'novels' || $categories[0]->slug === 'நாவல்') {
                         continue;
                     }
+
+                    $parent_id = get_post_meta($story_id, $sub_meta_key, true);
 
                     $total_views = get_story_total_views('post', $sub_meta_key, $story_id);
                     $average_rating = get_story_average_rating('post', $sub_meta_key, $story_id);

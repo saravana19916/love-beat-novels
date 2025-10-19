@@ -31,7 +31,7 @@
                     <div class="card-text mt-3 px-3 py-2" style="max-height: 600px; overflow-y: auto;">
                             <?php
                                 $content = get_post_meta(get_the_ID(), '_rules', true);
-                                echo wpautop(wp_strip_all_tags($content));
+                                echo wpautop(wp_kses_post($content));
                             ?>
                         </div>
                 </div>
