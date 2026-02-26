@@ -143,6 +143,7 @@
                 // get average rating
                 $episode_id = get_the_ID();
                 $average_rating = get_average_episode_rating($episode_id);
+                $episodeNumber = get_post_meta($episode_id, 'episode_number', true);
 
                 $edit_url = get_permalink(get_page_by_path('submit-competition-episode')) . '?story_id=' . $story_id . '&post_id=' . $episode_id;
 
@@ -154,10 +155,36 @@
                     <div class="shadow-lg rounded mt-4 shadow-div">
                         <div class="d-flex justify-content-between align-items-center px-4 pt-4">
                             <h6 class="mb-0 fw-bold">
-                                <?php echo sprintf("%2d", $count + 1); ?>.&nbsp
-                                <a class="text-primary-color" href="<?php echo add_query_arg('episode_id', get_the_ID(), get_permalink()); ?>">
+                                <?php echo sprintf("%2d", $episodeNumber); ?>.&nbsp
+
+                                <?php
+                                    $is_locked = find_episode_is_locked($story_id, $episode_id, $episodeNumber);
+                                ?>
+
+                                <a 
+                                    href="<?php echo (!$is_locked ? get_permalink() : 'javascript:void(0);'); ?>" 
+                                    class="text-primary-color episode-title <?php echo ($is_locked ? 'locked-episode' : ''); ?>"
+                                    <?php if ($is_locked): ?>
+                                        data-episode-id="<?php echo $episode_id; ?>"
+                                        data-parent-id="<?php echo $parentId; ?>"
+                                        data-episode-number="<?php echo $episodeNumber; ?>"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#episodeLockModal"
+                                    <?php endif; ?>
+                                >
                                     <?php the_title(); ?>
                                 </a>
+
+                                <!-- Lock Icon -->
+                                <?php if ($is_locked): ?>
+                                    <i class="fas fa-lock text-danger ms-2" 
+                                    style="cursor:pointer;"
+                                    data-episode-id="<?php echo $episode_id; ?>"
+                                    data-parent-id="<?php echo $parentId; ?>"
+                                    data-episode-number="<?php echo $episodeNumber; ?>"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#episodeLockModal"></i>
+                                <?php endif; ?>
                             </h6>
 
                             <?php 
@@ -238,125 +265,162 @@
     ?>
     
             <div class="container details-page mt-5">
-                <div class="row mb-5 details-page">
-                    <div class="col-md-12">
-                        <h5 class="fw-bold text-center my-4 text-primary-color"><?php the_title(); ?></h5>
+                <?php
+                    $parentId = get_post_meta(get_the_ID(), 'competition_parent_id', true);
+                    $episodeNumber = get_post_meta(get_the_ID(), 'episode_number', true);
+                    $is_locked = false;
+                    if ($parentId && $episodeNumber) {
+                        $is_locked = find_episode_is_locked($parentId, get_the_ID(), $episodeNumber);
+                    }
+                ?>
 
-                        <div class="mt-4 text-center">
-                            <?php
-                                $author_id = get_post_field('post_author', get_the_ID());
-                                $author_name = get_the_author_meta('display_name', $author_id);
-                                $profile_picture_id = get_user_meta($author_id, 'profile_picture', true);
-                                $profile_picture_url = $profile_picture_id ? wp_get_attachment_url($profile_picture_id) : get_template_directory_uri() . '/images/profile-no-image.jpg';
-                                $post_count = count_user_posts($author_id, 'post');
+                <?php if ($is_locked) : ?>
+                    <div class="shadow-lg text-center p-5 rounded shadow-div">
+                        <?php
+                            $coins = get_user_meta(get_current_user_id(), 'user_coin_balance', true);
+                            $coins = $coins ?: 0;
+                        ?>
+                        <p class="text-primary-color">உங்கள் பேலன்ஸ்: &nbsp;&nbsp;&nbsp;&nbsp;<strong><?php echo $coins; ?></strong> &nbsp;
+                            <img src="<?php echo get_template_directory_uri() . '/images/coin.png'; ?>" alt="Coin" class="img-fluid rounded">
+                        </p>
+                        <p class="text-normal text-primary-color">
+                            இந்த எபிசோடு லாக் செய்யப்பட்டிருக்கிறது <i class="fas fa-lock"></i>
+                            <strong><?php echo get_option('coins_to_unlock'); ?> காயின்ஸ்</strong>
+                            செலுத்தி அல்லது சப்ஸ்க்ரைப் செய்து திறக்கலாம்.
+                        </p>
 
-                                if ($post_count > 0) {
-                                    $icon_html = '<i class="fa-solid fa-pen-nib me-1"></i>';
-                                } else {
-                                    $icon_html = '<i class="fa-solid fa-book-reader me-1"></i>';
-                                }
-                            ?>
-                                <a href="<?php echo site_url('/profile/?user_id=' . $author_id); ?>" class="fs-16px text-primary-color text-decoration-underline mb-1">
-                                    <img src="<?php echo esc_url($profile_picture_url); ?>" alt="<?php echo $author_id ?>" class="rounded-circle me-2" height="40" width="40">
-                                    <?php echo $icon_html; ?>
-                                    <?php echo esc_html($author_name); ?>
-                                </a>
+                        <div class="d-flex flex-column flex-md-row justify-content-center align-items-center gap-2 mx-auto" style="max-width:500px;">
+                            <button class="btn btn-primary w-100" onclick="unlockEpisode(<?php echo get_the_ID(); ?>, <?php echo $parentId; ?>, <?php echo $episodeNumber; ?>);">
+                                Pay coins &nbsp;
+                                <img src="<?php echo get_template_directory_uri() . '/images/coin.png'; ?>" width="18" alt="Coin" class="rounded">
+                            </button>
 
-                                <?php
-                                $current_user_id = get_current_user_id();
-                                $author_id = get_post_field('post_author', get_the_ID());
-
-                                // Don't show follow button for current user
-                                if ($current_user_id && $current_user_id != $author_id) {
-
-                                    // Get current user's following list
-                                    $following = get_user_meta($current_user_id, 'following_users', true);
-                                    $following = is_array($following) ? $following : array();
-
-                                    $is_following = in_array($author_id, $following);
-                                    $btn_text = $is_following ? 'Following' : 'Follow';
-                                    $btn_disabled = $is_following ? 'disabled' : '';
-                                    ?>
-                                    <div class="mt-2">
-                                        <button class="btn btn-primary btn-sm follow-btn" 
-                                                data-author-id="<?php echo $author_id; ?>" 
-                                                <?php echo $btn_disabled; ?>>
-                                            <?php echo $btn_text; ?>
-                                        </button>
-                                    </div>
-                                <?php } ?>
+                            <a href="subscription" class="btn btn-primary text-decoration-none w-100">
+                                Subscribe now <i class="fa-solid fa-crown"></i>
+                            </a>
                         </div>
-                        
-                        <div class="shadow-lg rounded mt-4 p-4 shadow-div">
-                            <div class="mb-5 fs-6 custom-content">
-                                <?php echo wpautop(get_the_content()); ?>
-                                <?php track_recently_read_post(get_the_ID()); ?>
-                            </div>
+                    </div>
+                <?php else : ?>
+                    <div class="row mb-5 details-page">
+                        <div class="col-md-12">
+                            <h5 class="fw-bold text-center my-4 text-primary-color"><?php the_title(); ?></h5>
 
-                            <div class="my-4 text-center">
-                                <span class="fs-16px"><strong>Author:<strong>&nbsp;&nbsp;&nbsp;</span>
-                                <a href="<?php echo site_url('/profile/?user_id=' . $author_id); ?>" class="fs-16px text-primary-color text-decoration-underline mb-1">
-                                    <img src="<?php echo esc_url($profile_picture_url); ?>" alt="<?php echo $author_id ?>" class="rounded-circle me-2" height="40" width="40">
-                                    <?php echo $icon_html; ?>
-                                    <?php echo esc_html($author_name); ?>
-                                </a>
-                            </div>
+                            <div class="mt-4 text-center">
+                                <?php
+                                    $author_id = get_post_field('post_author', get_the_ID());
+                                    $author_name = get_the_author_meta('display_name', $author_id);
+                                    $profile_picture_id = get_user_meta($author_id, 'profile_picture', true);
+                                    $profile_picture_url = $profile_picture_id ? wp_get_attachment_url($profile_picture_id) : get_template_directory_uri() . '/images/profile-no-image.jpg';
+                                    $post_count = count_user_posts($author_id, 'post');
 
-                            <!-- Reaction start -->
-                            <div class="row justify-content-center text-center">
-                                <div class="col-12">
-                                    <div class="reactions-container">
-                                        <?php
-                                            $user_id = get_current_user_id();
-                                            $episode_id = get_the_ID();
-                                            $emojis = ['thumb' => '👍', 'heart' => '❤️', 'lough' => '😂', 'cry' => '😢', 'fire' => '🔥'];
+                                    if ($post_count > 0) {
+                                        $icon_html = '<i class="fa-solid fa-pen-nib me-1"></i>';
+                                    } else {
+                                        $icon_html = '<i class="fa-solid fa-book-reader me-1"></i>';
+                                    }
+                                ?>
+                                    <a href="<?php echo site_url('/profile/?user_id=' . $author_id); ?>" class="fs-16px text-primary-color text-decoration-underline mb-1">
+                                        <img src="<?php echo esc_url($profile_picture_url); ?>" alt="<?php echo $author_id ?>" class="rounded-circle me-2" height="40" width="40">
+                                        <?php echo $icon_html; ?>
+                                        <?php echo esc_html($author_name); ?>
+                                    </a>
 
-                                            $emoji_counts = [];
-                                            foreach ($emojis as $key => $emoji) {
-                                                $emoji_counts[$key] = $wpdb->get_var($wpdb->prepare(
-                                                    "SELECT COUNT(*) FROM {$wpdb->prefix}episode_reactions WHERE episode_id = %d AND reaction = %s",
-                                                    $episode_id, $key
-                                                ));
-                                            }
+                                    <?php
+                                    $current_user_id = get_current_user_id();
+                                    $author_id = get_post_field('post_author', get_the_ID());
+
+                                    // Don't show follow button for current user
+                                    if ($current_user_id && $current_user_id != $author_id) {
+
+                                        // Get current user's following list
+                                        $following = get_user_meta($current_user_id, 'following_users', true);
+                                        $following = is_array($following) ? $following : array();
+
+                                        $is_following = in_array($author_id, $following);
+                                        $btn_text = $is_following ? 'Following' : 'Follow';
+                                        $btn_disabled = $is_following ? 'disabled' : '';
                                         ?>
-
-                                        <div class="emoji-reactions sec-comment bg-transparent shadow-div" data-episode="<?php echo $episode_id; ?>" data-user="<?php echo $user_id; ?>">
-                                            <?php foreach ($emojis as $key => $emoji) : ?>
-                                                <button class="emoji-btn" data-emo-symbol="<?php echo $key; ?>" data-emoji="<?php echo $emoji; ?>">
-                                                    <?php echo $emoji; ?> <span class="count" data-emoji="<?php echo $emoji; ?>"><?php echo $emoji_counts[$key] > 0 ? $emoji_counts[$key] : ''; ?></span>
-                                                </button>
-                                            <?php endforeach; ?>
+                                        <div class="mt-2">
+                                            <button class="btn btn-primary btn-sm follow-btn" 
+                                                    data-author-id="<?php echo $author_id; ?>" 
+                                                    <?php echo $btn_disabled; ?>>
+                                                <?php echo $btn_text; ?>
+                                            </button>
                                         </div>
-                                        <!-- Reaction End -->
+                                    <?php } ?>
+                            </div>
+                            
+                            <div class="shadow-lg rounded mt-4 p-4 shadow-div">
+                                <div class="mb-5 fs-6 custom-content">
+                                    <?php echo wpautop(get_the_content()); ?>
+                                    <?php track_recently_read_post(get_the_ID()); ?>
+                                </div>
 
-                                        <div class="sec-comment comment-sec">
+                                <div class="my-4 text-center">
+                                    <span class="fs-16px"><strong>Author:<strong>&nbsp;&nbsp;&nbsp;</span>
+                                    <a href="<?php echo site_url('/profile/?user_id=' . $author_id); ?>" class="fs-16px text-primary-color text-decoration-underline mb-1">
+                                        <img src="<?php echo esc_url($profile_picture_url); ?>" alt="<?php echo $author_id ?>" class="rounded-circle me-2" height="40" width="40">
+                                        <?php echo $icon_html; ?>
+                                        <?php echo esc_html($author_name); ?>
+                                    </a>
+                                </div>
+
+                                <!-- Reaction start -->
+                                <div class="row justify-content-center text-center">
+                                    <div class="col-12">
+                                        <div class="reactions-container">
                                             <?php
-                                                if (comments_open() || get_comments_number()) {
-                                                    comments_template();
+                                                $user_id = get_current_user_id();
+                                                $episode_id = get_the_ID();
+                                                $emojis = ['thumb' => '👍', 'heart' => '❤️', 'lough' => '😂', 'cry' => '😢', 'fire' => '🔥'];
+
+                                                $emoji_counts = [];
+                                                foreach ($emojis as $key => $emoji) {
+                                                    $emoji_counts[$key] = $wpdb->get_var($wpdb->prepare(
+                                                        "SELECT COUNT(*) FROM {$wpdb->prefix}episode_reactions WHERE episode_id = %d AND reaction = %s",
+                                                        $episode_id, $key
+                                                    ));
                                                 }
                                             ?>
-                                        </div>
 
-                                        <!-- Rating start -->
-                                        <?php
-                                            $user_id = get_current_user_id();
-                                            $episode_id = get_the_ID();
-                                            $rating = get_user_meta($user_id, "episode_rating_{$episode_id}", true);
-                                        ?>
+                                            <div class="emoji-reactions sec-comment bg-transparent shadow-div" data-episode="<?php echo $episode_id; ?>" data-user="<?php echo $user_id; ?>">
+                                                <?php foreach ($emojis as $key => $emoji) : ?>
+                                                    <button class="emoji-btn" data-emo-symbol="<?php echo $key; ?>" data-emoji="<?php echo $emoji; ?>">
+                                                        <?php echo $emoji; ?> <span class="count" data-emoji="<?php echo $emoji; ?>"><?php echo $emoji_counts[$key] > 0 ? $emoji_counts[$key] : ''; ?></span>
+                                                    </button>
+                                                <?php endforeach; ?>
+                                            </div>
+                                            <!-- Reaction End -->
 
-                                        <div class="star-rating sec-comment" data-episode="<?php echo $episode_id; ?>">
-                                            <p class="mt-2 mb-0 text-primary-color"><span style="color:red;">***</span> <?php echo the_title(); ?> - படைப்பை ரேட் செய்யுங்கள் <span style="color:red;">***</span></p>
-                                            <?php for ($i = 1; $i <= 5; $i++): ?>
-                                                <span class="star <?php echo ($i <= $rating) ? 'rated' : ''; ?>" data-value="<?php echo $i; ?>">&#9733;</span>
-                                            <?php endfor; ?>
+                                            <div class="sec-comment comment-sec">
+                                                <?php
+                                                    if (comments_open() || get_comments_number()) {
+                                                        comments_template();
+                                                    }
+                                                ?>
+                                            </div>
+
+                                            <!-- Rating start -->
+                                            <?php
+                                                $user_id = get_current_user_id();
+                                                $episode_id = get_the_ID();
+                                                $rating = get_user_meta($user_id, "episode_rating_{$episode_id}", true);
+                                            ?>
+
+                                            <div class="star-rating sec-comment" data-episode="<?php echo $episode_id; ?>">
+                                                <p class="mt-2 mb-0 text-primary-color"><span style="color:red;">***</span> <?php echo the_title(); ?> - படைப்பை ரேட் செய்யுங்கள் <span style="color:red;">***</span></p>
+                                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                                    <span class="star <?php echo ($i <= $rating) ? 'rated' : ''; ?>" data-value="<?php echo $i; ?>">&#9733;</span>
+                                                <?php endfor; ?>
+                                            </div>
+                                            <!-- Rating end -->
                                         </div>
-                                        <!-- Rating end -->
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                <?php endif; ?>
             </div>
     <?php    }
 

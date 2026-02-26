@@ -140,7 +140,7 @@ if (is_user_logged_in()) {
     }
 
     function fetchNotifications() {
-        $.post(ajaxurl, { action: "fetch_notifications" }, function (response) {
+        $.post("<?php echo admin_url('admin-ajax.php'); ?>", { action: "fetch_notifications" }, function (response) {
             if (response.success) {
                 // Update badge
                 updateNotificationBadge(response.data.unread_count);

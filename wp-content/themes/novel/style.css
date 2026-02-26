@@ -106,6 +106,10 @@ body {
     font-size: 16px !important;
 }
 
+.fs-20px {
+    font-size: 20px !important;
+}
+
 .custom-content span {
     font-size: 16px !important;
 }
@@ -975,3 +979,41 @@ html.dark-mode .trending-swiper .swiper-button-next:hover::after,
 html.dark-mode .trending-swiper .swiper-button-prev:hover::after {
   color: #ffff;
 }
+
+.pricing-card {
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+
+/* .pricing-card {
+    border-radius: 25px;
+    overflow: hidden;
+    --bg-color: #ffffff;
+    position: relative;
+}
+
+.pricing-footer {
+    background: #cacbcf;
+    padding: 20px 0;
+    border-top-left-radius: 60px;
+} */
+
+/* Dark Mode */
+/* html.dark-mode .pricing-card,
+html.dark-mode .pricing-footer {
+  --bg-color: #121212;
+  --text-color: #ffffff;
+  border: 1px solid gray;
+}
+
+.pricing-header {
+    padding: 20px 0;
+    border-bottom: 1px solid gray;
+    border-bottom-right-radius: 60px;
+    border-bottom-left-radius: 0;
+}
+
+.green-text {
+    color: #3bb54a !important;
+} */

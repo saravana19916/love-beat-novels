@@ -57,3 +57,28 @@ jQuery(document).ready(function ($) {
         $('.error-message').remove();
     });
 });
+
+function onGoogleSignIn(response) {
+    // Send the ID token to your server for verification
+    jQuery.ajax({
+        url: ajax_login_object.ajax_url,
+        type: 'POST',
+        data: {
+            action: 'google_login',
+            id_token: response.credential
+        },
+        beforeSend: function () {
+            jQuery('#login-message').html('<div class="alert alert-info">Processing Google login...</div>');
+        },
+        success: function (res) {
+            if (res.status === 'success') {
+                jQuery('#login-message').html('<div class="alert alert-success">' + res.message + '</div>');
+                setTimeout(function () {
+                    window.location.reload();
+                }, 100);
+            } else {
+                jQuery('#login-message').html('<div class="alert alert-danger">' + res.message + '</div>');
+            }
+        }
+    });
+}

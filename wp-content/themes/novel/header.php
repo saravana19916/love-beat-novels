@@ -17,6 +17,8 @@
             }
         })();
     </script>
+
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body <?php body_class(); ?> class="height: 100%">
 <div class="wrapper" style="min-height: 90vh; /* Full viewport height */
@@ -72,13 +74,33 @@
                     style="min-width: 200px; display: none; position: absolute; top: 100%; right: 0; z-index: 1000;">
                     <?php if (is_user_logged_in()) : $current_user = wp_get_current_user(); ?>
                         <span class="dropdown-item text-center">Welcome <?php echo esc_html( $current_user->user_login ); ?> </span>
-                        <a href="<?php echo site_url('/profile'); ?>" class="dropdown-item text-center">My Profile</a>
-                        <a href="<?php echo wp_logout_url(site_url('/')); ?>" class="dropdown-item text-center">Logout</a>
+                        <a href="<?php echo site_url('/profile'); ?>" class="dropdown-item text-center">
+                            <i class="fa-solid fa-user"></i><span class="menu-text ms-1"> My Profile</span>
+                        </a>
+                        <a href="<?php echo wp_logout_url(site_url('/')); ?>" class="dropdown-item text-center">
+                            <i class="fa-solid fa-arrow-right-from-bracket"></i><span class="menu-text ms-1"> Logout</span>
+                        </a>
                     <?php else : ?>
-                        <a data-bs-toggle="modal" data-bs-target="#loginModal" class="dropdown-item text-center">Login</a>
+                        <a data-bs-toggle="modal" data-bs-target="#loginModal" class="dropdown-item text-center">
+                            <i class="fa-solid fa-arrow-right-from-bracket"></i><span class="menu-text ms-1"> Login</span>
+                        </a>
                     <?php endif; ?>
                 </div>
             </div>
+        </div>
+
+        <div class="d-none d-sm-flex align-items-center mt-2 ms-3">
+            <a href="subscription" class="text-white d-flex flex-column align-items-center me-3 text-decoration-none" style="cursor:pointer;">
+                <i class="fa-solid fa-crown fa-xl"></i>
+                <span class="menu-text mt-2 pt-1">Subscription plan</span>
+            </a>
+
+            <?php if (is_user_logged_in()) : $current_user = wp_get_current_user(); ?>
+                <a href="wallet" class="text-white d-flex flex-column align-items-center me-3 text-decoration-none" style="cursor:pointer;">
+                    <i class="fa-solid fa-wallet fa-xl"></i>
+                    <span class="menu-text mt-2 pt-1">Wallet</span>
+                </a>
+            <?php endif; ?>
         </div>
 
     </div>
@@ -91,15 +113,27 @@
                 
                 <!-- Dark/Light Toggle (Left) -->
                 <div class="d-flex align-items-center">
-                    <span class="theme-toggle moon text-white me-3" style="cursor:pointer;">
+                    <span class="theme-toggle moon text-white d-flex flex-column align-items-center me-3" style="cursor:pointer;">
                         <i class="fa-solid fa-moon fa-xl"></i>
-                        <span class="ms-2">Dark Mode</span>
+                        <span class="ms-2 mt-2 pt-1">Dark Mode</span>
                     </span>
 
-                    <span class="theme-toggle sun text-white me-3 d-none" style="cursor:pointer;">
+                    <span class="theme-toggle sun text-white d-flex flex-column align-items-center me-3 d-none" style="cursor:pointer;">
                         <i class="fa-solid fa-sun fa-xl"></i>
-                        <span class="ms-2">Light Mode</span>
+                        <span class="ms-2 mt-2 pt-1">Light Mode</span>
                     </span>
+
+                    <a href="subscription" class="text-white d-flex flex-column align-items-center me-3 text-decoration-none" style="cursor:pointer;">
+                        <i class="fa-solid fa-crown fa-xl"></i>
+                        <span class="menu-text mt-2 pt-1">Subscription plan</span>
+                    </a>
+
+                    <?php if (is_user_logged_in()) : $current_user = wp_get_current_user(); ?>
+                        <a href="wallet" class="text-white d-flex flex-column align-items-center me-3 text-decoration-none" style="cursor:pointer;">
+                            <i class="fa-solid fa-wallet fa-xl"></i>
+                            <span class="menu-text mt-2 pt-1">Wallet</span>
+                        </a>
+                    <?php endif; ?>
                 </div>
 
                 <!-- Notification (Right) -->
@@ -116,10 +150,16 @@
                             style="min-width: 200px; display: none; position: absolute; top: 100%; right: 0; z-index: 1000;">
                             <?php if (is_user_logged_in()) : $current_user = wp_get_current_user(); ?>
                                 <span class="dropdown-item text-center">Welcome <?php echo esc_html( $current_user->user_login ); ?> </span>
-                                <a href="<?php echo site_url('/profile'); ?>" class="dropdown-item text-center">My Profile</a>
-                                <a href="<?php echo wp_logout_url(site_url('/')); ?>" class="dropdown-item text-center">Logout</a>
+                                <a href="<?php echo site_url('/profile'); ?>" class="dropdown-item text-center">
+                                    <i class="fa-solid fa-user"></i><span class="menu-text ms-1"> My Profile</span>
+                                </a>
+                                <a href="<?php echo wp_logout_url(site_url('/')); ?>" class="dropdown-item text-center">
+                                    <i class="fa-solid fa-arrow-right-from-bracket"></i><span class="menu-text ms-1"> Logout</span>
+                                </a>
                             <?php else : ?>
-                                <a data-bs-toggle="modal" data-bs-target="#loginModal" class="dropdown-item text-center">Login</a>
+                                <a data-bs-toggle="modal" data-bs-target="#loginModal" class="dropdown-item text-center">
+                                    <i class="fa-solid fa-arrow-right-from-bracket"></i><span class="menu-text ms-1"> Login</span>
+                                </a>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -146,6 +186,19 @@
                 'depth' => 2,
                 'walker' => new WP_Bootstrap_Navwalker()
             )); ?>
+
+            <!-- <?php if (is_user_logged_in()) { ?>
+                <a href="wallet" class="text-white text-decoration-none" style="padding-left: 0.5rem;padding-right: 0.5rem;">
+                    <span itemprop="name">
+                        <div class="menu-icon text-center custom-menu-icon">
+                            <i class="fa-solid fa-wallet"></i>
+                        </div>
+                        <div class="text-center custom-menu row col-12">
+                            <span class="menu-text">Wallet</span>
+                        </div>
+                    </span>
+                </a>
+            <?php } ?> -->
         </div>
 
         <!-- Bootstrap Modal -->
@@ -188,6 +241,19 @@
                                         </div>
                                         <div class="col-6 d-flex align-items-center justify-content-end">
                                             <a href="#" class="text-primary-color text-decoration-none" data-bs-toggle="modal" data-bs-target="#registerModal">Register?</a>
+                                        </div>
+                                        <div id="g_id_onload" class="mt-3"
+                                            data-client_id="542991368123-1mhvdpnfcd1mvi9ddthbvvgf3aiql9ap.apps.googleusercontent.com"
+                                            data-callback="onGoogleSignIn"
+                                            data-auto_prompt="false">
+                                        </div>
+                                        <div class="g_id_signin"
+                                            data-type="standard"
+                                            data-size="large"
+                                            data-theme="outline"
+                                            data-text="login_with"
+                                            data-shape="rectangular"
+                                            data-logo_alignment="left">
                                         </div>
                                     </div>
                                     <div class="row mb-4">

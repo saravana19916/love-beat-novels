@@ -3,7 +3,15 @@ require_once get_template_directory() . '/inc/wp-bootstrap-navwalker.php';
 require_once get_template_directory() . '/inc/author-notification.php';
 require_once get_template_directory() . '/inc/social-media.php';
 require_once get_template_directory() . '/inc/register.php';
+require_once get_template_directory() . '/inc/login.php';
 require_once get_template_directory() . '/inc/competition.php';
+require_once get_template_directory() . '/inc/episode-lock-unlock.php';
+require_once get_template_directory() . '/inc/payment.php';
+require_once get_template_directory() . '/inc/episode-create.php';
+require_once get_template_directory() . '/inc/coin-pack-price.php';
+require_once get_template_directory() . '/inc/user-transaction-list.php';
+require_once get_template_directory() . '/inc/missing-transaction.php';
+require_once get_template_directory() . '/inc/user-active-coin-subscription-report.php';
 
 // Enqueue Bootstrap and Font Awesome
 function my_theme_enqueue_styles() {
@@ -415,10 +423,21 @@ function save_parent_blog_meta($post_id) {
         $terms = wp_get_post_terms($post_id, 'blog_type');
         $blog_type = (!empty($terms)) ? $terms[0]->slug : '';
 
+        $isEpisodeNumberExist = get_post_meta($post_id, 'episode_number', true);
+
+        $lastEpisodeNumber = get_last_episode_number($parent_id);
         if ($blog_type === 'main-blog') {
             update_post_meta($post_id, 'parent_blog_id', $parent_id);
+
+            if (!$isEpisodeNumberExist && $lastEpisodeNumber) {
+                update_post_meta($post_id, 'episode_number', $lastEpisodeNumber + 1);
+            }
         } elseif ($blog_type === 'my-creation-blog') {
             update_post_meta($post_id, 'my_creation_parent_blog_id', $parent_id);
+
+            if (!$isEpisodeNumberExist && $lastEpisodeNumber) {
+                update_post_meta($post_id, 'episode_number', $lastEpisodeNumber + 1);
+            }
         }
     }
 }
@@ -886,6 +905,10 @@ function handle_episode_submission() {
         $post_data['post_parent'] = $story_id;
         $episode_id = wp_insert_post($post_data);
         update_post_meta($episode_id, 'competition_parent_id', $story_id);
+        $lastEpisodeNumber = get_last_episode_number($story_id);
+        if ($lastEpisodeNumber) {
+            update_post_meta($episode_id, 'episode_number', $lastEpisodeNumber + 1);
+        }
     }
 
     if ($episode_id) {
@@ -902,10 +925,6 @@ function handle_episode_submission() {
 }
 add_action('wp_ajax_submit_episode', 'handle_episode_submission');
 add_action('wp_ajax_nopriv_submit_episode', 'handle_episode_submission');
-
-
-
-
 
 
 // function fetch_competition_posts() {
@@ -977,94 +996,6 @@ function enqueue_register_script() {
     ]);
 }
 add_action('wp_enqueue_scripts', 'enqueue_register_script');
-
-function ajax_register_user() {
-    // check_ajax_referer('register_nonce', 'security');
-    require_once(ABSPATH . 'wp-admin/includes/file.php');
-    require_once(ABSPATH . 'wp-admin/includes/image.php');
-    require_once(ABSPATH . 'wp-admin/includes/media.php');
-
-    $user_id = intval($_POST['user_id']);
-    $username = sanitize_user($_POST['username']);
-    $password = $_POST['password'];
-    $email = sanitize_email($_POST['email']);
-    $firstname = sanitize_text_field($_POST['firstname']);
-    $lastname = sanitize_text_field($_POST['lastname']);
-    $aboutUser = sanitize_text_field($_POST['about_user']);
-
-    $errors = [];
-
-    $required_fields = ['email', 'firstname', 'lastname'];
-
-    if (empty($user_id)) {
-        $required_fields[] = 'username';
-        $required_fields[] = 'password';
-    }
-
-    foreach ($required_fields as $field) {
-        if (empty($$field)) {
-            wp_send_json_error('All fields are required.');
-        }
-    }
-
-    if (!is_email($email)) {
-        wp_send_json_error('Invalid email address.');
-    }
-
-    if (username_exists($username)) {
-        wp_send_json_error('Username is already taken.');
-    }
-
-    $existing_user_id = email_exists($email);
-
-    if ($existing_user_id && $existing_user_id != $user_id) {
-        wp_send_json_error('Email is already registered.');
-    }
-
-    if ($user_id) {
-       $update_data = [
-            'ID'           => $user_id,
-            'user_email'   => $email,
-            'display_name' => trim($firstname . ' ' . $lastname),
-        ];
-
-        if (!empty($password)) {
-            $update_data['user_pass'] = $password;
-        }
-
-        wp_update_user($update_data);
-
-        update_user_meta($user_id, 'about_user', sanitize_textarea_field($_POST['about_user']));
-
-        wp_send_json_success(['message' => 'Profile updated successfully', 'user_id' => $user_id]);
-    } else {
-        $user_id = wp_insert_user([
-            'user_login' => $username,
-            'user_pass' => $password,
-            'user_nicename' => $username,
-            'user_email' => $email,
-            'display_name' => $firstname . ' ' . $lastname,
-            'role' => 'subscriber',
-        ]);
-
-        if (is_wp_error($user_id)) {
-            wp_send_json_error('An error occurred: ' . $user_id->get_error_message());
-        }
-
-        update_user_meta($user_id, 'about_user', $aboutUser);
-
-        if (isset($_FILES['profile_picture']) && !empty($_FILES['profile_picture']['tmp_name'])) {
-            $uploaded = media_handle_upload('profile_picture', 0);
-            if (!is_wp_error($uploaded)) {
-                update_user_meta($user_id, 'profile_picture', $uploaded);
-            }
-        }
-
-        wp_send_json_success(['message' => 'Registration successful!', 'user_id' => ''] );
-    }
-}
-add_action('wp_ajax_register_user', 'ajax_register_user');
-add_action('wp_ajax_nopriv_register_user', 'ajax_register_user');
 
 function my_theme_enqueue_scripts() {
     wp_enqueue_script(
@@ -1147,55 +1078,6 @@ function follow_user_callback() {
     ));
 }
 
-// login
-function enqueue_ajax_login_script() {
-    wp_enqueue_script('ajax-login-script', get_template_directory_uri() . '/js/login.js', array('jquery'), null, true);
-    wp_localize_script('ajax-login-script', 'ajax_login_object', array(
-        'ajax_url' => admin_url('admin-ajax.php'),
-        'security' => wp_create_nonce('ajax-login-nonce'),
-    ));
-}
-add_action('wp_enqueue_scripts', 'enqueue_ajax_login_script');
-
-function ajax_login_handler() {
-    // Verify nonce
-    check_ajax_referer('ajax-login-nonce', 'security');
-
-    $response = array();
-
-    // Validate input fields
-    if (empty($_POST['username']) || empty($_POST['password'])) {
-        $response['status'] = 'error';
-        $response['message'] = 'Username and password are required.';
-        wp_send_json($response);
-    }
-
-    $creds = array(
-        'user_login'    => sanitize_text_field($_POST['username']),
-        'user_password' => sanitize_text_field($_POST['password']),
-        'remember'      => true,
-    );
-
-    $user = wp_signon($creds, is_ssl());
-
-    if (is_wp_error($user)) {
-        $response['status'] = 'error';
-        $response['message'] = 'Invalid username or password.';
-    } else {
-        wp_clear_auth_cookie();
-        wp_set_current_user($user->ID);
-        wp_set_auth_cookie($user->ID, true);
-
-        $response['status'] = 'success';
-        $response['message'] = 'Login successful!';
-        // $response['redirect_url'] = home_url();
-    }
-
-    wp_send_json($response);
-}
-add_action('wp_ajax_nopriv_ajax_login', 'ajax_login_handler');
-add_action('wp_ajax_ajax_login', 'ajax_login_handler');
-
 // Logout start
 add_action('init', 'handle_custom_logout');
 
@@ -1209,34 +1091,32 @@ function handle_custom_logout() {
 // Logout end
 
 
-function handle_frontend_login() {
-    if (isset($_POST['frontend_login']) && $_POST['frontend_login'] == '1') {
-        $creds = array(
-            'user_login'    => sanitize_text_field($_POST['username']),
-            'user_password' => sanitize_text_field($_POST['password']),
-            'remember'      => isset($_POST['rememberme']),
-        );
+// function handle_frontend_login() {
+//     if (isset($_POST['frontend_login']) && $_POST['frontend_login'] == '1') {
+//         $creds = array(
+//             'user_login'    => sanitize_text_field($_POST['username']),
+//             'user_password' => sanitize_text_field($_POST['password']),
+//             'remember'      => isset($_POST['rememberme']),
+//         );
 
-        $user = wp_signon($creds, is_ssl());
+//         $user = wp_signon($creds, is_ssl());
 
-        if (is_wp_error($user)) {
-            // Login failed, store error message in session
-            session_start();
-            $_SESSION['login_error'] = $user->get_error_message();
-        } else {
-            wp_clear_auth_cookie();
-            wp_set_current_user($user->ID);
-            wp_set_auth_cookie($user->ID, true);
+//         if (is_wp_error($user)) {
+//             session_start();
+//             $_SESSION['login_error'] = $user->get_error_message();
+//         } else {
+//             wp_clear_auth_cookie();
+//             wp_set_current_user($user->ID);
+//             wp_set_auth_cookie($user->ID, true);
 
-            // Login successful, clear session and redirect
-            session_start();
-            unset($_SESSION['login_error']);
-            wp_redirect(home_url());
-            exit;
-        }
-    }
-}
-add_action('init', 'handle_frontend_login');
+//             session_start();
+//             unset($_SESSION['login_error']);
+//             wp_redirect(home_url());
+//             exit;
+//         }
+//     }
+// }
+// add_action('init', 'handle_frontend_login');
 
 function get_like_button($comment_id, $post_id) {
     $likes = get_comment_meta($comment_id, 'likes', true) ?: 0;
@@ -2177,5 +2057,138 @@ function track_recently_read_post($post_id) {
 
     update_user_meta($user_id, 'recently_read_posts', $history);
 }
+
+// add episode number
+function assign_episode_number_to_series() {
+    // Define the blog terms (categories for your series)
+    $blog_terms = ['main-blog', 'my-creation-blog', 'competition-blog'];
+    $meta_query = array();
+
+    // Add filter for main-blog
+    if (in_array('main-blog', $blog_terms)) {
+        $meta_query[] = array(
+            'relation' => 'OR',
+            array(
+                'key'     => 'parent_blog_id',
+                'compare' => 'NOT EXISTS',
+            ),
+            array(
+                'key'     => 'parent_blog_id',
+                'value'   => '0',
+                'compare' => '=',
+            ),
+        );
+    }
+
+    // Add filter for my-creation-blog
+    if (in_array('my-creation-blog', $blog_terms)) {
+        $meta_query[] = array(
+            'relation' => 'OR',
+            array(
+                'key'     => 'my_creation_parent_blog_id',
+                'compare' => 'NOT EXISTS',
+            ),
+            array(
+                'key'     => 'my_creation_parent_blog_id',
+                'value'   => '0',
+                'compare' => '=',
+            ),
+        );
+    }
+
+    // Add filter for competition-blog
+    if (in_array('competition-blog', $blog_terms)) {
+        $meta_query[] = array(
+            'relation' => 'OR',
+            array(
+                'key'     => 'competition_parent_id',
+                'compare' => 'NOT EXISTS',
+            ),
+            array(
+                'key'     => 'competition_parent_id',
+                'value'   => '0',
+                'compare' => '=',
+            ),
+        );
+    }
+
+    // Get all series posts
+    $args = array(
+        'post_type'      => 'post',
+        'tax_query'      => array(
+            'taxonomy' => 'category',
+            'field'    => 'slug',
+            'terms'    => ['novel', 'novels', 'நாவல்'],
+        ),
+        'meta_query'     => $meta_query,
+        'meta_key'       => 'story_view_count',
+        'orderby'        => 'meta_value_num',
+        'posts_per_page' => -1,
+        'paged'          => $paged,
+    );
+
+    $query = new WP_Query($args);
+    $series = $query->posts;
+
+    foreach ($series as $post) {
+        update_post_meta($post->ID, 'is_series', true);
+        $episode_number = 1;
+        $postId = $post->ID;
+        $args = array(
+            'post_type'      => 'post',
+            'meta_query'     => array(
+                'relation' => 'OR',
+                array(
+                    'key'     => 'parent_blog_id',
+                    'value'   => $postId,
+                    'compare' => '=',
+                ),
+                array(
+                    'key'     => 'my_creation_parent_blog_id',
+                    'value'   => $postId,
+                    'compare' => '=',
+                ),
+                array(
+                    'key'     => 'competition_parent_id',
+                    'value'   => $postId,
+                    'compare' => '=',
+                ),
+            ),
+            'orderby'        => 'ID',
+            'order'          => 'ASC',
+            'posts_per_page' => -1,
+        );
+
+        $query = new WP_Query($args);
+        $episodes = $query->posts;
+
+        foreach ($episodes as $episode) {
+            update_post_meta($episode->ID, 'episode_number', $episode_number);
+            $episode_number++;
+        }
+    }
+
+    // Reset post data after custom query
+    wp_reset_postdata();
+}
+
+// Hook the function to run when WordPress initializes
+// add_action('init', 'assign_episode_number_to_series');
+
+function set_coin_balance_for_all_users() {
+    $users = get_users(['fields' => 'ID']);
+
+    foreach ($users as $user_id) {
+        delete_user_meta($user_id, 'user_coin_balance');
+        delete_user_meta($user_id, 'email_verified');
+        update_user_meta($user_id, 'user_coin_balance', 50);
+        update_user_meta($user_id, 'email_verified', 1);
+    }
+}
+
+// Run only once
+// add_action('init', 'set_coin_balance_for_all_users');
+
+
 
 ?>

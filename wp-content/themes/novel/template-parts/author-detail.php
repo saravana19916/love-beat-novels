@@ -52,15 +52,31 @@ $author_following_count = is_array($author_following) ? count($author_following)
                     <img src="<?php echo esc_url($profile_picture_url); ?>" 
                         class="rounded-circle img-fluid shadow-sm border border-3 border-white mb-2" 
                         width="120" 
-                        alt="Profile Photo">
-                    <p class="mb-2 text-primary-color fs-16px"><strong><?php echo $isWriter ? 'Author' : 'Reader' ?>:&nbsp; </strong> <span> <?php echo $icon_html . esc_html($current_user->display_name); ?></span></p>
-                    <form method="post" enctype="multipart/form-data" id="profile-picture-form">
-                        <input type="file" name="profile_picture" id="profile-picture-input" style="display:none" required>
-                        <input type="hidden" name="update_profile_picture" value="1">
-                        <?php if (get_current_user_id() == $user_id) { ?>
-                            <button id="change-photo-btn" class="btn btn-sm" style="background-color: #061148 !important; border: #061148 !important; color: white;">Change Photo</button>
-                        <?php } ?>
-                    </form>
+                        alt="Profile Photo"
+                    >
+
+                    <?php if (get_current_user_id() == $user_id) { ?>
+                        <form method="post" enctype="multipart/form-data" id="profile-picture-form">
+                            <input type="file" name="profile_picture" id="profile-picture-input" style="display:none" required>
+                            <input type="hidden" name="update_profile_picture" value="1">
+                            <button id="change-photo-btn" class="btn btn-sm" style="background-color: #061148 !important; border: #061148 !important; color: white;">Change Photo</button>                        
+                        </form>
+                    <?php } ?>
+
+                    <p class="mt-3 mb-2 text-primary-color fs-16px"><strong><?php echo $isWriter ? 'Author' : 'Reader' ?>:&nbsp; </strong> <span> <?php echo $icon_html . esc_html($current_user->display_name); ?></span></p>
+                    <div class="mt-2">
+                        <?php if (!empty($about_user)) : ?>
+                            <p class="text-primary-color text-center fs-6"><?php echo esc_html($about_user); ?></p>
+                        <?php elseif(get_current_user_id() == $user_id) : ?>
+                            <p class="text-primary-color">
+                                Still you have not added about you. 
+                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#aboutUserModal">
+                                    Click here
+                                </button>
+                            </p>
+                        <?php endif; ?>
+                    </div>
+
                 </div>
 
                 <!-- Followers / Following + Button -->
@@ -102,19 +118,72 @@ $author_following_count = is_array($author_following) ? count($author_following)
                             </div>
                     <?php } ?>
                 </div>
-            </div>
 
-            <div class="mt-3">
-                <?php if (!empty($about_user)) : ?>
-                    <p class="text-primary-color text-center fs-6"><?php echo esc_html($about_user); ?></p>
-                <?php elseif(get_current_user_id() == $user_id) : ?>
-                    <p class="text-primary-color">
-                        Still you have not added about you. 
-                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#aboutUserModal">
-                            Click here
-                        </button>
-                    </p>
-                <?php endif; ?>
+                <?php
+                    $uid = get_current_user_id();
+                    $current_plan   = get_user_meta($uid, 'subscription_active_plan', true);
+                    $current_period = get_user_meta($uid, 'subscription_active_period', true);
+                    $expiry         = get_user_meta($uid, 'subscription_active_expiry', true);
+                    $coin_balance   = get_user_meta($uid, 'user_coin_balance', true) ?: 0;
+                ?>
+
+                <div class="d-flex justify-content-center w-100">
+                    <div class="card rounded-4 shadow-lg bg-transparent shadow-div mb-3" style="max-width:600px !important; width:600px !important;">
+                        <div class="card-body p-4">
+
+                            <h5 class="card-title fw-bold text-primary-color mb-3">Your Plan Details</h5>
+
+                            <?php if ($current_plan): ?>
+
+                                <p class="mb-2 text-primary-color">
+                                    உங்களுடைய தற்போதைய ஆக்ட்டிவ் பிளான் :<strong> <?= esc_html($current_plan); ?></strong>
+                                    <?php if (in_array($current_period, ['1 Month', '3 Months'])): ?>
+                                        <a href="<?= esc_url(site_url('/subscription')); ?>" class="btn btn-warning btn-sm ms-2">
+                                            Upgrade Plan
+                                        </a>
+                                    <?php endif; ?>
+                                </p>
+
+                                <p class="mb-3 text-primary-color">
+                                    உங்கள் பிளான் காலாவதி தேதி: 
+                                    <strong><?= $expiry ? date_i18n(get_option('date_format'), strtotime($expiry)) : 'N/A'; ?></strong>
+                                </p>
+
+                                <?php
+                                    $queue = get_user_meta(get_current_user_id(), 'subscription_queue', true);
+                                    $queue = is_array($queue) ? $queue : [];
+                                ?>
+
+                                <?php if (!empty($queue)): ?>
+                                    <div class="mt-3 text-primary-color">
+                                        <h6><strong class="d-block mb-2">Upcoming Plans:</strong></h6>
+                                        <?php foreach ($queue as $q): ?>
+                                            <div class="border rounded-3 p-2 mb-2 w-100" style="max-width:320px;">
+                                                <div class="fw-bold"><?= esc_html($q['plan']); ?></div>
+                                                <small>Starts: <?= esc_html($q['from']); ?></small><br>
+                                                <small>Expires: <?= esc_html($q['expiry']); ?></small>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php endif; ?>
+
+                            <?php else: ?>
+                                <p class="text-danger fw-semibold">No Active Subscription Plan</p>
+                                <a href="<?= esc_url(site_url('/subscription')); ?>" class="btn btn-primary btn-sm mb-3">Subscribe Now</a>
+                            <?php endif; ?>
+
+                            <hr class="my-2">
+
+                            <div class="text-primary-color mt-3">
+                                <h6>
+                                    <img src="<?php echo get_template_directory_uri() . '/images/coin.png'; ?>" width="24" class="me-2" alt="Coin">
+                                    <strong>Coin Balance:</strong> <span class="ms-1"><?= esc_html($coin_balance); ?></span>
+                                </h6>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Modal -->

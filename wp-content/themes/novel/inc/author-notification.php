@@ -18,12 +18,9 @@ function mark_notifications_seen() {
 // Set notification when post store
 add_action('save_post', 'send_follow_notifications', 10, 3);
 function send_follow_notifications($post_id, $post, $update) {
-    if ($post->post_type != 'post') return;
-
-    if ($update) return;
-
+    // Only for published posts
+    if ($post->post_type != 'post' || $post->post_status !== 'publish') return;
     if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
-
     if (wp_is_post_revision($post_id)) return;
 
     $author_id = $post->post_author;
@@ -33,18 +30,26 @@ function send_follow_notifications($post_id, $post, $update) {
         $following = get_user_meta($user->ID, 'following_users', true);
         if (is_array($following) && in_array($author_id, $following)) {
             global $wpdb;
-            $wpdb->insert(
-                "{$wpdb->prefix}author_notifications",
-                array(
-                    'user_id' => $user->ID,
-                    'post_id' => $post_id,
-                    'type' => 'follow_post',
-                    'by_user_id' => $author_id,
-                    'seen' => 0,
-                    'created_at' => current_time('mysql')
-                ),
-                array('%d','%d','%s','%d','%d','%s')
+            $exists = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->prefix}author_notifications WHERE user_id = %d AND post_id = %d AND type = 'follow_post'",
+                    $user->ID, $post_id
+                )
             );
+            if (!$exists) {
+                $wpdb->insert(
+                    "{$wpdb->prefix}author_notifications",
+                    array(
+                        'user_id' => $user->ID,
+                        'post_id' => $post_id,
+                        'type' => 'follow_post',
+                        'by_user_id' => $author_id,
+                        'seen' => 0,
+                        'created_at' => current_time('mysql')
+                    ),
+                    array('%d','%d','%s','%d','%d','%s')
+                );
+            }
         }
     }
 }
@@ -107,25 +112,33 @@ function fetch_notifications() {
                 $diff
             );
 
-            $type = match($note->type) {
-                'like' => 'liked your story',
-                'comment' => 'commented on your story',
-                'like comment' => 'liked your comment in the story',
-                'reply comment' => 'replied to your comment in the story',
-                'follow_post' => 'posted a new story',
-                'follow' => 'started to follow you.',
-                default => 'did something'
-            };
+            $current_plan   = get_user_meta($user_id, 'subscription_active_plan', true);
 
-            echo "<li class='border rounded mx-2 p-2 mb-2'>
-                    <a class='no-white me-2 text-primary-color' href='".esc_url($post_url)."'>
-                        <strong>".esc_html($user_name)."</strong> {$type} 
-                        <strong>".esc_html($post_title)."</strong>
-                    </a>
-                    <small class='text-primary-color'>
-                        " . $diff_short . "
-                    </small>
+            if ($note->type === 'subscription_activated' || $note->type === 'subscription_queued') {
+                echo "<li class='border rounded mx-2 p-2 mb-2'>
+                    " . esc_html($note->message) . "
                   </li>";
+            } else {
+                $type = match($note->type) {
+                    'like' => 'liked your story',
+                    'comment' => 'commented on your story',
+                    'like comment' => 'liked your comment in the story',
+                    'reply comment' => 'replied to your comment in the story',
+                    'follow_post' => 'posted a new story',
+                    'follow' => 'started to follow you.',
+                    default => 'did something'
+                };
+
+                echo "<li class='border rounded mx-2 p-2 mb-2'>
+                        <a class='no-white me-2 text-primary-color' href='".esc_url($post_url)."'>
+                            <strong>".esc_html($user_name)."</strong> {$type} 
+                            <strong>".esc_html($post_title)."</strong>
+                        </a>
+                        <small class='text-primary-color'>
+                            " . $diff_short . "
+                        </small>
+                    </li>";
+            }
         }
     }
 

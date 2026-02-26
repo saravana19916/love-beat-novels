@@ -31,7 +31,7 @@ jQuery(document).ready(function ($) {
                             $('#registerModal').modal('hide');
                             $('#loginModal').modal('show');
                         }
-                    }, 1000);
+                    }, 5000);
                 } else {
                     $('#registerMessage').html('<div class="alert alert-danger">' + response.data + '</div>');
                 }

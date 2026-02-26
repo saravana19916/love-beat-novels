@@ -55,20 +55,20 @@ get_header();
 
 <div class="container my-4">
     <?php
-        $writePageUrl = get_permalink(get_page_by_path('write'));
+        $writePageUrl = get_permalink(get_page_by_path('subscription'));
         $messageFromAdmin = get_option('writer_invite_message');
 
-        $linkHtml = '&nbsp;<a class="text-underline text-danger" href="' . esc_url($writePageUrl) . '">click here</a>';
+        $linkHtml = '&nbsp;<a class="text-underline text-danger" href="' . esc_url($writePageUrl) . '">சப்ஸ்கிரைப்</a>';
         $message = str_replace('{write_url}', $linkHtml, $messageFromAdmin);
     ?>
 
     <?php if ($messageFromAdmin) { ?>
         <div class="shadow rounded px-4 d-flex align-items-center justify-content-center fw-bold text-primary-color h-auto h-lg-100 shadow-div">
-            <i class="fa-solid fa-book fa-lg"></i> &nbsp; &nbsp;
+            <i class="fa-solid fa-crown fa-lg"></i> &nbsp; &nbsp;
             <span class="p-3">
                 <?= wp_kses_post($message); ?>
             </span>
-            &nbsp; &nbsp; <i class="fa-solid fa-book fa-lg"></i>
+            &nbsp; &nbsp; <i class="fa-solid fa-crown fa-lg"></i>
         </div>
     <?php } ?>
 

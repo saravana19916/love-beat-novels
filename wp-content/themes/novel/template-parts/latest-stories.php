@@ -44,32 +44,84 @@
                 $total_views = get_story_total_views('post', $sub_meta_key, $story_id);
                 $average_rating = get_story_average_rating('post', $sub_meta_key, $story_id);
                 $hidden_class = $count > 6 ? 'd-none more-latest-post' : '';
+
+                $episodeNumber = get_post_meta($story_id, 'episode_number', true);
+                $is_locked = find_episode_is_locked($parent_id, $story_id, $episodeNumber);
             ?>
             <div class="col-md-4 p-3 <?php echo $hidden_class; ?>">
                 <div class="card bg-transparent shadow-div h-100">
                     <div class="card-body">
                         <h6 class="card-title text-center fw-bold fs-14px">
-                            <a href="<?php the_permalink(); ?>" class="text-decoration-none text-primary-color">
+
+                            <a 
+                                href="<?php echo (!$is_locked ? get_permalink() : 'javascript:void(0);'); ?>" 
+                                class="text-decoration-none text-primary-color episode-title <?php echo ($is_locked ? 'locked-episode' : ''); ?>"
+                                <?php if ($is_locked): ?>
+                                    data-episode-id="<?php echo $story_id; ?>"
+                                    data-parent-id="<?php echo $parent_id; ?>"
+                                    data-episode-number="<?php echo $episodeNumber; ?>"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#episodeLockModal"
+                                <?php endif; ?>
+                            >
                                 <?php the_title(); ?>
                             </a>
+
+                            <!-- Lock Icon -->
+                            <?php if ($is_locked): ?>
+                                <i class="fas fa-lock text-danger ms-2 <?php echo ($is_locked ? 'locked-episode' : ''); ?>" 
+                                style="cursor:pointer;"
+                                data-episode-id="<?php echo $story_id; ?>"
+                                data-parent-id="<?php echo $parent_id; ?>"
+                                data-episode-number="<?php echo $episodeNumber; ?>"
+                                data-bs-toggle="modal" 
+                                data-bs-target="#episodeLockModal"></i>
+                            <?php endif; ?>
                         </h6>
 
                         <?php if (has_post_thumbnail($story_id)) : ?>
-                            <a href="<?php echo get_permalink($story_id); ?>">
+                            <a href="<?php echo (!$is_locked ? get_permalink($story_id) : 'javascript:void(0);'); ?>"
+                                class="<?php echo ($is_locked ? 'locked-episode' : ''); ?>"
+                                <?php if ($is_locked): ?>
+                                    data-episode-id="<?php echo $story_id; ?>"
+                                    data-parent-id="<?php echo $parent_id; ?>"
+                                    data-episode-number="<?php echo $episodeNumber; ?>"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#episodeLockModal"
+                                <?php endif; ?>
+                            >
                                 <?php echo get_the_post_thumbnail($story_id, 'medium', [
                                     'class' => 'img-fluid mx-auto d-block my-3',
                                     'style' => 'height: 300px;',
                                 ]); ?>
                             </a>
                         <?php elseif ($parent_id && has_post_thumbnail($parent_id)) : ?>
-                            <a href="<?php echo get_permalink($story_id); ?>">
+                            <a href="<?php echo (!$is_locked ? get_permalink($story_id) : 'javascript:void(0);'); ?>"
+                                class="<?php echo ($is_locked ? 'locked-episode' : ''); ?>"
+                                <?php if ($is_locked): ?>
+                                    data-episode-id="<?php echo $story_id; ?>"
+                                    data-parent-id="<?php echo $parent_id; ?>"
+                                    data-episode-number="<?php echo $episodeNumber; ?>"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#episodeLockModal"
+                                <?php endif; ?>
+                            >
                                 <?php echo get_the_post_thumbnail($parent_id, 'medium', [
                                     'class' => 'img-fluid mx-auto d-block my-3',
                                     'style' => 'height: 300px;',
                                 ]); ?>
                             </a>
                         <?php else : ?>
-                            <a href="<?php echo get_permalink($story_id); ?>">
+                            <a href="<?php echo (!$is_locked ? get_permalink($story_id) : 'javascript:void(0);'); ?>"
+                                class="<?php echo ($is_locked ? 'locked-episode' : ''); ?>"
+                                <?php if ($is_locked): ?>
+                                    data-episode-id="<?php echo $story_id; ?>"
+                                    data-parent-id="<?php echo $parent_id; ?>"
+                                    data-episode-number="<?php echo $episodeNumber; ?>"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#episodeLockModal"
+                                <?php endif; ?>
+                            >
                                 <img src="<?php echo get_template_directory_uri(); ?>/images/no-image.jpeg"
                                     class="img-fluid mx-auto d-block my-3"
                                     alt="Default Image"
@@ -87,7 +139,21 @@
                                 <p class="me-4 mb-0 text-primary-color"><i class="fa-solid fa-eye"></i>&nbsp;&nbsp;<?php echo format_view_count($total_views); ?></p>
                                 <p class="mb-0 text-primary-color"><i class="fa-solid fa-star" style="color: gold;"></i>&nbsp;&nbsp;<?php echo $average_rating; ?></p>
                             </div>
-                            <a href="<?php the_permalink(); ?>" class="btn btn-sm text-white fs-12px primary-btn">மேலும் படிக்க</a>
+                            <a
+                                href="<?php echo (!$is_locked ? get_permalink() : 'javascript:void(0);'); ?>"
+                                class="btn btn-sm text-white fs-12px primary-btn <?php echo ($is_locked ? 'locked-episode' : ''); ?>"
+                                <?php if ($is_locked): ?>
+                                    data-episode-id="<?php echo $story_id; ?>"
+                                    data-parent-id="<?php echo $parent_id; ?>"
+                                    data-episode-number="<?php echo $episodeNumber; ?>"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#episodeLockModal"
+                                <?php endif; ?>
+                            >மேலும் படிக்க
+                                <?php if ($is_locked): ?>
+                                    <i class="fas fa-lock ms-2"></i>
+                                <?php endif; ?>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -135,47 +201,98 @@
                         continue;
                     }
 
-                    if (strtolower($categories[0]->slug) === 'novel' || strtolower($categories[0]->slug) === 'novels' || $categories[0]->slug === 'நாவல்') {
+                    $parent_id = get_post_meta($story_id, $sub_meta_key, true);
+
+                    if ((strtolower($categories[0]->slug) === 'novel' || strtolower($categories[0]->slug) === 'novels' || $categories[0]->slug === 'நாவல்') && !$parent_id) {
                         continue;
                     }
 
-                    $parent_id = get_post_meta($story_id, $sub_meta_key, true);
-
                     $total_views = get_story_total_views('post', $sub_meta_key, $story_id);
                     $average_rating = get_story_average_rating('post', $sub_meta_key, $story_id);
+
+                    $episodeNumber = get_post_meta($story_id, 'episode_number', true);
+                    $is_locked = find_episode_is_locked($parent_id, $story_id, $episodeNumber);
                 ?>
                 <div class="swiper-slide custom-width">
                     <div class="col-lg-3 py-3">
                         <div class="card h-100 bg-transparent shadow-div">
                             <div class="card-body text-center px-0">
                                 <div class="title-wrapper d-flex align-items-center justify-content-center text-center px-2" style="height: 2rem;">
-                                    <h6 class="card-title fw-bold fs-14px mb-0">
-                                        <a href="<?php the_permalink(); ?>" class="text-decoration-none text-primary-color">
+                                    <h6 class="card-title text-center fw-bold fs-14px mb-0">
+                                        <a 
+                                            href="<?php echo (!$is_locked ? get_permalink() : 'javascript:void(0);'); ?>" 
+                                            class="text-decoration-none text-primary-color episode-title <?php echo ($is_locked ? 'locked-episode' : ''); ?>"
+                                            <?php if ($is_locked): ?>
+                                                data-episode-id="<?php echo $story_id; ?>"
+                                                data-parent-id="<?php echo $parent_id; ?>"
+                                                data-episode-number="<?php echo $episodeNumber; ?>"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#episodeLockModal"
+                                            <?php endif; ?>
+                                        >
                                             <?php
                                                 $title = get_the_title();
                                                 $trimmed_title = mb_strimwidth($title, 0, 50, '...');
                                                 echo esc_html($trimmed_title);
                                             ?>
                                         </a>
+
+                                        <!-- Lock Icon -->
+                                        <?php if ($is_locked): ?>
+                                            <i class="fas fa-lock text-danger ms-2 <?php echo ($is_locked ? 'locked-episode' : ''); ?>" 
+                                            style="cursor:pointer;"
+                                            data-episode-id="<?php echo $story_id; ?>"
+                                            data-parent-id="<?php echo $parent_id; ?>"
+                                            data-episode-number="<?php echo $episodeNumber; ?>"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#episodeLockModal"></i>
+                                        <?php endif; ?>
                                     </h6>
                                 </div>
 
                                 <?php if (has_post_thumbnail($story_id)) : ?>
-                                    <a href="<?php echo get_permalink($story_id); ?>">
+                                    <a href="<?php echo (!$is_locked ? get_permalink($story_id) : 'javascript:void(0);'); ?>"
+                                        class="<?php echo ($is_locked ? 'locked-episode' : ''); ?>"
+                                        <?php if ($is_locked): ?>
+                                            data-episode-id="<?php echo $story_id; ?>"
+                                            data-parent-id="<?php echo $parent_id; ?>"
+                                            data-episode-number="<?php echo $episodeNumber; ?>"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#episodeLockModal"
+                                        <?php endif; ?>
+                                    >
                                         <?php echo get_the_post_thumbnail($story_id, 'medium', [
                                             'class' => 'img-fluid mx-3 d-block my-3',
                                             'style' => 'height: 250px; width: 165px;',
                                         ]); ?>
                                     </a>
                                 <?php elseif ($parent_id && has_post_thumbnail($parent_id)) : ?>
-                                    <a href="<?php echo get_permalink($story_id); ?>">
+                                    <a href="<?php echo (!$is_locked ? get_permalink($story_id) : 'javascript:void(0);'); ?>"
+                                        class="<?php echo ($is_locked ? 'locked-episode' : ''); ?>"
+                                        <?php if ($is_locked): ?>
+                                            data-episode-id="<?php echo $story_id; ?>"
+                                            data-parent-id="<?php echo $parent_id; ?>"
+                                            data-episode-number="<?php echo $episodeNumber; ?>"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#episodeLockModal"
+                                        <?php endif; ?>
+                                    >
                                         <?php echo get_the_post_thumbnail($parent_id, 'medium', [
                                             'class' => 'img-fluid mx-3 d-block my-3',
                                             'style' => 'height: 250px; width: 165px;',
                                         ]); ?>
                                     </a>
                                 <?php else : ?>
-                                    <a href="<?php echo get_permalink($story_id); ?>">
+                                    <a href="<?php echo (!$is_locked ? get_permalink($story_id) : 'javascript:void(0);'); ?>"
+                                        class="<?php echo ($is_locked ? 'locked-episode' : ''); ?>"
+                                        <?php if ($is_locked): ?>
+                                            data-episode-id="<?php echo $story_id; ?>"
+                                            data-parent-id="<?php echo $parent_id; ?>"
+                                            data-episode-number="<?php echo $episodeNumber; ?>"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#episodeLockModal"
+                                        <?php endif; ?>
+                                    >
                                         <img src="<?php echo get_template_directory_uri(); ?>/images/no-image.jpeg"
                                             class="img-fluid mx-3 d-block my-3"
                                             alt="Default Image"
