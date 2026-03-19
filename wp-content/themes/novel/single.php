@@ -103,6 +103,7 @@
 
             <div class="row mb-5 episode-padding">
                 <?php
+                $count = 1;
                 while ($query->have_posts()) {
                     $query->the_post();
                     $views = get_post_meta(get_the_ID(), 'episode_view_count', true);

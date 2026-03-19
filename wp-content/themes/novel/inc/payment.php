@@ -21,6 +21,7 @@ add_action('wp_ajax_create_razorpay_order', 'create_razorpay_order');
 add_action('wp_ajax_nopriv_create_razorpay_order', 'create_razorpay_order');
 
 function create_razorpay_order() {
+    error_log('Razorpay order creation started');
 
     require_once get_template_directory() . '/inc/razorpay-php/Razorpay.php';
 
@@ -68,8 +69,12 @@ function verify_razorpay_payment() {
 
     $user_id = get_current_user_id();
 
+    error_log('Razorpay payment verification started');
+    error_log(print_r($_POST, true)); // Log POST data
+
     try {
         $api->utility->verifyPaymentSignature($attributes);
+        error_log('Signature verified successfully');
 
         global $wpdb;
         $table = $wpdb->prefix . 'coin_transactions';
@@ -85,6 +90,8 @@ function verify_razorpay_payment() {
             wp_send_json_success(['message' => 'Already processed']);
         }
 
+        error_log('Signature verified successfully1');
+
         if (isset($_POST['api']) && $_POST['api'] == 'subscription') {
             activate_subscription($amount, $_POST['period'], $_POST['name'], $razorpay_payment_id, $razorpay_order_id, $user_id);
         }
@@ -96,6 +103,8 @@ function verify_razorpay_payment() {
         wp_send_json_success();
 
     } catch (Exception $e) {
+        error_log('Signature verification failed: ' . $e->getMessage());
+
         global $wpdb;
         $table = $wpdb->prefix . 'coin_transactions';
 
@@ -121,6 +130,7 @@ function verify_razorpay_payment() {
 }
 
 function credit_coins_after_payment($amount, $payment_id, $order_id, $coins, $user_id) {
+    error_log('coin payment success, crediting coins');
     global $wpdb;
     $table = $wpdb->prefix . 'coin_transactions';
 
@@ -148,6 +158,7 @@ function credit_coins_after_payment($amount, $payment_id, $order_id, $coins, $us
 }
 
 function activate_subscription($amount, $period, $name, $payment_id, $order_id, $user_id) {
+    error_log('subscription payment success, activating subscription');
     global $wpdb;
     $table = $wpdb->prefix . 'coin_transactions';
 

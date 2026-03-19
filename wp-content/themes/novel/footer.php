@@ -418,7 +418,9 @@ $privacy_page = get_page_by_path('privacy-policy');
     document.addEventListener("DOMContentLoaded", function() {
   // Duplicate content to make the scroll seamless
   const marquee = document.querySelector('.marquee-content');
-  marquee.innerHTML += marquee.innerHTML;
+  if (marquee) {
+      marquee.innerHTML += marquee.innerHTML;
+  }
 });
 
 // lock and unlock episode
@@ -552,6 +554,7 @@ function startPayment(amount, coins) {
             name: "Coin Purchase",
             order_id: orderRes.data.order_id,
             handler: function (response) {
+                console.log("Payment response:", response);
                 jQuery.post(ajaxurl, {
                     action: "verify_razorpay_payment",
                     razorpay_payment_id: response.razorpay_payment_id,
@@ -600,42 +603,74 @@ function startPayment(amount, coins) {
     });
 }
 
+// function isInAppBrowser() {
+//     var ua = navigator.userAgent || navigator.vendor || window.opera;
+//     return (
+//         ua.indexOf("Chrome") > -1 ||
+//         ua.indexOf("FBAN") > -1 ||
+//         ua.indexOf("FBAV") > -1 ||
+//         ua.indexOf("Twitter") > -1
+//     );
+// }
+
+// document.addEventListener("DOMContentLoaded", function() {
+//     if (isInAppBrowser()) {
+//         var modal = document.createElement('div');
+//         modal.style.position = 'fixed';
+//         modal.style.top = 0;
+//         modal.style.left = 0;
+//         modal.style.width = '100vw';
+//         modal.style.height = '100vh';
+//         modal.style.background = 'rgba(0,0,0,0.85)';
+//         modal.style.zIndex = 99999;
+//         modal.style.display = 'flex';
+//         modal.style.alignItems = 'center';
+//         modal.style.justifyContent = 'center';
+//         modal.innerHTML = `
+//             <div style="background:#fff;padding:2rem 2.5rem;border-radius:12px;max-width:90vw;text-align:center;">
+//                 <h4 style="color:#d32f2f;">Payment Not Supported Here</h4>
+//                 <p style="color:#333;">
+//                     For a smooth payment experience, please open this page in your browser (like Chrome or Safari).<br><br>
+//                     <b>Tap the <span style="color:#1976d2;">three dots</span> or <span style="color:#1976d2;">browser icon</span> at the top right and choose "Open in Browser".</b>
+//                 </p>
+//                 <a 
+//                   href="googlechrome://navigate?url=<?php echo urlencode((is_ssl() ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']); ?>" 
+//                   class="btn btn-primary mt-3"
+//                   style="font-size:1.2rem;">
+//                   Open in Chrome
+//                 </a>
+//             </div>
+//         `;
+//         document.body.appendChild(modal);
+//         document.body.style.overflow = 'hidden';
+//     }
+// });
+
 function isInAppBrowser() {
     var ua = navigator.userAgent || navigator.vendor || window.opera;
-    // Instagram, Facebook, Messenger, Twitter
     return (
-        ua.indexOf("Chrome") > -1 ||
+        ua.indexOf("Instagram") > -1 ||
+        ua.indexOf("InstagramLite") > -1 || // <-- Add this for Instagram Lite
         ua.indexOf("FBAN") > -1 ||
         ua.indexOf("FBAV") > -1 ||
         ua.indexOf("Twitter") > -1
     );
 }
 
-document.addEventListener("DOMContentLoaded", function() {
-    if (isInAppBrowser()) {
-        // Show a modal or banner
-        var modal = document.createElement('div');
-        modal.style.position = 'fixed';
-        modal.style.top = 0;
-        modal.style.left = 0;
-        modal.style.width = '100vw';
-        modal.style.height = '100vh';
-        modal.style.background = 'rgba(0,0,0,0.85)';
-        modal.style.zIndex = 99999;
-        modal.style.display = 'flex';
-        modal.style.alignItems = 'center';
-        modal.style.justifyContent = 'center';
-        modal.innerHTML = `
-            <div style="background:#fff;padding:2rem 2.5rem;border-radius:12px;max-width:90vw;text-align:center;">
-                <h4 style="color:#d32f2f;">Payment Not Supported Here</h4>
-                <p style="color:#333;">
-                    For a smooth payment experience, please open this page in your browser (like Chrome or Safari).<br><br>
-                    <b>Tap the <span style="color:#1976d2;">three dots</span> or <span style="color:#1976d2;">browser icon</span> at the top right and choose "Open in Browser".</b>
-                </p>
-            </div>
-        `;
-        document.body.appendChild(modal);
-        document.body.style.overflow = 'hidden';
-    }
-});
+if (isInAppBrowser()) {
+    document.body.innerHTML = `
+        <div style="text-align:center; padding:40px;">
+            <h2>Open in Browser</h2>
+            <p>For secure payment, please open this page in your browser.</p>
+            <button onclick="openInBrowser()" style="padding:10px 20px; font-size:16px;">
+                Open in Browser
+            </button>
+        </div>
+    `;
+}
+
+function openInBrowser() {
+    var url = window.location.href;
+    window.location.href = "intent://" + url.replace(/^https?:\/\//, "") + "#Intent;scheme=https;package=com.android.chrome;end";
+}
 </script>

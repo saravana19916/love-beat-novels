@@ -32,7 +32,7 @@ get_header();
         <?php foreach ($banner_images as $index => $image): ?>
             <div class="carousel-item <?php echo $index === 0 ? 'active' : ''; ?>">
                 <a href="<?php echo esc_url($image['link']); ?>" target="_blank">
-                    <img src="<?php echo esc_url($image['image']); ?>" class="d-block w-100 custom-img-height" alt="<?php echo esc_attr($image['alt']); ?>">
+                    <img src="<?php echo esc_url($image['image']); ?>" class="d-block w-100 custom-img-height" alt="banner image <?php echo $index + 1; ?>">
                 </a>
                 <!-- <div class="carousel-caption d-none d-md-block">
                     <h5>வலைத்தளத்தில் எழுத புதிய எழுத்தாளர்கள் வரவேற்கப்படுகிறார்கள்.</h5>

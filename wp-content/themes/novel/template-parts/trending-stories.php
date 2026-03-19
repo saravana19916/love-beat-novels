@@ -86,10 +86,10 @@
 
         // $total_views = $main_views + $sub_total;
 
-        $total_views = get_story_total_views($sub_post_type, $sub_meta_key, $main_id);
+        $total_views = get_story_total_views('post', $sub_meta_key, $main_id);
 
         // Find average rating
-        $average_rating = get_story_average_rating($sub_post_type, $sub_meta_key, $main_id);
+        $average_rating = get_story_average_rating('post', $sub_meta_key, $main_id);
 
         $stories_with_views[] = [
             'post'  => $story,
