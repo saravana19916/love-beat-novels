@@ -1,4 +1,12 @@
 <?php
+add_action('rest_api_init', function () {
+    register_rest_route('razorpay/v1', '/webhook', [
+        'methods'  => ['GET', 'POST'],
+        'callback' => 'handle_razorpay_webhook',
+        'permission_callback' => '__return_true'
+    ]);
+});
+
 function load_razorpay_scripts() {
 
     wp_enqueue_script(
@@ -21,113 +29,120 @@ add_action('wp_ajax_create_razorpay_order', 'create_razorpay_order');
 add_action('wp_ajax_nopriv_create_razorpay_order', 'create_razorpay_order');
 
 function create_razorpay_order() {
-    error_log('Razorpay order creation started');
-
+    error_log('order create start');
     require_once get_template_directory() . '/inc/razorpay-php/Razorpay.php';
 
-    $keyId     = RAZORPAY_KEY_ID;
-    $keySecret = RAZORPAY_KEY_SECRET;
+    $api = new Razorpay\Api\Api(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET);
 
-    $api = new Razorpay\Api\Api($keyId, $keySecret);
-
-    $amount = intval($_POST['amount']); // in paise
-
-    $order = $api->order->create([
-        'receipt'         => 'wallet_' . time(),
-        'amount'          => $amount,
-        'currency'        => 'INR',
-        'payment_capture' => 1
-    ]);
-
-    wp_send_json_success([
-        'order_id' => $order['id']
-    ]);
-}
-
-add_action('wp_ajax_verify_razorpay_payment', 'verify_razorpay_payment');
-add_action('wp_ajax_nopriv_verify_razorpay_payment', 'verify_razorpay_payment');
-
-function verify_razorpay_payment() {
-
-    require_once get_template_directory() . '/inc/razorpay-php/Razorpay.php';
-
-    $keyId     = RAZORPAY_KEY_ID;
-    $keySecret = RAZORPAY_KEY_SECRET;
-
-    $api = new \Razorpay\Api\Api($keyId, $keySecret);
-
-    $attributes = [
-        'razorpay_order_id'   => $_POST['razorpay_order_id'],
-        'razorpay_payment_id' => $_POST['razorpay_payment_id'],
-        'razorpay_signature'  => $_POST['razorpay_signature'],
-    ];
-
-    $razorpay_payment_id = $_POST['razorpay_payment_id'];
-    $razorpay_order_id = $_POST['razorpay_order_id'];
-    $amount  = intval($_POST['amount']);
-    $coins  = $_POST['coins'];
-
+    $amount  = (int) $_POST['amount']; // paise
+    $pay_for = sanitize_text_field($_POST['pay_for'] ?? 'coin');
     $user_id = get_current_user_id();
 
-    error_log('Razorpay payment verification started');
-    error_log(print_r($_POST, true)); // Log POST data
+    $receipt_prefix = ($pay_for === 'subscription') ? 'subscription_' : 'coin_';
 
-    try {
-        $api->utility->verifyPaymentSignature($attributes);
-        error_log('Signature verified successfully');
+    $order = $api->order->create([
+        'receipt'         => $receipt_prefix . time(),
+        'amount'          => $amount,
+        'currency'        => 'INR',
+        'payment_capture' => 1, // <-- Make sure this is 1 (auto capture)
+        'notes'           => [
+            'pay_for'   => $pay_for,
+            'user_id'   => $user_id,
+            'coins'     => (int) ($_POST['coins'] ?? 0),
+            'plan_name' => sanitize_text_field($_POST['plan_name'] ?? ''),
+            'period'    => sanitize_text_field($_POST['period'] ?? ''),
+        ],
+    ]);
 
-        global $wpdb;
-        $table = $wpdb->prefix . 'coin_transactions';
-        $exists = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT COUNT(*) FROM {$table} 
-                WHERE transaction_id = %s AND payment_status = 'success'",
-                $razorpay_order_id
-            )
-        );
+    error_log('order created: ' . print_r($order, true));
 
-        if ($exists) {
-            wp_send_json_success(['message' => 'Already processed']);
-        }
-
-        error_log('Signature verified successfully1');
-
-        if (isset($_POST['api']) && $_POST['api'] == 'subscription') {
-            activate_subscription($amount, $_POST['period'], $_POST['name'], $razorpay_payment_id, $razorpay_order_id, $user_id);
-        }
-
-        if (isset($_POST['api']) && $_POST['api'] == 'coin') {
-            credit_coins_after_payment($amount, $razorpay_payment_id, $razorpay_order_id, $coins, $user_id);            
-        }
-
-        wp_send_json_success();
-
-    } catch (Exception $e) {
-        error_log('Signature verification failed: ' . $e->getMessage());
-
-        global $wpdb;
-        $table = $wpdb->prefix . 'coin_transactions';
-
-        $wpdb->insert(
-            $table,
-            [
-                'user_id'        => get_current_user_id(),
-                'payment_id'     => $razorpay_payment_id,
-                'transaction_id' => $razorpay_order_id,
-                'amount'         => $amount,
-                'pay_for'        => 'coin',
-                'purchased_coins' => $coins,
-                'created_at'     => current_time('mysql'),
-                'payment_status' => 'failed'
-            ],
-            [
-                '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s'
-            ]
-        );
-
-        wp_send_json_error(['message' => 'Verification failed']);
-    }
+    wp_send_json_success(['order_id' => $order['id']]);
 }
+
+// add_action('wp_ajax_verify_razorpay_payment', 'verify_razorpay_payment');
+// add_action('wp_ajax_nopriv_verify_razorpay_payment', 'verify_razorpay_payment');
+
+// function verify_razorpay_payment() {
+
+//     require_once get_template_directory() . '/inc/razorpay-php/Razorpay.php';
+
+//     $keyId     = RAZORPAY_KEY_ID;
+//     $keySecret = RAZORPAY_KEY_SECRET;
+
+//     $api = new \Razorpay\Api\Api($keyId, $keySecret);
+
+//     $attributes = [
+//         'razorpay_order_id'   => $_POST['razorpay_order_id'],
+//         'razorpay_payment_id' => $_POST['razorpay_payment_id'],
+//         'razorpay_signature'  => $_POST['razorpay_signature'],
+//     ];
+
+//     $razorpay_payment_id = $_POST['razorpay_payment_id'];
+//     $razorpay_order_id = $_POST['razorpay_order_id'];
+//     $amount  = intval($_POST['amount']);
+//     $coins  = $_POST['coins'];
+
+//     $user_id = get_current_user_id();
+
+//     error_log('Razorpay payment verification started');
+//     error_log(print_r($_POST, true));
+
+//     try {
+//         $api->utility->verifyPaymentSignature($attributes);
+//         error_log('Signature verified successfully');
+
+//         global $wpdb;
+//         $table = $wpdb->prefix . 'coin_transactions';
+//         $exists = $wpdb->get_var(
+//             $wpdb->prepare(
+//                 "SELECT COUNT(*) FROM {$table} 
+//                 WHERE transaction_id = %s AND payment_status = 'success'",
+//                 $razorpay_order_id
+//             )
+//         );
+
+//         if ($exists) {
+//             wp_send_json_success(['message' => 'Already processed']);
+//         }
+
+//         error_log('Signature verified successfully1');
+
+//         if (isset($_POST['api']) && $_POST['api'] == 'subscription') {
+//             activate_subscription($amount, $_POST['period'], $_POST['name'], $razorpay_payment_id, $razorpay_order_id, $user_id);
+//         }
+
+//         if (isset($_POST['api']) && $_POST['api'] == 'coin') {
+//             credit_coins_after_payment($amount, $razorpay_payment_id, $razorpay_order_id, $coins, $user_id);            
+//         }
+
+//         wp_send_json_success();
+
+//     } catch (Exception $e) {
+//         error_log('Signature verification failed: ' . $e->getMessage());
+
+//         global $wpdb;
+//         $table = $wpdb->prefix . 'coin_transactions';
+
+//         $wpdb->insert(
+//             $table,
+//             [
+//                 'user_id'        => get_current_user_id(),
+//                 'payment_id'     => $razorpay_payment_id,
+//                 'transaction_id' => $razorpay_order_id,
+//                 'amount'         => $amount,
+//                 'pay_for'        => 'coin',
+//                 'purchased_coins' => $coins,
+//                 'created_at'     => current_time('mysql'),
+//                 'payment_status' => 'failed'
+//             ],
+//             [
+//                 '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s'
+//             ]
+//         );
+
+//         wp_send_json_error(['message' => 'Verification failed']);
+//     }
+// }
 
 function credit_coins_after_payment($amount, $payment_id, $order_id, $coins, $user_id) {
     error_log('coin payment success, crediting coins');
@@ -306,90 +321,144 @@ function activate_subscription($amount, $period, $name, $payment_id, $order_id, 
         }
     });
 
-    // Schedule cron if not already scheduled
-    // add_action('init', function () {
+// add_action('wp_ajax_log_razorpay_failure', 'log_razorpay_failure');
+// add_action('wp_ajax_nopriv_log_razorpay_failure', 'log_razorpay_failure');
 
-    //     if (!wp_next_scheduled('process_subscription_queue_cron')) {
-    //         wp_schedule_event(time(), 'hourly', 'process_subscription_queue_cron');
-    //     }
+// function log_razorpay_failure() {
+//     global $wpdb;
+//     $table = $wpdb->prefix . 'coin_transactions';
 
-    // });
+//     $razorpay_payment_id = $_POST['razorpay_payment_id'];
+//     $razorpay_order_id = $_POST['razorpay_order_id'];
+//     $amount = $_POST['amount'];
+//     $api = $_POST['api'];
 
-    // add_action('init', function () {
+//     $wpdb->insert(
+//         $table,
+//         [
+//             'user_id'        => get_current_user_id(),
+//             'payment_id'     => $razorpay_payment_id,
+//             'amount'         => $amount,
+//             'pay_for'        => $api,
+//             'created_at'     => current_time('mysql'),
+//             'payment_status' => 'failed',
+//             'transaction_id' => $razorpay_order_id,
+//             'subscription_plan' => $api === 'subscription' ? $_POST['name'] : null,
+//         ],
+//         [
+//             '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%s'
+//         ]
+//     );
+// }
 
-    //     if (!wp_next_scheduled('process_subscription_queue_cron')) {
-    //         wp_schedule_event(time(), 'every_minute', 'process_subscription_queue_cron');
-    //     }
+function handle_razorpay_webhook(WP_REST_Request $request) {
+    error_log('Webhook called');
 
-    // });
+    if (!defined('RAZORPAY_WEBHOOK_SECRET') || RAZORPAY_WEBHOOK_SECRET === '') {
+        error_log('Webhook secret not configured');
+        return new WP_REST_Response(['status' => 'error', 'message' => 'Webhook secret not configured'], 500);
+    }
 
-    // add_filter('cron_schedules', function ($schedules) {
-    //     if (!isset($schedules['every_minute'])) {
-    //         $schedules['every_minute'] = [
-    //             'interval' => 60,
-    //             'display'  => 'Every Minute',
-    //         ];
-    //     }
-    //     return $schedules;
-    // });
+    $webhook_secret = RAZORPAY_WEBHOOK_SECRET;
+    $payload   = (string) $request->get_body();
+    $signature = (string) $request->get_header('x-razorpay-signature');
 
-    // add_action('init', function () {
-    //     if (isset($_GET['run_cron'])) {
-    //         do_action('process_subscription_queue_cron');
-    //         exit('Cron executed manually');
-    //     }
-    // });
+    // Check if signature or payload is missing
+    if ($payload === '' || $signature === '') {
+        error_log('Webhook: missing payload or signature');
+        return new WP_REST_Response(['status' => 'error', 'message' => 'Missing payload or signature'], 400);
+    }
 
-    // add_action('process_subscription_queue_cron', 'run_subscription_queue_cron');
+    require_once get_template_directory() . '/inc/razorpay-php/Razorpay.php';
+    $api = new Razorpay\Api\Api(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET);
 
-    // function run_subscription_queue_cron() {
+    try {
+        $api->utility->verifyWebhookSignature($payload, $signature, $webhook_secret);
+        error_log('signature verified');
+        $data = json_decode($payload, true);
 
-    //     $users = get_users([
-    //         'meta_key'     => 'subscription_queue',
-    //         'meta_compare' => 'EXISTS',
-    //     ]);
+        if (empty($data['event']) || empty($data['payload']['payment']['entity'])) {
+            return new WP_REST_Response(['status' => 'ignored'], 200);
+        }
 
-    //     if (empty($users)) {
-    //         return;
-    //     }
+        $event   = $data['event'];
+        $payment = $data['payload']['payment']['entity'];
 
-    //     foreach ($users as $user) {
-    //         process_subscription_queue($user->ID);
-    //     }
-    // }
+        $payment_id = $payment['id'] ?? '';
+        $order_id   = $payment['order_id'] ?? '';
+        $amount     = isset($payment['amount']) ? ((int) $payment['amount'] / 100) : 0; // rupees
+        $email      = $payment['email'] ?? '';
 
-    // add_action('switch_theme', function () {
-    //     wp_clear_scheduled_hook('process_subscription_queue_cron');
-    // });
+        $order = !empty($order_id) ? $api->order->fetch($order_id) : [];
+        $notes = $order['notes'] ?? [];
+        $receipt = $order['receipt'] ?? '';
 
-add_action('wp_ajax_log_razorpay_failure', 'log_razorpay_failure');
-add_action('wp_ajax_nopriv_log_razorpay_failure', 'log_razorpay_failure');
+        $pay_for = $notes['pay_for'] ?? (
+            strpos($receipt, 'subscription_') === 0 ? 'subscription' :
+            (strpos($receipt, 'coin_') === 0 ? 'coin' : 'unknown')
+        );
 
-function log_razorpay_failure() {
-    global $wpdb;
-    $table = $wpdb->prefix . 'coin_transactions';
+        $user_id = (int) ($notes['user_id'] ?? 0);
+        if (!$user_id && !empty($email)) {
+            $user = get_user_by('email', $email);
+            $user_id = $user ? (int) $user->ID : 0;
+        }
 
-    $razorpay_payment_id = $_POST['razorpay_payment_id'];
-    $razorpay_order_id = $_POST['razorpay_order_id'];
-    $amount = $_POST['amount'];
-    $api = $_POST['api'];
+        global $wpdb;
+        $table = $wpdb->prefix . 'coin_transactions';
 
-    $wpdb->insert(
-        $table,
-        [
-            'user_id'        => get_current_user_id(),
-            'payment_id'     => $razorpay_payment_id,
-            'amount'         => $amount,
-            'pay_for'        => $api,
-            'created_at'     => current_time('mysql'),
-            'payment_status' => 'failed',
-            'transaction_id' => $razorpay_order_id,
-            'subscription_plan' => $api === 'subscription' ? $_POST['name'] : null,
-        ],
-        [
-            '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%s'
-        ]
-    );
+        // idempotency
+        $already = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$table} WHERE payment_id = %s",
+                $payment_id
+            )
+        );
+        if ($already > 0) {
+            return new WP_REST_Response(['status' => 'duplicate'], 200);
+        }
+
+        if ($event === 'payment.captured') {
+            if ($pay_for === 'coin') {
+                $coins = (int) ($notes['coins'] ?? 0);
+                credit_coins_after_payment($amount, $payment_id, $order_id, $coins, $user_id);
+            } elseif ($pay_for === 'subscription') {
+                $plan_name = sanitize_text_field($notes['plan_name'] ?? '');
+                $period    = sanitize_text_field($notes['period'] ?? '');
+                activate_subscription($amount, $period, $plan_name, $payment_id, $order_id, $user_id);
+            } else {
+                $wpdb->insert($table, [
+                    'user_id' => $user_id,
+                    'payment_id' => $payment_id,
+                    'transaction_id' => $order_id,
+                    'amount' => $amount,
+                    'pay_for' => 'unknown',
+                    'purchased_coins' => 0,
+                    'created_at' => current_time('mysql'),
+                    'payment_status' => 'success',
+                ], ['%d','%s','%s','%d','%s','%d','%s','%s']);
+            }
+        }
+
+        if ($event === 'payment.failed') {
+            $wpdb->insert($table, [
+                'user_id' => $user_id,
+                'payment_id' => $payment_id,
+                'transaction_id' => $order_id,
+                'amount' => $amount,
+                'pay_for' => $pay_for,
+                'purchased_coins' => 0,
+                'created_at' => current_time('mysql'),
+                'payment_status' => 'failed',
+                'subscription_plan' => ($pay_for === 'subscription') ? ($notes['plan_name'] ?? '') : null,
+            ], ['%d','%s','%s','%d','%s','%d','%s','%s','%s']);
+        }
+
+        return new WP_REST_Response(['status' => 'ok'], 200);
+    } catch (Exception $e) {
+        error_log('Webhook verify failed: ' . $e->getMessage());
+        return new WP_REST_Response(['status' => 'invalid signature'], 400);
+    }
 }
 
 

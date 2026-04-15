@@ -522,17 +522,19 @@ jQuery(document).on('click', 'input[name="coin_pack_price"]', function() {
 });
 
 function paymentProcess() {
+    // Block Razorpay inside Instagram/Facebook in-app browser
+    if (!canStartRazorpayPayment()) return;
+
     jQuery('#coinRequired').addClass('d-none');
 
     let selectedPack = document.querySelector('input[name="coin_pack_price"]:checked');
+    if (!selectedPack) {
+        jQuery('#coinRequired').removeClass('d-none');
+        return;
+    }
 
     let amount = selectedPack.value;
     let coins = selectedPack.getAttribute('data-coin');
-    if (!amount) {
-        jQuery('#coinRequired').removeClass('d-none');
-      return;
-    }
-
     startPayment(amount, coins);
 }
 
@@ -541,7 +543,7 @@ let failureLoggedOrders = new Set();
 function startPayment(amount, coins) {
     let amountInPaisa = amount * 100;
 
-    jQuery.post(ajaxurl, { action: "create_razorpay_order", amount: amountInPaisa }, function(orderRes) {
+    jQuery.post(ajaxurl, { action: "create_razorpay_order", coins: coins, amount: amountInPaisa, pay_for: 'coin' }, function(orderRes) {
         if (!orderRes.success) {
             alert("Order creation failed");
             return;
@@ -554,52 +556,71 @@ function startPayment(amount, coins) {
             name: "Coin Purchase",
             order_id: orderRes.data.order_id,
             handler: function (response) {
-                console.log("Payment response:", response);
-                jQuery.post(ajaxurl, {
-                    action: "verify_razorpay_payment",
-                    razorpay_payment_id: response.razorpay_payment_id,
-                    razorpay_order_id: response.razorpay_order_id,
-                    razorpay_signature: response.razorpay_signature,
-                    amount: amount,
-                    api: 'coin',
-                    coins: coins
-                }, function(res) {
-
-                    if (res.success) {
-                        alert("Coins Added Successfully!");
-                        location.reload();
-                    } else {
-                        alert("Payment verification failed!");
-                    }
-                });
+                alert("Coins Added Successfully!");
+                location.reload();
             }
         };
 
-        let rzp = new Razorpay(options);
+        var rzp = new Razorpay(options);
 
-        rzp.on('payment.failed', function(response) {
-            let orderId = orderRes.data.order_id;
-
-            // ❗ Restrict duplicate logging
-            if (failureLoggedOrders.has(orderId)) {
-                console.warn("Failure already logged for this order:", orderId);
-                return;
-            }
-
-            failureLoggedOrders.add(orderId); // mark as logged
-
-            jQuery.post(ajaxurl, {
-                action: 'log_razorpay_failure',
-                razorpay_payment_id: response.error.metadata.payment_id,
-                razorpay_order_id: response.error.metadata.order_id,
-                amount: amount,
-                api: 'coin'
-            });
-
-            alert("Payment failed!");
+        rzp.on('payment.failed', function () {
+            alert("Coins Payment failed!");
         });
 
         rzp.open();
+
+        // var options = {
+        //     key: RazorpayConfig.key,
+        //     amount: amountInPaisa,
+        //     currency: "INR",
+        //     name: "Coin Purchase",
+        //     order_id: orderRes.data.order_id,
+        //     handler: function (response) {
+        //         console.log("Payment response:", response);
+        //         jQuery.post(ajaxurl, {
+        //             action: "verify_razorpay_payment",
+        //             razorpay_payment_id: response.razorpay_payment_id,
+        //             razorpay_order_id: response.razorpay_order_id,
+        //             razorpay_signature: response.razorpay_signature,
+        //             amount: amount,
+        //             api: 'coin',
+        //             coins: coins
+        //         }, function(res) {
+
+        //             if (res.success) {
+        //                 alert("Coins Added Successfully!");
+        //                 location.reload();
+        //             } else {
+        //                 alert("Payment verification failed!");
+        //             }
+        //         });
+        //     }
+        // };
+
+        // let rzp = new Razorpay(options);
+
+        // rzp.on('payment.failed', function(response) {
+        //     let orderId = orderRes.data.order_id;
+
+        //     if (failureLoggedOrders.has(orderId)) {
+        //         console.warn("Failure already logged for this order:", orderId);
+        //         return;
+        //     }
+
+        //     failureLoggedOrders.add(orderId);
+
+        //     jQuery.post(ajaxurl, {
+        //         action: 'log_razorpay_failure',
+        //         razorpay_payment_id: response.error.metadata.payment_id,
+        //         razorpay_order_id: response.error.metadata.order_id,
+        //         amount: amount,
+        //         api: 'coin'
+        //     });
+
+        //     alert("Payment failed!");
+        // });
+
+        // rzp.open();
     });
 }
 
@@ -646,31 +667,143 @@ function startPayment(amount, coins) {
 //     }
 // });
 
-function isInAppBrowser() {
-    var ua = navigator.userAgent || navigator.vendor || window.opera;
-    return (
-        ua.indexOf("Instagram") > -1 ||
-        ua.indexOf("InstagramLite") > -1 || // <-- Add this for Instagram Lite
-        ua.indexOf("FBAN") > -1 ||
-        ua.indexOf("FBAV") > -1 ||
-        ua.indexOf("Twitter") > -1
-    );
+// Last updated on 2024-06-10 by Novel Team
+// function isInAppBrowser() {
+//     var ua = navigator.userAgent || navigator.vendor || window.opera;
+//     return (
+//         ua.indexOf("Instagram") > -1 ||
+//         ua.indexOf("InstagramLite") > -1 ||
+//         ua.indexOf("FBAN") > -1 ||
+//         ua.indexOf("FBAV") > -1 ||
+//         ua.indexOf("Twitter") > -1
+//     );
+// }
+
+// if (isInAppBrowser()) {
+//     document.body.innerHTML = `
+//         <div style="text-align:center; padding:40px;">
+//             <h2>Open in Browser</h2>
+//             <p>For secure payment, please open this page in your browser.</p>
+//             <button onclick="openInBrowser()" style="padding:10px 20px; font-size:16px;">
+//                 Open in Browser
+//             </button>
+//         </div>
+//     `;
+// }
+
+// function openInBrowser() {
+//     var url = window.location.href;
+//     window.location.href = "intent://" + url.replace(/^https?:\/\//, "") + "#Intent;scheme=https;package=com.android.chrome;end";
+// }
+
+function isSocialInAppBrowser() {
+    const ua = navigator.userAgent || '';
+    return /Instagram|InstagramLite|FBAN|FBAV/i.test(ua);
 }
 
-if (isInAppBrowser()) {
-    document.body.innerHTML = `
-        <div style="text-align:center; padding:40px;">
-            <h2>Open in Browser</h2>
-            <p>For secure payment, please open this page in your browser.</p>
-            <button onclick="openInBrowser()" style="padding:10px 20px; font-size:16px;">
-                Open in Browser
-            </button>
-        </div>
-    `;
+function isIOSDevice() {
+    return /iPhone|iPad|iPod/i.test(navigator.userAgent || '');
 }
 
-function openInBrowser() {
-    var url = window.location.href;
-    window.location.href = "intent://" + url.replace(/^https?:\/\//, "") + "#Intent;scheme=https;package=com.android.chrome;end";
+function isAndroidDevice() {
+    return /Android/i.test(navigator.userAgent || '');
 }
+
+function showPaymentBrowserNotice() {
+    const currentUrl = window.location.href;
+    const url = new URL(currentUrl);
+
+    const chromeIntentUrl =
+        'intent://' +
+        url.host +
+        url.pathname +
+        url.search +
+        url.hash +
+        '#Intent;scheme=' +
+        url.protocol.replace(':', '') +
+        ';package=com.android.chrome;end';
+
+    if (isIOSDevice()) {
+        alert('For payment, open this page in Safari.\nTap menu in Instagram/Facebook and choose "Open in Safari".');
+        return;
+    }
+
+    if (isAndroidDevice()) {
+        // Try opening Chrome directly
+        window.location.href = chromeIntentUrl;
+        return;
+    }
+
+    alert('For payment, open this page in your default browser.');
+}
+
+function canStartRazorpayPayment() {
+    if (!isSocialInAppBrowser()) return true;
+    showPaymentBrowserNotice();
+    return false;
+}
+
+// document.addEventListener('DOMContentLoaded', function () {
+//     var ua = navigator.userAgent || '';
+//     var isIOS = /iPhone|iPad|iPod/i.test(ua);
+//     var isAndroid = /Android/i.test(ua);
+//     var isInAppBrowser = isSocialInAppBrowser();
+
+//     if (!isInAppBrowser) return;
+
+//     var currentUrl = window.location.href;
+//     var url = new URL(currentUrl);
+//     var chromeIntentUrl =
+//         'intent://' +
+//         url.host +
+//         url.pathname +
+//         url.search +
+//         url.hash +
+//         '#Intent;scheme=' +
+//         url.protocol.replace(':', '') +
+//         ';package=com.android.chrome;end';
+
+//     var notice = document.createElement('div');
+//     notice.style.cssText =
+//         'position:fixed;bottom:16px;left:16px;right:16px;z-index:99999;background:#2366a8;color:#fff;padding:14px 16px;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.2);font-size:14px;';
+
+//     if (isIOS) {
+//         notice.innerHTML = `
+//             <div style="display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;">
+//                 <div>For secure payment, open this page in Safari. Tap menu in Instagram/Facebook and choose <b>Open in Safari</b>.</div>
+//                 <div style="display:flex;gap:8px;">
+//                     <button type="button" id="closeInAppNotice" style="background:#fff;color:#2366a8;border:none;padding:8px 12px;border-radius:6px;font-weight:600;">OK</button>
+//                 </div>
+//             </div>
+//         `;
+//     } else if (isAndroid) {
+//         notice.innerHTML = `
+//             <div style="display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;">
+//                 <div>For secure payment, open this page in Chrome.</div>
+//                 <div style="display:flex;gap:8px;">
+//                     <a href="${chromeIntentUrl}" style="background:#fff;color:#2366a8;padding:8px 12px;border-radius:6px;text-decoration:none;font-weight:600;">Open in Chrome</a>
+//                     <button type="button" id="closeInAppNotice" style="background:transparent;border:1px solid #fff;color:#fff;padding:8px 12px;border-radius:6px;">Close</button>
+//                 </div>
+//             </div>
+//         `;
+//     } else {
+//         notice.innerHTML = `
+//             <div style="display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;">
+//                 <div>For secure payment, open this page in your default browser.</div>
+//                 <div style="display:flex;gap:8px;">
+//                     <button type="button" id="closeInAppNotice" style="background:#fff;color:#2366a8;border:none;padding:8px 12px;border-radius:6px;font-weight:600;">OK</button>
+//                 </div>
+//             </div>
+//         `;
+//     }
+
+//     document.body.appendChild(notice);
+
+//     var closeBtn = document.getElementById('closeInAppNotice');
+//     if (closeBtn) {
+//         closeBtn.addEventListener('click', function () {
+//             notice.remove();
+//         });
+//     }
+// });
 </script>

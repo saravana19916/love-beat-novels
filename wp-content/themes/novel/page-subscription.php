@@ -155,6 +155,8 @@ $plans = get_option('plan_details');
 
 <script>
     jQuery(document).on("click", ".buy-plan-btn", function () {
+        if (!canStartRazorpayPayment()) return;
+
         let failureLoggedOrders = new Set();
 
         var planName = jQuery(this).data('plan-name');
@@ -170,7 +172,10 @@ $plans = get_option('plan_details');
             "<?php echo admin_url('admin-ajax.php'); ?>",
             {
                 action: "create_razorpay_order",
-                amount: amountInPaisa
+                amount: amountInPaisa,
+                pay_for: 'subscription',
+                period: period,
+                plan_name: planName
             },
             function (orderRes) {
 
@@ -186,55 +191,75 @@ $plans = get_option('plan_details');
                     name: "Subscription Purchase",
                     order_id: orderRes.data.order_id,
                     handler: function (response) {
-                        jQuery.post(
-                            "<?php echo admin_url('admin-ajax.php'); ?>",
-                            {
-                                action: "verify_razorpay_payment",
-                                razorpay_payment_id: response.razorpay_payment_id,
-                                razorpay_order_id: response.razorpay_order_id,
-                                razorpay_signature: response.razorpay_signature,
-                                amount: amount,
-                                api: 'subscription',
-                                period: period,
-                                name: planName
-                            },
-                            function (res) {
-                                if (res.success) {
-                                    alert("Subscription Activated!");
-                                    location.reload();
-                                } else {
-                                    alert("Payment verification failed!");
-                                }
-                            }
-                        );
+                        alert("Subscription Activated!");
+                        location.reload();
                     }
                 };
 
                 var rzp = new Razorpay(options);
 
-                rzp.on('payment.failed', function(response) {
-                    let orderId = orderRes.data.order_id;
-
-                    if (failureLoggedOrders.has(orderId)) {
-                        console.warn("Failure already logged for this order:", orderId);
-                        return;
-                    }
-
-                    failureLoggedOrders.add(orderId); // mark as logged
-
-                    jQuery.post(ajaxurl, {
-                        action: 'log_razorpay_failure',
-                        razorpay_payment_id: response.error.metadata.payment_id,
-                        razorpay_order_id: response.error.metadata.order_id,
-                        amount: amount,
-                        api: 'subscription',
-                        name: planName
-                    });
-
-                    alert("Payment failed!");
+                rzp.on('payment.failed', function () {
+                    alert("Subscription Payment failed!");
                 });
 
                 rzp.open();
+
+                // var options = {
+                //     key: RazorpayConfig.key,
+                //     amount: amountInPaisa,
+                //     currency: "INR",
+                //     name: "Subscription Purchase",
+                //     order_id: orderRes.data.order_id,
+                //     handler: function (response) {
+                //         jQuery.post(
+                //             "<?php echo admin_url('admin-ajax.php'); ?>",
+                //             {
+                //                 action: "verify_razorpay_payment",
+                //                 razorpay_payment_id: response.razorpay_payment_id,
+                //                 razorpay_order_id: response.razorpay_order_id,
+                //                 razorpay_signature: response.razorpay_signature,
+                //                 amount: amount,
+                //                 api: 'subscription',
+                //                 period: period,
+                //                 name: planName
+                //             },
+                //             function (res) {
+                //                 if (res.success) {
+                //                     alert("Subscription Activated!");
+                //                     location.reload();
+                //                 } else {
+                //                     alert("Payment verification failed!");
+                //                 }
+                //             }
+                //         );
+                //     }
+                // };
+
+                // var rzp = new Razorpay(options);
+
+                // rzp.on('payment.failed', function(response) {
+                //     let orderId = orderRes.data.order_id;
+
+                //     if (failureLoggedOrders.has(orderId)) {
+                //         console.warn("Failure already logged for this order:", orderId);
+                //         return;
+                //     }
+
+                //     failureLoggedOrders.add(orderId);
+
+                //     jQuery.post(ajaxurl, {
+                //         action: 'log_razorpay_failure',
+                //         razorpay_payment_id: response.error.metadata.payment_id,
+                //         razorpay_order_id: response.error.metadata.order_id,
+                //         amount: amount,
+                //         api: 'subscription',
+                //         name: planName
+                //     });
+
+                //     alert("Payment failed!");
+                // });
+
+                // rzp.open();
             }
         );
     });
