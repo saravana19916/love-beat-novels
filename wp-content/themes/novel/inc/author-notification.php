@@ -114,7 +114,7 @@ function fetch_notifications() {
 
             $current_plan   = get_user_meta($user_id, 'subscription_active_plan', true);
 
-            if ($note->type === 'subscription_activated' || $note->type === 'subscription_queued') {
+            if ($note->type === 'subscription_activated' || $note->type === 'subscription_queued' || $note->type === 'subscription_renewal_reminder_post' || $note->type === 'subscription_renewal_reminder_pre') {
                 echo "<li class='border rounded mx-2 p-2 mb-2'>
                     " . esc_html($note->message) . "
                   </li>";

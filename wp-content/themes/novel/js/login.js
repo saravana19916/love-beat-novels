@@ -27,28 +27,32 @@ jQuery(document).ready(function ($) {
         // Clear previous messages
         messageContainer.html('');
 
-        $.ajax({
-            type: 'POST',
+        jQuery.ajax({
             url: ajax_login_object.ajax_url,
+            type: 'POST',
+            dataType: 'json',
             data: {
                 action: 'ajax_login',
-                username: username,
-                password: password,
-                security: ajax_login_object.security,
+                security: ajax_login_object.security, // ✅ REQUIRED for check_ajax_referer
+                username: jQuery('#username').val(),
+                password: jQuery('#password').val()
             },
             beforeSend: function () {
-                messageContainer.html('<div class="alert alert-info">Processing...</div>');
+                jQuery('#login-message').html('<div class="alert alert-info">Processing...</div>');
             },
-            success: function (response) {
-                if (response.status === 'error') {
-                    messageContainer.html('<div class="alert alert-danger">' + response.message + '</div>');
-                } else if (response.status === 'success') {
-                    messageContainer.html('<div class="alert alert-success">' + response.message + '</div>');
-                    setTimeout(function () {
-                        window.location.href = window.location.href + '?v=' + new Date().getTime();
-                    }, 100);
+            success: function (res) {
+                if (res && res.status === 'success') {
+                    jQuery('#login-message').html('<div class="alert alert-success">' + res.message + '</div>');
+                    setTimeout(() => window.location.reload(), 100);
+                } else {
+                    jQuery('#login-message').html('<div class="alert alert-danger">' + (res?.message || 'Login failed') + '</div>');
                 }
             },
+            error: function (xhr) { // ✅ show 403 details
+                jQuery('#login-message').html(
+                    '<div class="alert alert-danger">AJAX Error ' + xhr.status + ': ' + (xhr.responseText || '') + '</div>'
+                );
+            }
         });
     });
 
@@ -58,27 +62,32 @@ jQuery(document).ready(function ($) {
     });
 });
 
+// Google login
 function onGoogleSignIn(response) {
-    // Send the ID token to your server for verification
     jQuery.ajax({
         url: ajax_login_object.ajax_url,
         type: 'POST',
+        dataType: 'json',
         data: {
             action: 'google_login',
+            security: ajax_login_object.security, // ✅ REQUIRED (your PHP checks nonce here too)
             id_token: response.credential
         },
         beforeSend: function () {
             jQuery('#login-message').html('<div class="alert alert-info">Processing Google login...</div>');
         },
         success: function (res) {
-            if (res.status === 'success') {
+            if (res && res.status === 'success') {
                 jQuery('#login-message').html('<div class="alert alert-success">' + res.message + '</div>');
-                setTimeout(function () {
-                    window.location.reload();
-                }, 100);
+                setTimeout(() => window.location.reload(), 100);
             } else {
-                jQuery('#login-message').html('<div class="alert alert-danger">' + res.message + '</div>');
+                jQuery('#login-message').html('<div class="alert alert-danger">' + (res?.message || 'Google login failed') + '</div>');
             }
+        },
+        error: function (xhr) {
+            jQuery('#login-message').html(
+                '<div class="alert alert-danger">Google AJAX Error ' + xhr.status + ': ' + (xhr.responseText || '') + '</div>'
+            );
         }
     });
 }

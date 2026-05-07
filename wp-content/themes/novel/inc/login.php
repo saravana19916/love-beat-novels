@@ -2,16 +2,26 @@
 
 // login
 function enqueue_ajax_login_script() {
-    wp_enqueue_script('ajax-login-script', get_template_directory_uri() . '/js/login.js', array('jquery'), null, true);
-    wp_localize_script('ajax-login-script', 'ajax_login_object', array(
-        'ajax_url' => admin_url('admin-ajax.php'),
-        'security' => wp_create_nonce('ajax-login-nonce'),
-    ));
+    $handle = 'novel-login';
+
+    $src  = get_template_directory_uri() . '/js/login.js';
+    $path = get_template_directory() . '/js/login.js';
+    $ver  = file_exists($path) ? filemtime($path) : null;
+
+    wp_enqueue_script($handle, $src, ['jquery'], $ver, true);
+
+    wp_localize_script($handle, 'ajax_login_object', [
+        'ajax_url'  => admin_url('admin-ajax.php'),
+        'security'  => wp_create_nonce('ajax-login-nonce'),
+    ]);
 }
 add_action('wp_enqueue_scripts', 'enqueue_ajax_login_script');
 
 function ajax_login_handler() {
-    check_ajax_referer('ajax-login-nonce', 'security');
+    $nonce = $_POST['security'] ?? '';
+    if (!$nonce || !wp_verify_nonce($nonce, 'ajax-login-nonce')) {
+        wp_send_json(['status' => 'error', 'message' => 'Security check failed. Please refresh and try again.'], 403);
+    }
 
     $response = array();
 
@@ -70,17 +80,38 @@ add_action('wp_ajax_nopriv_google_login', 'ajax_google_login_handler');
 add_action('wp_ajax_google_login', 'ajax_google_login_handler');
 
 function ajax_google_login_handler() {
+    // Add nonce check (like normal login)
+    check_ajax_referer('ajax-login-nonce', 'security');
+
     if (empty($_POST['id_token'])) {
         wp_send_json(['status' => 'error', 'message' => 'No token received.']);
     }
 
     $id_token = sanitize_text_field($_POST['id_token']);
 
-    // Verify token with Google
-    $response = wp_remote_get('https://oauth2.googleapis.com/tokeninfo?id_token=' . $id_token);
+    $response = wp_remote_get('https://oauth2.googleapis.com/tokeninfo?id_token=' . rawurlencode($id_token), [
+        'timeout' => 10,
+    ]);
+
+    if (is_wp_error($response)) {
+        error_log('Google tokeninfo error: ' . $response->get_error_message());
+        wp_send_json(['status' => 'error', 'message' => 'Google verification failed.']);
+    }
+
+    $code = (int) wp_remote_retrieve_response_code($response);
     $body = json_decode(wp_remote_retrieve_body($response), true);
 
-    if (empty($body['email']) || $body['aud'] !== '542991368123-1mhvdpnfcd1mvi9ddthbvvgf3aiql9ap.apps.googleusercontent.com') {
+    if ($code !== 200 || !is_array($body)) {
+        error_log('Google tokeninfo non-200: ' . $code . ' body=' . wp_remote_retrieve_body($response));
+        wp_send_json(['status' => 'error', 'message' => 'Invalid Google token.']);
+    }
+
+    $expected_aud = defined('NOVEL_GOOGLE_CLIENT_ID')
+        ? NOVEL_GOOGLE_CLIENT_ID
+        : '';
+
+    if (empty($body['email']) || empty($body['aud']) || $body['aud'] !== $expected_aud) {
+        error_log('Google token invalid: ' . print_r($body, true));
         wp_send_json(['status' => 'error', 'message' => 'Invalid Google token.']);
     }
 

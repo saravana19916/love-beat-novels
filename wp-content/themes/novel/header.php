@@ -242,8 +242,9 @@
                                         <div class="col-6 d-flex align-items-center justify-content-end">
                                             <a href="#" class="text-primary-color text-decoration-none" data-bs-toggle="modal" data-bs-target="#registerModal">Register?</a>
                                         </div>
+                                        <?php $google_client_id = defined('NOVEL_GOOGLE_CLIENT_ID') ? NOVEL_GOOGLE_CLIENT_ID : ''; ?>
                                         <div id="g_id_onload" class="mt-3"
-                                            data-client_id="542991368123-1mhvdpnfcd1mvi9ddthbvvgf3aiql9ap.apps.googleusercontent.com"
+                                            data-client_id="<?php echo esc_attr($google_client_id); ?>"
                                             data-callback="onGoogleSignIn"
                                             data-auto_prompt="false">
                                         </div>

@@ -12,6 +12,7 @@ require_once get_template_directory() . '/inc/coin-pack-price.php';
 require_once get_template_directory() . '/inc/user-transaction-list.php';
 require_once get_template_directory() . '/inc/missing-transaction.php';
 require_once get_template_directory() . '/inc/user-active-coin-subscription-report.php';
+require_once get_template_directory() . '/inc/email-templates.php';
 
 // Enqueue Bootstrap and Font Awesome
 function my_theme_enqueue_styles() {

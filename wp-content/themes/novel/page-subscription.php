@@ -154,6 +154,41 @@ $plans = get_option('plan_details');
 <?php get_footer(); ?>
 
 <script>
+    // Code for auto payment start
+    // jQuery(document).on("click", ".buy-plan-btn", function () {
+    //     if (typeof canStartRazorpayPayment === 'function' && !canStartRazorpayPayment()) return;
+
+    //     const planId = jQuery(this).data("plan-id");
+    //     const planName = jQuery(this).data("plan-name");
+    //     const period = jQuery(this).data("period");
+
+    //     jQuery.post(ajaxurl, {
+    //         action: "create_razorpay_subscription",
+    //         plan_id: planId,
+    //         plan_name: planName,
+    //         period: period
+    //     }, function (res) {
+    //         if (!res.success) {
+    //             alert(res.data?.message || "Subscription create failed");
+    //             return;
+    //         }
+
+    //         const options = {
+    //             key: RazorpayConfig.key,
+    //             subscription_id: res.data.subscription_id,
+    //             name: "Love Beat Novels",
+    //             handler: function () {
+    //                 alert("Subscription initiated successfully!");
+    //                 location.reload();
+    //             }
+    //         };
+
+    //         const rzp = new Razorpay(options);
+    //         rzp.open();
+    //     });
+    // });
+    // Code for auto payment End
+
     jQuery(document).on("click", ".buy-plan-btn", function () {
         if (!canStartRazorpayPayment()) return;
 
@@ -198,7 +233,8 @@ $plans = get_option('plan_details');
 
                 var rzp = new Razorpay(options);
 
-                rzp.on('payment.failed', function () {
+                rzp.on('payment.failed', function (resp) {
+                    console.log('Razorpay payment.failed:', resp);
                     alert("Subscription Payment failed!");
                 });
 

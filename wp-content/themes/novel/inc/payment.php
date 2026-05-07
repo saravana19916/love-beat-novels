@@ -59,6 +59,42 @@ function create_razorpay_order() {
     wp_send_json_success(['order_id' => $order['id']]);
 }
 
+// Code for auto payment start
+// add_action('wp_ajax_create_razorpay_subscription', 'create_razorpay_subscription');
+
+// function create_razorpay_subscription() {
+//     if (!is_user_logged_in()) {
+//         wp_send_json_error(['message' => 'Login required']);
+//     }
+
+//     require_once get_template_directory() . '/inc/razorpay-php/Razorpay.php';
+//     $api = new Razorpay\Api\Api(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET);
+
+//     $user_id   = get_current_user_id();
+//     $plan_id   = sanitize_text_field($_POST['plan_id'] ?? '');
+//     $plan_name = sanitize_text_field($_POST['plan_name'] ?? '');
+//     $period    = sanitize_text_field($_POST['period'] ?? '');
+
+//     if (!$plan_id) {
+//         wp_send_json_error(['message' => 'plan_id missing']);
+//     }
+
+//     $sub = $api->subscription->create([
+//         'plan_id' => $plan_id,
+//         'customer_notify' => 1,
+//         'total_count' => 120,
+//         'notes' => [
+//             'user_id' => (string) $user_id,
+//             'pay_for' => 'subscription',
+//             'plan_name' => $plan_name,
+//             'period' => $period,
+//         ]
+//     ]);
+
+//     wp_send_json_success(['subscription_id' => $sub['id']]);
+// }
+// Code for auto payment end
+
 // add_action('wp_ajax_verify_razorpay_payment', 'verify_razorpay_payment');
 // add_action('wp_ajax_nopriv_verify_razorpay_payment', 'verify_razorpay_payment');
 
@@ -170,6 +206,12 @@ function credit_coins_after_payment($amount, $payment_id, $order_id, $coins, $us
             '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s'
         ]
     );
+
+    // Send coin success email
+    $to = novel_get_email_for_user($user_id);
+    if ($to) {
+        novel_mail_coin_success($to);
+    }
 }
 
 function activate_subscription($amount, $period, $name, $payment_id, $order_id, $user_id) {
@@ -208,6 +250,12 @@ function activate_subscription($amount, $period, $name, $payment_id, $order_id, 
             '%d', '%s', '%s', '%d', '%s', '%s', '%s', '%s'
         ]
     );
+
+    // Send subscription success email
+    $to = novel_get_email_for_user($user_id);
+    if ($to) {
+        novel_mail_subscription_success($to);
+    }
 }
 
     function add_subscription_plan($user_id, $planName, $period_raw, $originalPeriod) {
@@ -284,17 +332,26 @@ function activate_subscription($amount, $period, $name, $payment_id, $order_id, 
     }
 
     function process_subscription_queue($user_id) {
-
         $now_ts = current_time('timestamp');
 
         $active_expiry = get_user_meta($user_id, 'subscription_active_expiry', true);
         if ($active_expiry && strtotime($active_expiry) > $now_ts) {
-            return;
+            return; // still active
         }
 
         $queue = get_user_meta($user_id, 'subscription_queue', true);
-        
+
+        // No next plan => mark expired, keep last expiry for reminders/history
         if (empty($queue) || !is_array($queue)) {
+
+            // Keep last known expiry (for reminders + history)
+            if (!empty($active_expiry)) {
+                update_user_meta($user_id, 'subscription_last_expiry', $active_expiry);
+            }
+
+            update_user_meta($user_id, 'subscription_status', 'expired');
+
+            // Optional: clear plan fields (OK), but DO NOT delete expiry if you rely on it
             delete_user_meta($user_id, 'subscription_active_plan');
             delete_user_meta($user_id, 'subscription_active_period');
             delete_user_meta($user_id, 'subscription_active_from');
@@ -309,6 +366,7 @@ function activate_subscription($amount, $period, $name, $payment_id, $order_id, 
         update_user_meta($user_id, 'subscription_active_from', $next['from']);
         update_user_meta($user_id, 'subscription_active_expiry', $next['expiry']);
         update_user_meta($user_id, 'subscription_queue', $queue);
+        update_user_meta($user_id, 'subscription_status', 'active');
     }
 
     add_action('init', function () {
@@ -452,6 +510,59 @@ function handle_razorpay_webhook(WP_REST_Request $request) {
                 'payment_status' => 'failed',
                 'subscription_plan' => ($pay_for === 'subscription') ? ($notes['plan_name'] ?? '') : null,
             ], ['%d','%s','%s','%d','%s','%d','%s','%s','%s']);
+
+            // Send subscription failed notifications (only for subscription)
+            if ($pay_for === 'subscription') {
+                $to = novel_get_email_for_user($user_id, $email);
+                if ($to) {
+                    novel_mail_subscription_failed($to);
+                }
+
+                // WhatsApp (non-template text works only if WhatsApp allows it for this user/session)
+                // if (function_exists('novel_send_whatsapp_text')) {
+                //     $wa_phone = (string) get_user_meta($user_id, 'user_whatsapp', true);
+
+                //     if ($wa_phone === '' && !empty($payment['contact'])) {
+                //         $wa_phone = (string) $payment['contact'];
+                //     }
+
+                //     $wa_message = <<<TXT
+                //         அன்புள்ள வாசகரே,
+
+                //         நீங்கள் சமீபத்தில் Subscription எடுக்க முயற்சி செய்துள்ளீர்கள். ஆனால், கட்டணம் செலுத்தும் செயல்முறை வெற்றியடையவில்லை.
+
+                //         தயவுசெய்து மீண்டும் ஒரு முறை Subscription எடுக்க முயற்சி செய்யவும்.
+
+                //         ⚠️ முக்கிய அறிவிப்பு:
+                //         Facebook அல்லது Instagram app-இல் இருந்து link-ஐ நேரடியாக click செய்து முயற்சி செய்ய வேண்டாம்.
+
+                //         அதற்குப் பதிலாக, அந்த link-ஐ copy செய்து உங்கள் மொபைல் browser (Google Chrome, Safari போன்றவை) மூலம் திறந்து Subscription செய்ய முயற்சி செய்யவும்.
+
+                //         சில நேரங்களில் social media app-இல் திறக்கும் போது payment பிரச்சினைகள் ஏற்படலாம். Browser மூலம் முயற்சி செய்தால் சரியாக செயல்படும்.
+
+                //         🌍 International users-க்கு:
+                //         Debit / Credit card payment மட்டுமே வேலை செய்யும்.
+                //         அதனால், உங்கள் card-ல் international payment enabled ஆக இருக்க வேண்டும்.
+
+                //         Subscription Link - https://lovebeatnovels.com/subscription/
+
+                //         இன்னும் ஏதேனும் பிரச்சினை இருந்தால், எங்களை தொடர்பு கொள்ள தயங்க வேண்டாம்.
+
+                //         உங்கள் ஆதரவுக்கு நன்றி. ❤️
+                //         Thanks & Regards,
+                //         Sarmi SS
+                //         Author | Content Editor
+                //         Whatsapp - +916374401933
+                //         Instagram: https://www.instagram.com/sarmi_ss/
+                //         Facebook: https://www.facebook.com/Sarmi.SSfan
+                //         Website: https://lovebeatnovels.com
+                //         TXT;
+
+                //     if ($wa_phone !== '') {
+                //         novel_send_whatsapp_text($wa_phone, $wa_message);
+                //     }
+                // }
+            }
         }
 
         return new WP_REST_Response(['status' => 'ok'], 200);
@@ -461,4 +572,157 @@ function handle_razorpay_webhook(WP_REST_Request $request) {
     }
 }
 
+/**
+ * Daily subscription reminder cron
+ * - 3 days before expiry: send once per day
+ * - 3 days after expiry: send once per day
+ */
 
+/**
+ * Run reminder check once on page load (logged-in user).
+ * IMPORTANT: keep only ONE init hook for this.
+ */
+add_action('init', function () {
+    if (!is_user_logged_in()) return;
+    check_subscription_reminder(get_current_user_id());
+});
+
+/**
+ * Atomic per-user lock (prevents duplicates on concurrent requests).
+ */
+if (!function_exists('novel_user_daily_lock')) {
+    function novel_user_daily_lock($user_id, $kind, $today) {
+        $user_id = (int) $user_id;
+        $kind    = preg_replace('/[^a-z0-9_\-]/i', '', (string) $kind);
+        $today   = preg_replace('/[^0-9\-]/', '', (string) $today);
+
+        if ($user_id <= 0 || $kind === '' || $today === '') return false;
+
+        // unique meta key per user per day per kind
+        $lock_key = "novel_sub_reminder_lock_{$kind}_{$today}";
+
+        // add_user_meta with $unique=true is atomic in DB (prevents races)
+        return add_user_meta($user_id, $lock_key, 1, true) ? $lock_key : false;
+    }
+}
+
+function check_subscription_reminder($user_id) {
+    if (!function_exists('novel_mail_subscription_renewal_reminder')) return;
+
+    $user_id = (int) $user_id;
+    if ($user_id <= 0) return;
+
+    $today  = current_time('Y-m-d');
+    $now_ts = current_time('timestamp');
+    $tz     = wp_timezone();
+
+    $expiry_str = (string) get_user_meta($user_id, 'subscription_active_expiry', true);
+    if ($expiry_str === '') {
+        $expiry_str = (string) get_user_meta($user_id, 'subscription_last_expiry', true);
+    }
+    if ($expiry_str === '') return;
+
+    $expiry_str = trim($expiry_str);
+
+    // Parse both "Y-m-d H:i:s" and "Y-m-d"
+    $expiry_dt = date_create_from_format('Y-m-d H:i:s', $expiry_str, $tz);
+    if (!$expiry_dt) {
+        $expiry_dt = date_create_from_format('Y-m-d', $expiry_str, $tz);
+        if ($expiry_dt) $expiry_dt->setTime(23, 59, 59);
+    }
+    if (!$expiry_dt) {
+        try { $expiry_dt = new DateTime($expiry_str, $tz); }
+        catch (Exception $e) { return; }
+    }
+
+    $expiry_ts = (int) $expiry_dt->getTimestamp();
+
+    // =========================
+    // PRE: 3..1 days left
+    // =========================
+    if ($expiry_ts > $now_ts) {
+        $days_left = (int) ceil(($expiry_ts - $now_ts) / DAY_IN_SECONDS);
+
+        if ($days_left >= 1 && $days_left <= 3) {
+            $last = (string) get_user_meta($user_id, 'novel_sub_reminder_pre_last', true);
+            if ($last === $today) return;
+
+            // Acquire lock to prevent duplicates
+            $lock_key = novel_user_daily_lock($user_id, 'pre', $today);
+            if ($lock_key === false) return;
+
+            // Mark sent today immediately (prevents duplicates even under concurrency)
+            update_user_meta($user_id, 'novel_sub_reminder_pre_last', $today);
+
+            $to = novel_get_email_for_user($user_id);
+            if ($to) {
+                novel_mail_subscription_renewal_reminder($to, false);
+            }
+
+            if (function_exists('novel_add_author_notification')) {
+                novel_add_author_notification(
+                    $user_id,
+                    'subscription_renewal_reminder_pre',
+                    'உங்களின் subscription pack will expire in ' . $days_left . ' day(s) உங்கள் வாசிப்பில் interruption ஏற்படாமல் இருக்க, தயவுசெய்து உடனடியாக renew செய்யவும்.'
+                );
+            }
+
+            // ❌ do not delete lock; next day key changes automatically
+            // delete_user_meta($user_id, $lock_key);
+        }
+
+        return;
+    }
+
+    // =========================
+    // POST: 0..2 days past
+    // =========================
+    $days_past = (int) floor(($now_ts - $expiry_ts) / DAY_IN_SECONDS);
+
+    if ($days_past >= 0 && $days_past <= 2) {
+        $last = (string) get_user_meta($user_id, 'novel_sub_reminder_post_last', true);
+        if ($last === $today) return;
+
+        $lock_key = novel_user_daily_lock($user_id, 'post', $today);
+        if ($lock_key === false) return;
+
+        update_user_meta($user_id, 'novel_sub_reminder_post_last', $today);
+
+        $to = novel_get_email_for_user($user_id);
+        if ($to) {
+            novel_mail_subscription_renewal_reminder($to, true);
+        }
+
+        if (function_exists('novel_add_author_notification')) {
+            novel_add_author_notification(
+                $user_id,
+                'subscription_renewal_reminder_post',
+                'உங்களின் subscription pack expire ஆகிவிட்டது. உங்கள் வாசிப்பில் interruption ஏற்படாமல் இருக்க, தயவுசெய்து உடனடியாக renew செய்யவும்.'
+            );
+        }
+
+        // ❌ do not delete lock
+        // delete_user_meta($user_id, $lock_key);
+    }
+}
+
+if (!function_exists('novel_add_author_notification')) {
+    function novel_add_author_notification($user_id, $type, $message) {
+        global $wpdb;
+
+        $user_id = (int) $user_id;
+        if ($user_id <= 0) return false;
+
+        return (bool) $wpdb->insert(
+            "{$wpdb->prefix}author_notifications",
+            [
+                'user_id'     => $user_id,
+                'type'        => (string) $type,
+                'seen'        => 0,
+                'created_at'  => current_time('mysql'),
+                'message'     => (string) $message,
+            ],
+            ['%d','%s','%d','%s','%s']
+        );
+    }
+}
