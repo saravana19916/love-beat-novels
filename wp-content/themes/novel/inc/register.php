@@ -116,23 +116,30 @@ function ajax_register_user() {
 add_action('wp_ajax_register_user', 'ajax_register_user');
 add_action('wp_ajax_nopriv_register_user', 'ajax_register_user');
 
-add_action('init', function() {
-    if (isset($_GET['verify_email']) && isset($_GET['user_id'])) {
-        $user_id = intval($_GET['user_id']);
-        $code = sanitize_text_field($_GET['verify_email']);
-        $saved_code = get_user_meta($user_id, 'email_verification_code', true);
-
-        if ($code === $saved_code) {
-            update_user_meta($user_id, 'email_verified', 1);
-            delete_user_meta($user_id, 'email_verification_code');
-            wp_redirect(home_url('/login/?verified=1'));
-            exit;
-        } else {
-            wp_redirect(home_url('/login/?verified=0'));
-            exit;
-        }
+add_action('template_redirect', function () {
+    if (is_admin() || wp_doing_ajax() || (defined('REST_REQUEST') && REST_REQUEST)) {
+        return;
     }
-});
+
+    if (!isset($_GET['verify_email'], $_GET['user_id'])) {
+        return;
+    }
+
+    $user_id = (int) $_GET['user_id'];
+    $code    = sanitize_text_field($_GET['verify_email']);
+
+    $saved_code = get_user_meta($user_id, 'email_verification_code', true);
+
+    if ($code && hash_equals((string)$saved_code, (string)$code)) {
+        update_user_meta($user_id, 'email_verified', 1);
+        delete_user_meta($user_id, 'email_verification_code');
+        wp_safe_redirect(home_url('/login/?verified=1'));
+        exit;
+    }
+
+    wp_safe_redirect(home_url('/login/?verified=0'));
+    exit;
+}, 1);
 
 add_action('wp_ajax_get_user_profile', 'get_user_profile');
 
