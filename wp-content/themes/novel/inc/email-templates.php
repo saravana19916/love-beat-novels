@@ -42,8 +42,6 @@ if (!function_exists('novel_send_payment_mail')) {
         // Body (plain text -> safe HTML)
         $safe_body_html = wpautop(esc_html($body));
 
-        // ✅ Logo (must be a public absolute URL)
-        $logo_url = trailingslashit(get_stylesheet_directory_uri()) . 'images/logo.jpeg';
         $site_name = wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES);
 
         // Email wrapper + logo header
@@ -57,13 +55,8 @@ if (!function_exists('novel_send_payment_mail')) {
             <body style="margin:0;padding:0;background:#ffffff;">
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;">
                 <tr>
-                <td align="center" style="padding:20px 12px;">
+                <td style="padding:20px 12px;">
                     <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:600px;max-width:600px;">
-                    <tr>
-                        <td align="center" style="padding:0 0 14px 0;">
-                        <img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_name) . '" width="140" style="width:140px;max-width:100%;height:auto;display:block;border:0;outline:none;text-decoration:none;">
-                        </td>
-                    </tr>
                     <tr>
                         <td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#111111;">
                         ' . $safe_body_html . '
@@ -290,6 +283,7 @@ add_filter('wp_mail_from_name', function ($from_name) {
 }, 999);
 
 add_action('phpmailer_init', function ($phpmailer) {
+    // Set From
     $name  = (defined('NOVEL_MAIL_FROM_NAME') && NOVEL_MAIL_FROM_NAME !== '')
         ? (string) NOVEL_MAIL_FROM_NAME
         : wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES);
@@ -300,6 +294,30 @@ add_action('phpmailer_init', function ($phpmailer) {
 
     if (is_email($email)) {
         $phpmailer->setFrom($email, $name, false);
-        $phpmailer->Sender = $email; // envelope-from (helps some providers)
+        $phpmailer->Sender = $email;
+    }
+
+    // Use SMTP if configured
+    if (defined('WP_MAIL_SMTP_HOST') && WP_MAIL_SMTP_HOST) {
+        $phpmailer->isSMTP();
+        $phpmailer->Host = WP_MAIL_SMTP_HOST;
+        $phpmailer->Port = defined('WP_MAIL_SMTP_PORT') ? (int) WP_MAIL_SMTP_PORT : 587;
+
+        $secure = defined('WP_MAIL_SMTP_SECURE') ? (string) WP_MAIL_SMTP_SECURE : '';
+        if ($secure !== '') {
+            $phpmailer->SMTPSecure = $secure; // 'tls' or 'ssl'
+        }
+
+        $auth = defined('WP_MAIL_SMTP_AUTH') ? (bool) WP_MAIL_SMTP_AUTH : false;
+        $phpmailer->SMTPAuth = $auth;
+
+        if ($auth) {
+            $phpmailer->Username = defined('WP_MAIL_SMTP_USER') ? (string) WP_MAIL_SMTP_USER : '';
+            $phpmailer->Password = defined('WP_MAIL_SMTP_PASS') ? (string) WP_MAIL_SMTP_PASS : '';
+        }
+
+        // Optional debug (enable temporarily)
+        // $phpmailer->SMTPDebug = 2;
+        // $phpmailer->Debugoutput = function($str, $level){ error_log("SMTP[$level]: $str"); };
     }
 });

@@ -103,59 +103,87 @@ if (is_user_logged_in()) {
     </a>
 <?php endif; ?>
 
+<?php if (is_user_logged_in()): ?>
 <script>
-   jQuery(document).ready(function ($) {
-    function updateNotificationBadge(unreadCount) {
-        ["#notification-badge-desktop", "#notification-badge-mobile"].forEach(function (id) {
-            let badge = $(id);
-            if (badge.length) {
-                if (unreadCount > 0) {
-                    badge.text(unreadCount > 10 ? "10+" : unreadCount).show();
-                } else {
-                    badge.hide();
-                }
-            }
-        });
+jQuery(function ($) {
+  const ajaxUrl = "<?php echo esc_url(admin_url('admin-ajax.php')); ?>";
+  let lastId = 0;
+
+  function updateNotificationBadge(unreadCount) {
+    unreadCount = parseInt(unreadCount || 0, 10);
+    ["#notification-badge-desktop", "#notification-badge-mobile"].forEach(function (id) {
+      const $badge = $(id);
+      if (!$badge.length) return;
+      if (unreadCount > 0) $badge.text(unreadCount > 99 ? "99+" : unreadCount).show();
+      else $badge.hide();
+    });
+  }
+
+  function updateNotificationList(notificationsHtml) {
+    const headerHtml = `<li class="fs-14px dropdown-header text-primary-color"><strong>Notifications</strong></li>`;
+    const contentHtml = notificationsHtml && notificationsHtml.trim()
+      ? notificationsHtml
+      : `<li><span class="dropdown-item text-primary-color">No new notifications</span></li>`;
+    const fullHtml = headerHtml + contentHtml;
+
+    const $desktop = $("#notification-list-desktop");
+    if ($desktop.length) $desktop.html(fullHtml);
+
+    const $mobile = $("#notification-list-mobile");
+    if ($mobile.length) $mobile.html(fullHtml);
+  }
+
+  function fetchNotifications() {
+    return $.ajax({
+      url: ajaxUrl + "?action=fetch_notifications",   // ✅ action in URL (prevents 400)
+      type: "POST",
+      dataType: "json",
+      timeout: 15000
+    })
+    .done(function (response) {
+      if (response && response.success) {
+        updateNotificationBadge(response.data.unread_count);
+        updateNotificationList(response.data.notifications_html);
+      }
+    })
+    .fail(function (xhr) {
+      console.log("fetch_notifications failed:", xhr.status, xhr.responseText);
+    });
+  }
+
+  function waitLoop() {
+    if (document.visibilityState !== "visible") {
+      setTimeout(waitLoop, 2000);
+      return;
     }
 
-    function updateNotificationList(html) {
-        ["#notification-list-desktop"].forEach(function (id) {
-            let list = $(id);
-            if (list.length) {
-                list.html(`
-                    <li class="fs-14px dropdown-header text-primary-color"><strong>Notifications</strong></li>
-                    ${html}
-                `);
-            }
-        });
+    $.ajax({
+      url: ajaxUrl + "?action=novel_notifications_wait",
+      type: "POST",
+      dataType: "json",
+      timeout: 25000,
+      data: { last_id: lastId }
+    })
+    .done(function (res) {
+      if (!res || !res.success) return;
 
-        ["#notification-list-mobile"].forEach(function (id) {
-            let list = $(id);
-            if (list.length) {
-                list.html(`
-                    ${html}
-                `);
-            }
-        });
-    }
+      updateNotificationBadge(res.data.unread_count);
+      lastId = parseInt(res.data.latest_id || 0, 10);
 
-    function fetchNotifications() {
-        $.post("<?php echo admin_url('admin-ajax.php'); ?>", { action: "fetch_notifications" }, function (response) {
-            if (response.success) {
-                // Update badge
-                updateNotificationBadge(response.data.unread_count);
+      if (res.data.changed) fetchNotifications();
+    })
+    .fail(function (xhr) {
+      console.log("novel_notifications_wait failed:", xhr.status, xhr.responseText);
+    })
+    .always(function () {
+      setTimeout(waitLoop, 200);
+    });
+  }
 
-                // Update list
-                updateNotificationList(response.data.notifications_html);
-            }
-        });
-    }
-
-    // Poll every 10 seconds
-    setInterval(fetchNotifications, 1000);
-    fetchNotifications();
+  fetchNotifications().always(function () {
+    waitLoop();
+  });
 });
-
-
 </script>
+<?php endif; ?>
 
