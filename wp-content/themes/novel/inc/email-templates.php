@@ -21,7 +21,6 @@ if (!function_exists('novel_send_payment_mail')) {
         $subject = (string) $subject;
         $body    = (string) $body;
 
-        // From name/email (override via wp-config constants if you want)
         $from_name  = defined('NOVEL_MAIL_FROM_NAME')
             ? (string) NOVEL_MAIL_FROM_NAME
             : wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES);
@@ -44,28 +43,37 @@ if (!function_exists('novel_send_payment_mail')) {
 
         $site_name = wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES);
 
+        // ✅ Logo URL (public URL)
+        $logo_url = trailingslashit(get_stylesheet_directory_uri()) . 'images/logo.jpeg';
+
         // Email wrapper + logo header
         $html = '
             <!doctype html>
             <html>
             <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1">
             </head>
             <body style="margin:0;padding:0;background:#ffffff;">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;">
                 <tr>
-                <td style="padding:20px 12px;">
+                  <td align="left" style="padding:20px 12px;">
                     <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:600px;max-width:600px;">
-                    <tr>
-                        <td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#111111;">
-                        ' . $safe_body_html . '
+                      <tr>
+                        <td align="left" style="padding:0 0 14px 0;">
+                          <img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_name) . '" width="140"
+                               style="width:140px;max-width:100%;height:auto;display:block;border:0;outline:none;text-decoration:none;">
                         </td>
-                    </tr>
+                      </tr>
+                      <tr>
+                        <td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#111111;">
+                          ' . $safe_body_html . '
+                        </td>
+                      </tr>
                     </table>
-                </td>
+                  </td>
                 </tr>
-            </table>
+              </table>
             </body>
             </html>';
 
