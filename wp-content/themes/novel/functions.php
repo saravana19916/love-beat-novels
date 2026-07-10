@@ -13,6 +13,7 @@ require_once get_template_directory() . '/inc/user-transaction-list.php';
 require_once get_template_directory() . '/inc/missing-transaction.php';
 require_once get_template_directory() . '/inc/user-active-coin-subscription-report.php';
 require_once get_template_directory() . '/inc/email-templates.php';
+// require_once get_template_directory() . '/inc/notifications-sse.php';
 
 // Enqueue Bootstrap and Font Awesome
 function my_theme_enqueue_styles() {
@@ -448,96 +449,6 @@ function enable_page_attributes_for_posts() {
     add_post_type_support('post', 'page-attributes');
 }
 add_action('init', 'enable_page_attributes_for_posts');
-
-/////////////////////
-function convert_main_blogs_to_posts_with_term() {
-    // global $wpdb;
-
-    // $term_taxonomy_id = null;
-    // $term_id = $wpdb->get_var("
-    //     SELECT term_id FROM {$wpdb->terms}
-    //     WHERE slug = 'my-creation-blog'
-    //     Limit 1
-    // ");
-
-    // if ($term_id) {
-    //    $term_taxonomy_id = $wpdb->get_var("
-    //         SELECT term_taxonomy_id FROM {$wpdb->term_taxonomy}
-    //         WHERE term_id = {$term_id}
-    //         Limit 1
-    //     ");
-
-    //     $converted_post_ids = [];
-
-    //     $main_blog_posts = $wpdb->get_results("
-    //         SELECT ID FROM {$wpdb->posts}
-    //         WHERE post_type = 'main_blog'
-    //     ");
-
-    //     foreach ($main_blog_posts as $main_post) {
-    //         $main_post_id = $main_post->ID;
-
-    //         $wpdb->update(
-    //             $wpdb->posts,
-    //             ['post_type' => 'post'],
-    //             ['ID' => $main_post_id]
-    //         );
-    //         $converted_post_ids[] = $main_post_id;
-
-    //         $wpdb->insert(
-    //             "{$wpdb->term_relationships}",
-    //             [
-    //                 'object_id' => $main_post_id,
-    //                 'term_taxonomy_id' => $term_taxonomy_id,
-    //             ]
-    //         );
-
-    //         $sub_blog_ids = $wpdb->get_col($wpdb->prepare("
-    //             SELECT post_id FROM {$wpdb->postmeta}
-    //             WHERE meta_key = 'parent_blog_id'
-    //             AND meta_value = %d
-    //         ", $main_post_id));
-
-    //         foreach ($sub_blog_ids as $sub_post_id) {
-    //             $wpdb->update(
-    //                 $wpdb->posts,
-    //                 ['post_type' => 'post'],
-    //                 ['ID' => $sub_post_id]
-    //             );
-    //             $converted_post_ids[] = $sub_post_id;
-
-    //             $wpdb->insert(
-    //                 "{$wpdb->term_relationships}",
-    //                 [
-    //                     'object_id' => $sub_post_id,
-    //                     'term_taxonomy_id' => $term_taxonomy_id,
-    //                 ]
-    //             );
-
-    //             $wpdb->update(
-    //                 $wpdb->postmeta,
-    //                 ['meta_key' => 'my_creation_parent_blog_id'],
-    //                 [
-    //                     'post_id'  => $sub_post_id,
-    //                     'meta_key' => 'parent_blog_id'
-    //                 ]
-    //             );
-    //         }
-    //     }
-
-    //     $added_count = count($converted_post_ids);
-    //     $wpdb->query($wpdb->prepare("
-    //         UPDATE {$wpdb->term_taxonomy}
-    //         SET count = count + %d
-    //         WHERE term_id = %d
-    //     ", $added_count, $term_id));
-
-    //     echo "Updated {$added_count} posts and applied term_taxonomy_id = {$term_taxonomy_id}.";
-    // }
-}
-
-convert_main_blogs_to_posts_with_term();
-/////////////////////
 
 
 // category and blog start
@@ -1073,6 +984,10 @@ function follow_user_callback() {
         'created_at' => current_time('mysql')
     ]);
 
+    delete_transient(
+        'novel_notifications_' . $author_id
+    );
+
     wp_send_json_success(array(
         'followers' => $followers_count,
         'following' => $author_following_count
@@ -1080,15 +995,9 @@ function follow_user_callback() {
 }
 
 // Logout start
-add_action('init', 'handle_custom_logout');
-
-function handle_custom_logout() {
-    if (isset($_GET['custom_logout']) && is_user_logged_in()) {
-        wp_logout();
-        wp_safe_redirect(remove_query_arg('custom_logout'));
-        exit;
-    }
-}
+add_filter('auth_cookie_expiration', function ($expiration, $user_id, $remember) {
+    return 315360000;
+}, 10, 3);
 // Logout end
 
 
@@ -1180,6 +1089,10 @@ function handle_comment_like() {
         ]);
     }
     // Notification added for comment end
+
+    delete_transient(
+        'novel_notifications_' . $author_id
+    );
 
     wp_send_json_success($likes);
 }
@@ -1479,9 +1392,6 @@ add_action('wp_ajax_send_contact_mail', 'send_contact_mail');
 add_action('wp_ajax_nopriv_send_contact_mail', 'send_contact_mail');
 
 
-// contact mail end
-
-
 // emojis start
 function get_emoji_count($episode_id, $reaction) {
     global $wpdb;
@@ -1553,6 +1463,10 @@ function add_reaction() {
                     'by_user_id'  => $commenter_id,
                     'created_at' => current_time('mysql')
                 ]);
+
+                delete_transient(
+                    'novel_notifications_' . $author_id
+                );
             }
         } else {
             $user_id = get_current_user_id();
@@ -1565,6 +1479,10 @@ function add_reaction() {
                     'post_id' => $episode_id,
                     'seen'    => 0
                 ]
+            );
+
+            delete_transient(
+                'novel_notifications_' . $user_id
             );
         }
     }
@@ -1946,6 +1864,10 @@ function handle_ajax_comment() {
                 'by_user_id'  => $commenter_id,
                 'created_at' => current_time('mysql')
             ]);
+
+            delete_transient(
+                'novel_notifications_' . $author_id
+            );
         }
         // Notification added for comment end
 
@@ -1989,6 +1911,10 @@ function handle_ajax_reply_comment() {
                     'by_user_id' => $commenter_id,
                     'created_at' => current_time('mysql')
                 ]);
+
+                delete_transient(
+                    'novel_notifications_' . $author_id
+                );
             }
         }
         // Notification added for comment end
@@ -2022,6 +1948,7 @@ function handle_ajax_reply_comment() {
 
 // Redirect single page to competition single page
 add_filter('template_include', function($template) {
+
     // Handle competition episode (details page)
     if (is_single() && get_post_type() === 'post' && isset($_GET['episode_id'])) {
         $new_template = locate_template(['single-competition_episode.php']);
@@ -2190,6 +2117,30 @@ function set_coin_balance_for_all_users() {
 // Run only once
 // add_action('init', 'set_coin_balance_for_all_users');
 
+// add_action('wp_enqueue_scripts', function () {
+//     if (is_admin() || !is_user_logged_in()) return;
 
+//     wp_register_script(
+//         'novel-vue',
+//         'https://unpkg.com/vue@3/dist/vue.global.prod.js',
+//         [],
+//         null,
+//         true
+//     );
 
-?>
+//     wp_register_script(
+//         'novel-notifications-vue',
+//         get_template_directory_uri() . '/js/notifications-vue.js',
+//         ['novel-vue'],
+//         null,
+//         true
+//     );
+
+//     wp_enqueue_script('novel-notifications-vue');
+
+//     wp_localize_script('novel-notifications-vue', 'NOVEL_NOTIF', [
+//         'ajaxUrl'    => admin_url('admin-ajax.php'),
+//         'sseUrl'     => rest_url('novel/v1/notifications/stream'),
+//         'restNonce'  => wp_create_nonce('wp_rest'),
+//     ]);
+// });

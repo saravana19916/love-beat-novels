@@ -1,45 +1,5 @@
 <?php
 $view = $args['view'] ?? 'desktop';
-
-if (is_user_logged_in()) {
-
-    global $wpdb;
-    $user_id = get_current_user_id();
-
-
-    $notifications = $wpdb->get_results(
-        $wpdb->prepare(
-            "SELECT * FROM {$wpdb->prefix}author_notifications 
-            WHERE user_id = %d 
-            ORDER BY created_at DESC 
-            LIMIT 20", 
-            $user_id
-        )
-    );
-
-    $unread_count = count(array_filter($notifications, fn($n) => $n->seen == 0));
-
-    // Group notifications
-    $grouped_notifications = [
-        'Today' => [],
-        'Yesterday' => [],
-        'Earlier' => [],
-    ];
-
-    $today = date('Y-m-d');
-    $yesterday = date('Y-m-d', strtotime('-1 day'));
-
-    foreach ($notifications as $note) {
-        $created_date = date('Y-m-d', strtotime($note->created_at));
-        if ($created_date === $today) {
-            $grouped_notifications['Today'][] = $note;
-        } elseif ($created_date === $yesterday) {
-            $grouped_notifications['Yesterday'][] = $note;
-        } else {
-            $grouped_notifications['Earlier'][] = $note;
-        }
-    }
-}
 ?>
 <?php if (is_user_logged_in()): ?>
     <!-- Desktop: dropdown -->
@@ -103,11 +63,18 @@ if (is_user_logged_in()) {
     </a>
 <?php endif; ?>
 
-<?php if (is_user_logged_in()): ?>
+<?php
+// Print the JS only once (e.g. only for desktop view)
+if (is_user_logged_in() && $view === 'desktop'): ?>
 <script>
 jQuery(function ($) {
+  // Run-once guard (prevents duplicate init when template is included twice)
+  if (window.__NOVEL_NOTIF_INIT__) return;
+  window.__NOVEL_NOTIF_INIT__ = true;
+
   const ajaxUrl = "<?php echo esc_url(admin_url('admin-ajax.php')); ?>";
-  let lastId = 0;
+  let timer = null;
+  let inFlight = false;
 
   function updateNotificationBadge(unreadCount) {
     unreadCount = parseInt(unreadCount || 0, 10);
@@ -124,6 +91,7 @@ jQuery(function ($) {
     const contentHtml = notificationsHtml && notificationsHtml.trim()
       ? notificationsHtml
       : `<li><span class="dropdown-item text-primary-color">No new notifications</span></li>`;
+
     const fullHtml = headerHtml + contentHtml;
 
     const $desktop = $("#notification-list-desktop");
@@ -134,8 +102,11 @@ jQuery(function ($) {
   }
 
   function fetchNotifications() {
+    if (inFlight || document.visibilityState !== "visible") return;
+    inFlight = true;
+
     return $.ajax({
-      url: ajaxUrl + "?action=fetch_notifications",   // ✅ action in URL (prevents 400)
+      url: ajaxUrl + "?action=fetch_notifications",
       type: "POST",
       dataType: "json",
       timeout: 15000
@@ -146,42 +117,35 @@ jQuery(function ($) {
         updateNotificationList(response.data.notifications_html);
       }
     })
-    .fail(function (xhr) {
-      console.log("fetch_notifications failed:", xhr.status, xhr.responseText);
-    });
-  }
-
-  function waitLoop() {
-    if (document.visibilityState !== "visible") {
-      setTimeout(waitLoop, 2000);
-      return;
-    }
-
-    $.ajax({
-      url: ajaxUrl + "?action=novel_notifications_wait",
-      type: "POST",
-      dataType: "json",
-      timeout: 25000,
-      data: { last_id: lastId }
-    })
-    .done(function (res) {
-      if (!res || !res.success) return;
-
-      updateNotificationBadge(res.data.unread_count);
-      lastId = parseInt(res.data.latest_id || 0, 10);
-
-      if (res.data.changed) fetchNotifications();
-    })
-    .fail(function (xhr) {
-      console.log("novel_notifications_wait failed:", xhr.status, xhr.responseText);
-    })
     .always(function () {
-      setTimeout(waitLoop, 200);
+      inFlight = false;
     });
   }
 
-  fetchNotifications().always(function () {
-    waitLoop();
+  function schedule(ms) {
+    clearTimeout(timer);
+    timer = setTimeout(function () {
+      fetchNotifications();
+      schedule(ms);
+    }, ms);
+  }
+
+  // Fetch when user opens (desktop dropdown)
+  $(document).on("shown.bs.dropdown", "#notificationDropdown", function () {
+    fetchNotifications();
+  });
+
+  // Fetch when user opens (mobile modal)
+  $(document).on("shown.bs.modal", "#mobileNotificationModal", function () {
+    fetchNotifications();
+  });
+
+  // Optional: light refresh every 30s (badge/list updated if open later)
+  schedule(30000);
+
+  // Refresh when tab becomes visible
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible") fetchNotifications();
   });
 });
 </script>

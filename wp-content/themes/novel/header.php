@@ -222,6 +222,27 @@
 
                                     <div id="login-message" class="mt-3"></div>
 
+                                    <!-- ✅ Google Login Button FIRST -->
+                                    <?php $google_client_id = defined('NOVEL_GOOGLE_CLIENT_ID') ? NOVEL_GOOGLE_CLIENT_ID : ''; ?>
+                                    <div id="g_id_onload" class="mb-3"
+                                        data-client_id="<?php echo esc_attr($google_client_id); ?>"
+                                        data-callback="onGoogleSignIn"
+                                        data-auto_prompt="false">
+                                    </div>
+                                    <div class="d-flex justify-content-center">
+                                        <div class="g_id_signin mb-4"
+                                            data-type="standard"
+                                            data-size="large"
+                                            data-theme="filled_blue"
+                                            data-text="signin_with"
+                                            data-shape="rectangular"
+                                            data-logo_alignment="left">
+                                        </div>
+                                    </div>
+
+                                    <p class="text-primary-color text-center">(OR)</p>
+
+                                    <!-- Username/Password fields BELOW Google button -->
                                     <div class="row mb-3 align-items-center">
                                         <div class="col-12">
                                             <input type="text" class="form-control" id="username" name="username" placeholder="Username *">
@@ -241,20 +262,6 @@
                                         </div>
                                         <div class="col-6 d-flex align-items-center justify-content-end">
                                             <a href="#" class="text-primary-color text-decoration-none" data-bs-toggle="modal" data-bs-target="#registerModal">Register?</a>
-                                        </div>
-                                        <?php $google_client_id = defined('NOVEL_GOOGLE_CLIENT_ID') ? NOVEL_GOOGLE_CLIENT_ID : ''; ?>
-                                        <div id="g_id_onload" class="mt-3"
-                                            data-client_id="<?php echo esc_attr($google_client_id); ?>"
-                                            data-callback="onGoogleSignIn"
-                                            data-auto_prompt="false">
-                                        </div>
-                                        <div class="g_id_signin"
-                                            data-type="standard"
-                                            data-size="large"
-                                            data-theme="outline"
-                                            data-text="login_with"
-                                            data-shape="rectangular"
-                                            data-logo_alignment="left">
                                         </div>
                                     </div>
                                     <div class="row mb-4">

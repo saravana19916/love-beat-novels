@@ -305,6 +305,10 @@ function activate_subscription($amount, $period, $name, $payment_id, $order_id, 
                 array('%d', '%s', '%d', '%s', '%s')
             );
 
+            delete_transient(
+                'novel_notifications_' . $user_id
+            );
+
         } else {
             // Queue it
             $queue[] = [
@@ -327,6 +331,10 @@ function activate_subscription($amount, $period, $name, $payment_id, $order_id, 
                     'created_at' => current_time('mysql')
                 ],
                 ['%d','%s','%d','%s','%s']
+            );
+
+            delete_transient(
+                'novel_notifications_' . $user_id
             );
         }
     }
@@ -512,8 +520,8 @@ function handle_razorpay_webhook(WP_REST_Request $request) {
             ], ['%d','%s','%s','%d','%s','%d','%s','%s','%s']);
 
             // Send subscription failed notifications (only for subscription)
+            $to = novel_get_email_for_user($user_id, $email);
             if ($pay_for === 'subscription') {
-                $to = novel_get_email_for_user($user_id, $email);
                 if ($to) {
                     novel_mail_subscription_failed($to);
                 }
@@ -562,6 +570,12 @@ function handle_razorpay_webhook(WP_REST_Request $request) {
                 //         novel_send_whatsapp_text($wa_phone, $wa_message);
                 //     }
                 // }
+            }
+
+            if ($pay_for === 'coin') {
+                if ($to) {
+                    novel_mail_coin_transaction_failed($to);
+                }
             }
         }
 
@@ -713,7 +727,7 @@ if (!function_exists('novel_add_author_notification')) {
         $user_id = (int) $user_id;
         if ($user_id <= 0) return false;
 
-        return (bool) $wpdb->insert(
+        $isAdded =  (bool) $wpdb->insert(
             "{$wpdb->prefix}author_notifications",
             [
                 'user_id'     => $user_id,
@@ -724,5 +738,11 @@ if (!function_exists('novel_add_author_notification')) {
             ],
             ['%d','%s','%d','%s','%s']
         );
+
+        delete_transient(
+            'novel_notifications_' . $user_id
+        );
+
+        return $isAdded;
     }
 }

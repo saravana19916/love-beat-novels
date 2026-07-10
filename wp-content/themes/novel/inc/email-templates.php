@@ -62,7 +62,7 @@ if (!function_exists('novel_send_payment_mail')) {
                       <tr>
                         <td align="left" style="padding:0 0 14px 0;">
                           <img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_name) . '" width="140"
-                               style="width:140px;max-width:100%;height:auto;display:block;border:0;outline:none;text-decoration:none;">
+                               style="width:300px;max-width:100%;height:auto;display:block;border:0;outline:none;text-decoration:none;">
                         </td>
                       </tr>
                       <tr>
@@ -119,11 +119,52 @@ if (!function_exists('novel_mail_coin_success')) {
 
             எந்த restriction-ம் இல்லாமல் எல்லா stories-ஐயும் read செய்ய Subscription எடுப்பதே best option.
 
+            Subscription Link - https://lovebeatnovels.com/subscription/
+
             உங்கள் support-க்கு மனப்பூர்வமான நன்றி.
 
             Happy Reading! ✨📖--
 
             --
+            Thanks & Regards,
+            Sarmi SS
+            Author | Content Editor
+            Whatsapp - +916374401933
+            Instagram: https://www.instagram.com/sarmi_ss/
+            Facebook: https://www.facebook.com/Sarmi.SSfan
+            Website: https://lovebeatnovels.com
+            TXT;
+
+        return novel_send_payment_mail($to, $subject, $body);
+    }
+}
+
+if (!function_exists('novel_mail_coin_transaction_failed')) {
+    function novel_mail_coin_transaction_failed($to) {
+        $subject = 'Coin Transaction Failed';
+        $body = <<<TXT
+            அன்புள்ள வாசகரே,
+
+            நீங்கள் சமீபத்தில் coin purchase  செய்ய முயற்சி செய்துள்ளீர்கள். ஆனால், கட்டணம் செலுத்தும் செயல்முறை வெற்றியடையவில்லை.
+
+            தயவுசெய்து மீண்டும் ஒரு முறை முயற்சி செய்யவும்.
+
+            ⚠️ முக்கிய அறிவிப்பு:
+            Facebook அல்லது Instagram app-இல் இருந்து link-ஐ நேரடியாக click செய்து முயற்சி செய்ய வேண்டாம்.
+
+            அதற்குப் பதிலாக, அந்த link-ஐ copy செய்து உங்கள் மொபைல் browser (Google Chrome, Safari போன்றவை) மூலம் திறந்து Coin purchase செய்ய முயற்சி செய்யவும்.
+
+            சில நேரங்களில் social media app-இல் திறக்கும் போது payment பிரச்சினைகள் ஏற்படலாம். Browser மூலம் முயற்சி செய்தால் சரியாக செயல்படும்.
+
+            🌍 International users-க்கு:
+            Debit / Credit card payment மட்டுமே வேலை செய்யும்.
+            அதனால், உங்கள் card-ல் international payment enabled ஆக இருக்க வேண்டும்.
+
+            Coin Purchase Link - https://lovebeatnovels.com/wallet/
+
+            இன்னும் ஏதேனும் பிரச்சினை இருந்தால், எங்களை தொடர்பு கொள்ள தயங்க வேண்டாம்.
+
+            உங்கள் ஆதரவுக்கு நன்றி. ❤️
             Thanks & Regards,
             Sarmi SS
             Author | Content Editor
